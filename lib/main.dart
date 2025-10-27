@@ -4155,39 +4155,9 @@ final _mailStand = TextEditingController();
     }
 
     Future<void> _sendEmailWithAttachment({bool preview = false}) async {
-      if (_lastGeneratedDocPath.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Veuillez d\'abord générer le document')),
-        );
-        return;
-      }
-
       try {
-
-        if (preview) {
-          // Try to open the generated document for a quick preview
-          await OpenFilex.open(_lastGeneratedDocPath);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('👁️ Aperçu ouvert: ${_lastGeneratedDocPath}'),
-              duration: Duration(seconds: 4),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ Saved: ${_lastGeneratedDocPath}'),
-              duration: Duration(seconds: 5),
-            ),
-          );
-        }
-        // Generate a PDF version automatically before sending
-        await _generatePdfFromData();
-        final String attachmentPath = _lastGeneratedPdfPath.isNotEmpty ? _lastGeneratedPdfPath : _lastGeneratedDocPath;
-
         final recipientEmail = _mailStand.text.trim();
         final String recipient = recipientEmail.isNotEmpty ? recipientEmail : 'client@example.com';
-
         final subject = 'Rapport de Vérification Après Montage: ${_salonName.text} Hall ${_standHall.text} - Stand: ${_standName.text} ${_standNb.text}';
         final body = 'Bonjour,\n\n'
             'Veuillez trouver ci-joint le rapport de vérification après montage demandé.\n\n'
@@ -4199,6 +4169,61 @@ final _mailStand = TextEditingController();
             '${_techName.text},\n'
             'Versant Event.';
 
+        // Web: generate and download the PDF, then open the mail client with prefilled fields.
+        if (kIsWeb) {
+          // Ensure we have fresh PDF bytes
+          await _generatePdfFromData();
+          if (_lastGeneratedPdfBytes == null || _lastGeneratedPdfBytes!.isEmpty) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Impossible de générer le PDF.')),
+            );
+            return;
+          }
+          final safeRef = _nosReferences.text.trim().isNotEmpty
+              ? _nosReferences.text.trim().replaceAll(' ', '_')
+              : 'VE';
+          final filename = 'rapport_${safeRef}_${DateFormat('dd_MM_yyyy_HH_mm').format(DateTime.now())}.pdf';
+          await saveBytesAsFile(_lastGeneratedPdfBytes!, filename: filename);
+
+          final uri = Uri(
+            scheme: 'mailto',
+            path: recipient,
+            queryParameters: {
+              'subject': subject,
+              'body': body,
+            },
+          );
+          // Try to open default mail app/site
+          final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  launched
+                      ? '📧 Rédaction d\'email ouverte. Pièce jointe téléchargée: $filename\nAjoutez-la depuis vos téléchargements.'
+                      : 'Impossible d\'ouvrir l\'application mail. Pièce jointe téléchargée: $filename'),
+              duration: const Duration(seconds: 6),
+            ),
+          );
+          return;
+        }
+
+        // IO platforms: generate a PDF file and attach it using FlutterEmailSender
+        await _generatePdfFromData();
+        String attachmentPath = _lastGeneratedPdfPath;
+        if (attachmentPath.isEmpty && _lastGeneratedDocPath.isNotEmpty) {
+          // Fallback to DOCX if PDF path wasn't produced for some reason
+          attachmentPath = _lastGeneratedDocPath;
+        }
+        if (attachmentPath.isEmpty) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Aucun fichier à envoyer.')),
+          );
+          return;
+        }
+
         final Email email = Email(
           body: body,
           subject: subject,
@@ -4208,73 +4233,40 @@ final _mailStand = TextEditingController();
           isHTML: false,
         );
 
-        // Essayer d'abord avec flutter_email_sender
         try {
           await FlutterEmailSender.send(email);
-
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ Email envoyé à $recipient'),
-              backgroundColor: Colors.green,
-            ),
+            SnackBar(content: Text('✅ Email prêt à être envoyé à $recipient')),
           );
         } on PlatformException catch (e) {
           if (e.code == 'not_available') {
-            // Fallback vers Share si aucun client email
-            if (!mounted) return;
-
-            final result = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                backgroundColor: blackAmont,
-                title: Text('Aucun client email', style: TextStyle(color: blanc)),
-                content: Text(
-                  'Aucun client email trouvé.\n\n'
-                      'Voulez-vous utiliser le partage à la place?',
-                  style: TextStyle(color: blanc),
+            // Fallback: share the PDF/DOCX
+            final ref = _nosReferences.text.trim();
+            await Share.shareXFiles(
+              [
+                XFile(
+                  _lastGeneratedPdfPath.isNotEmpty ? _lastGeneratedPdfPath : attachmentPath,
+                  mimeType: _lastGeneratedPdfPath.isNotEmpty ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  name: _lastGeneratedPdfPath.isNotEmpty
+                      ? 'rapport_${ref.replaceAll(' ', '_')}.pdf'
+                      : 'rapport_${ref.replaceAll(' ', '_')}.docx',
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: Text('Annuler', style: TextStyle(color: Colors.grey)),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: Text('Partager', style: TextStyle(color: bleuAmont)),
-                  ),
-                ],
-              ),
+              ],
+              subject: subject,
+              text: body,
             );
-
-            if (result == true) {
-              final ref = _nosReferences.text.trim();
-              await Share.shareXFiles(
-                [
-                  XFile(
-                    _lastGeneratedPdfPath.isNotEmpty ? _lastGeneratedPdfPath : attachmentPath,
-                    mimeType: 'application/pdf',
-                    name: 'rapport_${ref.replaceAll(' ', '_')}.pdf',
-                  ),
-                ],
-                subject: subject,
-                text: '📧 Destinataire: $recipient\n\n$body',
-              );
-            }
           } else {
-            throw e;
+            rethrow;
           }
         }
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
         );
       }
-  }
+    }
   Future<void> _sendToClient() async {
     try {
       // Generate the document first
@@ -7513,42 +7505,8 @@ final _mailStand = TextEditingController();
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      try {
-                        // Build the PDF from current form data
-                        final result = await _generatePdfFromData();
-
-                        if (kIsWeb) {
-                          if (_lastGeneratedPdfBytes == null || _lastGeneratedPdfBytes!.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Échec de la génération du PDF')),
-                            );
-                            return;
-                          }
-                          final ref = _nosReferences.text.trim();
-                          final safeRef = ref.isNotEmpty ? ref.replaceAll(' ', '_') : 'VE';
-                          final filename = 'rapport_${safeRef}_${DateFormat('dd_MM_yyyy_HH_mm').format(DateTime.now())}.pdf';
-                          await saveBytesAsFile(_lastGeneratedPdfBytes!, filename: filename);
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('📄 Téléchargé: $filename')),
-                          );
-                        } else {
-                          // On mobile/desktop, open the saved PDF path
-                          final path = _lastGeneratedPdfPath;
-                          if (path.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Aucun PDF généré')),
-                            );
-                            return;
-                          }
-                          await OpenFilex.open(path);
-                        }
-                      } catch (e) {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Erreur: $e')),
-                        );
-                      }
+                      // Unified flow: generate PDF and compose email.
+                      await _sendEmailWithAttachment(preview: false);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
