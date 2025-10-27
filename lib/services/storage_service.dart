@@ -6,12 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/form_data.dart';
 
 class StorageService {
-  Future<Directory> get _appDocDir async {
+  // Use a flexible return type to avoid web/IO Directory type mismatch during web compile
+  Future<dynamic> get _appDocDir async {
     if (kIsWeb) {
       // Return a stub Directory for web; actual file IO is avoided on web paths
       return Directory('/');
     }
-    return await getApplicationDocumentsDirectory();
+    // On IO platforms, this is a dart:io Directory; declare as dynamic to unify types
+    return await getApplicationDocumentsDirectory() as dynamic;
   }
 
   // ===== Legacy helpers for FormData model (kept for compatibility) =====
