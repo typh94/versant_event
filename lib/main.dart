@@ -7513,78 +7513,38 @@ final _mailStand = TextEditingController();
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      // First generate the Word document
-                      await _generateWordFile(preview: false);
-
-                      if (_lastGeneratedDocPath.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Veuillez d\'abord générer le document Word')),
-                        );
-                        return;
-                      }
-
                       try {
-                        // Show loading dialog
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => Center(
-                            child: Card(
-                              child: Padding(
-                                padding: EdgeInsets.all(24),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    CircularProgressIndicator(),
-                                    SizedBox(height: 16),
-                                    Text('Conversion en PDF...'),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
+                        // Build the PDF from current form data
+                        final result = await _generatePdfFromData();
 
-                        // Simple approach: Share the DOCX and suggest PDF conversion
-                        Navigator.pop(context); // Close loading dialog
-
-                        final result = await showDialog<String>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text('Exporter en PDF'),
-                            content: Text(
-                                'Voulez-vous:\n\n'
-                                    '1. Partager le document Word (vous pourrez le convertir en PDF sur votre appareil)\n'
-                                    '2. Ouvrir le document (puis "Imprimer" → "Enregistrer en PDF")'
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, 'cancel'),
-                                child: Text('Annuler'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, 'share'),
-                                child: Text('Partager'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, 'open'),
-                                child: Text('Ouvrir'),
-                              ),
-                            ],
-                          ),
-                        );
-
-                        if (result == 'share') {
-                          await Share.shareXFiles(
-                            [XFile(_lastGeneratedDocPath)],
-                            subject: 'Rapport de Vérification - ${_nosReferences.text}',
-                            text: 'Rapport de Vérification',
+                        if (kIsWeb) {
+                          if (_lastGeneratedPdfBytes == null || _lastGeneratedPdfBytes!.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Échec de la génération du PDF')),
+                            );
+                            return;
+                          }
+                          final ref = _nosReferences.text.trim();
+                          final safeRef = ref.isNotEmpty ? ref.replaceAll(' ', '_') : 'VE';
+                          final filename = 'rapport_${safeRef}_${DateFormat('dd_MM_yyyy_HH_mm').format(DateTime.now())}.pdf';
+                          await saveBytesAsFile(_lastGeneratedPdfBytes!, filename: filename);
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('📄 Téléchargé: $filename')),
                           );
-                        } else if (result == 'open') {
-                          await OpenFilex.open(_lastGeneratedDocPath);
+                        } else {
+                          // On mobile/desktop, open the saved PDF path
+                          final path = _lastGeneratedPdfPath;
+                          if (path.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Aucun PDF généré')),
+                            );
+                            return;
+                          }
+                          await OpenFilex.open(path);
                         }
                       } catch (e) {
-                        Navigator.pop(context); // Close loading dialog if still open
+                        if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Erreur: $e')),
                         );
