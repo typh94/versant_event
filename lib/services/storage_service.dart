@@ -6,7 +6,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/form_data.dart';
 
 class StorageService {
-  Future<Directory> get _appDocDir async => await getApplicationDocumentsDirectory();
+  Future<Directory> get _appDocDir async {
+    if (kIsWeb) {
+      // Return a stub Directory for web; actual file IO is avoided on web paths
+      return Directory('/');
+    }
+    return await getApplicationDocumentsDirectory();
+  }
 
   // ===== Legacy helpers for FormData model (kept for compatibility) =====
   Future<String> saveFormData(FormData data) async {

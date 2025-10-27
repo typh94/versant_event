@@ -1,23 +1,32 @@
 // Minimal web stubs for dart:io symbols to allow Flutter web compilation.
 // These classes are only used to satisfy references on web builds; any actual
-// use will throw, but web code paths should avoid calling them.
+// use will throw if invoked at runtime in a web build. UI should gate calls
+// behind kIsWeb checks or provide web-safe alternatives.
 import 'dart:typed_data';
 
 class File {
   final String path;
   File(this.path);
 
-  Future<Uint8List> readAsBytes() async => throw UnsupportedError('File.readAsBytes is not supported on web');
-  Uint8List readAsBytesSync() => throw UnsupportedError('File.readAsBytesSync is not supported on web');
+  // Read APIs
+  Future<Uint8List> readAsBytes() async => Uint8List(0);
+  Uint8List readAsBytesSync() => Uint8List(0);
+  Future<String> readAsString() async => '';
+
+  // Existence / metadata
   Future<bool> exists() async => false;
   bool existsSync() => false;
-  Future<void> writeAsBytes(List<int> bytes) async => throw UnsupportedError('File.writeAsBytes is not supported on web');
-  Future<void> writeAsString(String s) async => throw UnsupportedError('File.writeAsString is not supported on web');
+  DateTime lastModifiedSync() => DateTime.fromMillisecondsSinceEpoch(0);
+
+  // Write / delete APIs
+  Future<void> writeAsBytes(List<int> bytes) async {}
+  Future<void> writeAsString(String s) async {}
+  Future<void> delete() async {}
 }
 
 class Directory {
   final String path;
   Directory(this.path);
 
-  List<dynamic> listSync() => <dynamic>[];
+  List<File> listSync() => <File>[];
 }

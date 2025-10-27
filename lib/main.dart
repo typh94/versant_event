@@ -4505,7 +4505,7 @@ final _mailStand = TextEditingController();
 
                 decoration: InputDecoration(
                   labelText: 'Adresse  du local',
-                  labelStyle: TextStyle(color: Colors.fondRosePale),
+                  labelStyle: TextStyle(color: fondRosePale),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
