@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io'; // Conditional for web
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:path_provider/path_provider.dart';
+import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/form_data.dart';
 

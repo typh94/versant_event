@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle, PlatformException;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:docx_template/docx_template.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
 import 'package:signature/signature.dart';
 import 'package:versant_event/stubs/open_filex_stub.dart' if (dart.library.io) 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
