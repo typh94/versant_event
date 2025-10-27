@@ -1,0 +1,18 @@
+{
+  "name": "versant_event_web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static server for Flutter Web build of VersantEvent on Railway",
+  "main": "server.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'Use Dockerfile to build the Flutter web app'"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.1"
+  }
+}

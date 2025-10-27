@@ -1,0 +1,23 @@
+# VCS
+.git
+.gitignore
+
+# Flutter
+.dart_tool/
+.packages
+.pub-cache/
+build/
+.ios/
+.android/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
