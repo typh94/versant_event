@@ -8,7 +8,10 @@ WORKDIR /app
 RUN flutter config --enable-web
 
 # Copy only the files needed to resolve dependencies first (better caching)
-COPY pubspec.yaml pubspec.lock ./
+# Avoid copying pubspec.lock to prevent SDK/version mismatch in container
+COPY pubspec.yaml ./
+# Copy local path dependency so `flutter pub get` can resolve it
+COPY docx_template ./docx_template
 RUN flutter pub get
 
 # Now copy the rest of the source

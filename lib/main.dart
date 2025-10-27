@@ -85,12 +85,13 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
      // backgroundColor: Colors.white10,
-      backgroundColor: Color(0xFF1A1A1A),
+      // backgroundColor: Color(0xFF1A1A1A),
+       backgroundColor: Colors.white,
 
       appBar: AppBar(
         title: Text('Versant Event'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         centerTitle: true,
         actions: [
           Padding(
@@ -4361,8 +4362,8 @@ final _mailStand = TextEditingController();
         return false; // we handle the pop after saving
       },
       child: Scaffold(
-      //  backgroundColor: Colors.white10,
-        backgroundColor: Color(0xFF1A1A1A),
+       backgroundColor: fondRosePale,
+     //   backgroundColor: Color(0xFF1A1A1A),
         appBar: AppBar(
           title: Text(
             _buildFicheTitle(),
@@ -4372,7 +4373,7 @@ final _mailStand = TextEditingController();
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: Colors.black,
+          backgroundColor: roseVE,
           foregroundColor: Colors.white,
           actions: [
             IconButton(
@@ -4420,7 +4421,7 @@ final _mailStand = TextEditingController();
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
 
@@ -4473,7 +4474,7 @@ final _mailStand = TextEditingController();
               SizedBox(height: 32),
               Text(
                 'INFORMATIONS GÉNÉRALES',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
@@ -4488,13 +4489,13 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.black), //  typed text white
                    validator: (value) => value!.isEmpty ? 'Entrez votre référence' : null,
               ),
               SizedBox(height: 12),
@@ -4503,16 +4504,16 @@ final _mailStand = TextEditingController();
 
                 decoration: InputDecoration(
                   labelText: 'Adresse  du local',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.fondRosePale),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 2,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.white),
 
               ),
               SizedBox(height: 12),
