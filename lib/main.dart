@@ -21,6 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'widgets/io_image.dart';
+import 'utils/save_file.dart';
 
 import 'package:versant_event/stubs/flutter_email_sender_stub.dart' if (dart.library.io) 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:printing/printing.dart';
@@ -1831,34 +1832,41 @@ final _mailStand = TextEditingController();
 
       print('✅ Generated document size: ${generated.length} bytes');
 
-      final directory = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final file = File('${directory.path}/filled_$timestamp.docx');
-      await file.writeAsBytes(generated);
-      
-      print('💾 File saved at: ${file.path}');
-      
+      final filename = 'filled_$timestamp.docx';
+      final savedPath = await saveBytesAsFile(generated, filename: filename);
+
+      print('💾 File saved/triggered download: $savedPath');
+
       if (mounted) {
         setState(() {
-          _lastGeneratedDocPath = file.path;
+          _lastGeneratedDocPath = kIsWeb ? '' : savedPath;
         });
       }
-      
+
       if (!mounted) return;
 
       if (preview) {
-        // Try to open the generated document for a quick preview
-        await OpenFilex.open(file.path);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('👁️ Aperçu ouvert: ${file.path}'),
-            duration: Duration(seconds: 4),
-          ),
-        );
+        if (kIsWeb) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('👁️ Document téléchargé: $filename'),
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } else {
+          await OpenFilex.open(savedPath);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('👁️ Aperçu ouvert: $savedPath'),
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Saved: ${file.path}'),
+            content: Text(kIsWeb ? '✅ Téléchargé: $filename' : '✅ Saved: $savedPath'),
             duration: Duration(seconds: 5),
           ),
         );
