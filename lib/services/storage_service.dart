@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show Directory, File; // Only used on non-web
+import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io'; // Conditional for web
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';

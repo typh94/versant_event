@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:docx_template/docx_template.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:signature/signature.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:versant_event/stubs/open_filex_stub.dart' if (dart.library.io) 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
-import 'dart:io';
+import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'screens/login_page.dart';
@@ -20,8 +20,9 @@ import 'services/auth_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
+import 'widgets/io_image.dart';
 
-import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:versant_event/stubs/flutter_email_sender_stub.dart' if (dart.library.io) 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:printing/printing.dart';
 import 'screens/pdf_preview_screen.dart';
 import 'dart:convert';
@@ -4463,8 +4464,8 @@ final _mailStand = TextEditingController();
                     borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.file(
-                    File(_buildingPhotoPath),
+                  child: IoImage(
+                    path: _buildingPhotoPath,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -5447,8 +5448,8 @@ final _mailStand = TextEditingController();
                           borderRadius: BorderRadius.circular(8),
                         ),
                         padding: EdgeInsets.all(4),
-                        child: Image.file(
-                          File(_articlePhotos[3]!.imagePath),
+                        child: IoImage(
+                          path: _articlePhotos[3]!.imagePath,
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
@@ -5516,12 +5517,12 @@ final _mailStand = TextEditingController();
                       borderRadius: BorderRadius.circular(8),
                   ),
                   padding: EdgeInsets.all(4),
-                  child: Image.file(
-                    File(_articlePhotos[5]!.imagePath),
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                  ),
+                  child: IoImage(
+                  path: _articlePhotos[5]!.imagePath,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
                 ),
                 ),
                 ),
@@ -7421,8 +7422,8 @@ final _mailStand = TextEditingController();
                             height: 60,
                             fit: BoxFit.contain,
                           )
-                        : Image.file(
-                            File(_signaturePath),
+                        : IoImage(
+                            path: _signaturePath,
                             width: 120,
                             height: 60,
                             fit: BoxFit.contain,

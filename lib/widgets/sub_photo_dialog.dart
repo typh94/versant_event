@@ -1,7 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io';
 import '../models/sub_photo_entry.dart';
+import 'io_image.dart';
 
 // Public dialog widget extracted from main.dart (refactor-only, no behavior change)
 class SubPhotoDialog extends StatefulWidget {
@@ -17,6 +20,7 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
   final _descriptionController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   String _imagePath = '';
+  Uint8List? _imageBytesWeb;
 
   @override
   void dispose() {
@@ -28,9 +32,17 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() {
-        _imagePath = image.path;
-      });
+      if (kIsWeb) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _imageBytesWeb = bytes;
+          _imagePath = image.name; // just for display
+        });
+      } else {
+        setState(() {
+          _imagePath = image.path;
+        });
+      }
     }
   }
 
@@ -77,7 +89,7 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
                 icon: const Icon(Icons.photo_library),
                 label: const Text('Choisir une photo'),
               ),
-              if (_imagePath.isNotEmpty) ...[
+              if (kIsWeb ? (_imageBytesWeb != null && _imageBytesWeb!.isNotEmpty) : _imagePath.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
                   height: 150,
@@ -87,10 +99,15 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.file(
-                    File(_imagePath),
-                    fit: BoxFit.cover,
-                  ),
+                  child: kIsWeb
+                      ? Image.memory(
+                          _imageBytesWeb!,
+                          fit: BoxFit.cover,
+                        )
+                      : IoImage(
+                          path: _imagePath,
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ],
             ],
