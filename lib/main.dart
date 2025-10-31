@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle, PlatformException;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -22,16 +21,13 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'widgets/io_image.dart';
 import 'utils/save_file.dart';
-
 import 'package:versant_event/stubs/flutter_email_sender_stub.dart' if (dart.library.io) 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:printing/printing.dart';
 import 'screens/pdf_preview_screen.dart';
 import 'dart:convert';
-
 import 'constants/app_colors.dart';
 import 'models/sub_photo_entry.dart';
 import 'widgets/sub_photo_dialog.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +54,8 @@ class _HomePageState extends State<HomePage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Déconnexion'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Déconnexion', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Voulez-vous vraiment vous déconnecter?'),
         actions: [
           TextButton(
@@ -80,119 +77,216 @@ class _HomePageState extends State<HomePage> {
         MaterialPageRoute(builder: (context) => LoginScreen()),
       );
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     // backgroundColor: Colors.white10,
-      // backgroundColor: Color(0xFF1A1A1A),
-       backgroundColor: Colors.white,
+      backgroundColor: Colors.pink[50],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 10),
+                ShaderMask(
+                  shaderCallback: (bounds) => LinearGradient(
+                    colors: [roseVE, Color(0xFFFF6B9D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
 
-      appBar: AppBar(
-        title: Text('Versant Event'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Center(
-             // child: Text(
-             //   _userName,
-             //   style: TextStyle(fontWeight: FontWeight.bold),
-            //  ),
+                  child: Text(
+                    'Versant Event',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 100),
+
+                Text(
+                  'Rapports de Vérification',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                SizedBox(height: 60),
+
+                Container(
+                  width: double.infinity,
+                  height: 150,
+                  child: Card(
+                    elevation: 8,
+                    shadowColor: roseVE.withOpacity(0.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => FormToWordPage()),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [roseVE, Color(0xFFFF6B9D)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.add_circle_outline,
+                                size: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Nouveau Rapport de Vérification',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  height: 100,
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(color: roseVE.withOpacity(0.3), width: 2),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const DraftsListScreen()),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: roseVE.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.folder_open_rounded,
+                                size: 32,
+                                color: roseVE,
+                              ),
+                            ),
+                            SizedBox(width: 20),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Tous mes Rapports',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Accéder aux brouillons',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: roseVE.withOpacity(0.5),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 60),
+
+                // Logout button
+                TextButton.icon(
+                  onPressed: _handleLogout,
+                  icon: Icon(Icons.logout_rounded, color: Colors.grey[600]),
+                  label: Text(
+                    'Déconnexion',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+
+                SizedBox(height: 20),
+
+                // Footer
+                Text(
+                  '© 2025 Versant Event',
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-
-          children: [
-
-            SizedBox(height: 20),
-
-            // Nouvelle Fiche Button
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => FormToWordPage()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-                  textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  backgroundColor: roseVE
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add_circle_outlined, size: 22, color: blanc ),
-                  SizedBox(width: 8),
-                  Text('Nouveau Rapport de Vérification', style: TextStyle(color: blanc)),
-
-                ],
-              ),
-            ),
-
-            SizedBox(height: 12),
-
-            // Toutes mes fiches Button
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const DraftsListScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-                textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                backgroundColor: Colors.white24,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.folder_open, size: 22, color: blanc),
-                  SizedBox(width: 8),
-                  Text('Tous mes Rapports', style: TextStyle(color: blanc)),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-
-
-
-            SizedBox(height: 400),
-
-            // Logout Button
-            ElevatedButton(
-              onPressed: _handleLogout,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.redAccent,
-                padding: EdgeInsets.symmetric(vertical: 6),
-                textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              child: Text('Déconnexion'),
-            ),
-          ],
         ),
       ),
     );
   }
-
-
 }
-
-
 class FormToWordPage extends StatefulWidget {
   @override
   _FormToWordPageState createState() => _FormToWordPageState();
@@ -200,7 +294,6 @@ class FormToWordPage extends StatefulWidget {
 
 class _FormToWordPageState extends State<FormToWordPage> {
   String _currentUsername = '';
-  // Keeps the path of the last generated DOCX to attach/share it by email
   String _lastGeneratedDocPath = '';
   // Keeps the path of the last generated PDF to attach/share it by email
   String _lastGeneratedPdfPath = '';
@@ -224,7 +317,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
   Uint8List? _signatureBytes; // Web: store signature bytes in memory
   Uint8List? _lastGeneratedPdfBytes; // Web: keep generated PDF in memory for preview
 
- // List<bool?> checkboxValues = List.generate(14, (_) => null);
   Map<int, String?> checkboxValues2 = {};
 
   final _formKey1 = GlobalKey<FormState>();
@@ -234,7 +326,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final PageController _pageController = PageController();
   final ImagePicker _picker = ImagePicker();
 
-  // Page 1 controllers
   final _nosReferences = TextEditingController();
   final _clientFacture = TextEditingController();
   final _contactFacture = TextEditingController();
@@ -253,13 +344,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final _endTime = TextEditingController();
   final _date = TextEditingController();
 
-
-  //
   final _techName = TextEditingController();
   final _localAdress = TextEditingController(text: "12 rue des frères lumières Lumière 77290 MITRY MORY");
   final _localTel = TextEditingController(text: "01 46 38 58 71");
   final _localMail = TextEditingController(text: "contact@versantevenement.com");
-  final _doName = TextEditingController(text:"TBD");
+  final _doName = TextEditingController(text:"INFORMA MARKETS");
   final _objMission = TextEditingController();
   final _pageNumber = TextEditingController();
   final _dateTransmission = TextEditingController();
@@ -271,20 +360,19 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final _siteName = TextEditingController(text: "PORTE DE VERSAILLES");
   final _siteAdress = TextEditingController(text: "1 Place de la porte de Versailles 75015 PARIS");
   final _standDscrptn = TextEditingController();
-  final _dateMontage = TextEditingController(text: "DATE");
+  final _dateMontage = TextEditingController(text: "27/11/25 au 01/12/25");
   final _dateEvnmt = TextEditingController(text: "02/12/25 au 04/12/25");
   final _catErpType = TextEditingController(text: "T");
-  final _effectifMax = TextEditingController(text: "TBD");
-
-  final _orgaName = TextEditingController(text: "ORGA");
+  final _effectifMax = TextEditingController(text: "20000");
+  final _orgaName = TextEditingController(text: "INFORMA MARKETS");
   final _installateurName = TextEditingController();
   final _exploitSiteName = TextEditingController(text: "VIPARIS");
   final _proprioMatosName = TextEditingController();
-
-
   final _nbStructures = TextEditingController();
   final _nbTableauxBesoin = TextEditingController();
   final _hauteur = TextEditingController();
+
+
   // Per-gril controllers for independent values
   List<TextEditingController> _hauteurCtrls = [];
   List<TextEditingController> _ouvertureCtrls = [];
@@ -336,7 +424,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final _docConsultName= TextEditingController();
   final _docConsultResp= TextEditingController();
 
-
   final _question1 = TextEditingController(); // Notice technique
   final _question2 = TextEditingController(); // Plans de détail
   final _question3 = TextEditingController(); // Notes de calculs
@@ -350,7 +437,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final _question11 = TextEditingController(); // attestatioon de bon montage
   final _question12 = TextEditingController(); // dossier de securite
   final _question13 = TextEditingController(); // vgp des palans
-
 
   final _article3 = TextEditingController();
   final _article5 = TextEditingController();
@@ -390,8 +476,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final _article47 = TextEditingController();
   final _article48 = TextEditingController();
 
-
-
   Map<int, bool?> checkboxValues = {
     1: null,
     2: null,
@@ -407,9 +491,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
     12: null,
     13: null,
   };
-
-
-
 
   final _article3Response = TextEditingController();
   final _article3Obsrvt = TextEditingController();
@@ -453,9 +534,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
   final _avisFav = TextEditingController();
   final _avisDefav = TextEditingController();
-
-final _mailStand = TextEditingController();
-
+  final _mailStand = TextEditingController();
 
   // Draft support
   String? _draftId;
@@ -567,7 +646,6 @@ final _mailStand = TextEditingController();
           'status': checkboxValues[13],
           'comment': _question3.text,
         },
-
       },
 
       //  "Tableau des vérifications"
@@ -587,42 +665,35 @@ final _mailStand = TextEditingController();
           'obs': _article6Obsrvt.text,
           'photoPath': _articlePhotos[6]?.imagePath,
         },
-
         '7': {
           'status': checkboxValues2[7],
           'obs': _article7Obsrvt.text,
           'photoPath': _articlePhotos[7]?.imagePath,
-
         },
         '9': {
           'status': checkboxValues2[9],
           'obs': _article9Obsrvt.text,
           'photoPath': _articlePhotos[9]?.imagePath,
-
         },
         '10': {
           'status': checkboxValues2[10],
           'obs': _article10Obsrvt.text,
           'photoPath': _articlePhotos[10]?.imagePath,
-
         },
         '11': {
           'status': checkboxValues2[11],
           'obs': _article11Obsrvt.text,
           'photoPath': _articlePhotos[11]?.imagePath,
-
         },
         '12': {
           'status': checkboxValues2[12],
           'obs': _article12Obsrvt.text,
           'photoPath': _articlePhotos[12]?.imagePath,
-
         },
         '13': {
           'status': checkboxValues2[13],
           'obs': _article13Obsrvt.text,
           'photoPath': _articlePhotos[13]?.imagePath,
-
         },
         '14': {
           'status': checkboxValues2[14],
@@ -634,165 +705,137 @@ final _mailStand = TextEditingController();
           'status': checkboxValues2[15],
           'obs': _article15Obsrvt.text,
           'photoPath': _articlePhotos[15]?.imagePath,
-
         },
         '16': {
           'status': checkboxValues2[16],
           'obs': _article16Obsrvt.text,
           'photoPath': _articlePhotos[16]?.imagePath,
-
         },
         '17': {
           'status': checkboxValues2[17],
           'obs': _article17Obsrvt.text,
           'photoPath': _articlePhotos[17]?.imagePath,
-
         },
         '18': {
           'status': checkboxValues2[18],
           'obs': _article18Obsrvt.text,
           'photoPath': _articlePhotos[18]?.imagePath,
-
         },
         '19': {
           'status': checkboxValues2[19],
           'obs': _article19Obsrvt.text,
           'photoPath': _articlePhotos[19]?.imagePath,
-
         },
         '20': {
           'status': checkboxValues2[20],
           'obs': _article20Obsrvt.text,
           'photoPath': _articlePhotos[20]?.imagePath,
-
         },
         '21': {
           'status': checkboxValues2[21],
           'obs': _article21Obsrvt.text,
           'photoPath': _articlePhotos[21]?.imagePath,
-
         },
         '22': {
           'status': checkboxValues2[22],
           'obs': _article22Obsrvt.text,
           'photoPath': _articlePhotos[22]?.imagePath,
-
         },
         '23': {
           'status': checkboxValues2[23],
           'obs': _article23Obsrvt.text,
           'photoPath': _articlePhotos[23]?.imagePath,
-
         },
         '24': {
           'status': checkboxValues2[24],
           'obs': _article24Obsrvt.text,
           'photoPath': _articlePhotos[24]?.imagePath,
-
         },
         '25': {
           'status': checkboxValues2[25],
           'obs': _article25Obsrvt.text,
           'photoPath': _articlePhotos[25]?.imagePath,
-
         },
         '26': {
           'status': checkboxValues2[26],
           'obs': _article26Obsrvt.text,
           'photoPath': _articlePhotos[26]?.imagePath,
-
         },
         '27': {
           'status': checkboxValues2[27],
           'obs': _article27Obsrvt.text,
           'photoPath': _articlePhotos[27]?.imagePath,
-
         },
         '28': {
           'status': checkboxValues2[28],
           'obs': _article28Obsrvt.text,
           'photoPath': _articlePhotos[28]?.imagePath,
-
         },
         '29': {
           'status': checkboxValues2[29],
           'obs': _article29Obsrvt.text,
           'photoPath': _articlePhotos[29]?.imagePath,
-
         },
         '30': {
           'status': checkboxValues2[30],
           'obs': _article30Obsrvt.text,
           'photoPath': _articlePhotos[30]?.imagePath,
-
         },
         '31': {
           'status': checkboxValues2[31],
           'obs': _article31bsrvt.text,
           'photoPath': _articlePhotos[31]?.imagePath,
-
         },
         '32': {
           'status': checkboxValues2[32],
           'obs': _article32bsrvt.text,
           'photoPath': _articlePhotos[32]?.imagePath,
-
         },
         '33': {
           'status': checkboxValues2[33],
           'obs': _article33bsrvt.text,
           'photoPath': _articlePhotos[33]?.imagePath,
-
         },
         '34': {
           'status': checkboxValues2[34],
           'obs': _article34bsrvt.text,
           'photoPath': _articlePhotos[34]?.imagePath,
-
         },
         '36': {
           'status': checkboxValues2[36],
           'obs': _article36bsrvt.text,
           'photoPath': _articlePhotos[36]?.imagePath,
-
         },
         '37': {
           'status': checkboxValues2[37],
           'obs': _article37bsrvt.text,
           'photoPath': _articlePhotos[37]?.imagePath,
-
         },
         '38': {
           'status': checkboxValues2[38],
           'obs': _article38bsrvt.text,
           'photoPath': _articlePhotos[38]?.imagePath,
-
         },
         '39': {
           'status': checkboxValues2[39],
           'obs': _article39bsrvt.text,
           'photoPath': _articlePhotos[39]?.imagePath,
-
         },
         '45': {
           'status': checkboxValues2[45],
           'obs': _article45bsrvt.text,
           'photoPath': _articlePhotos[45]?.imagePath,
-
         },
         '47': {
           'status': checkboxValues2[47],
           'obs': _article47bsrvt.text,
           'photoPath': _articlePhotos[47]?.imagePath,
-
         },
         '48': {
           'status': checkboxValues2[48],
           'obs': _article48bsrvt.text,
           'photoPath': _articlePhotos[48]?.imagePath,
-
         },
-
       },
 
       'hall': _standHall.text,
@@ -825,9 +868,11 @@ final _mailStand = TextEditingController();
     };
   }
 
-  void _loadFromDraftJson(Map<String, dynamic> json) {
+  void _loadFromDraftJson(Map<String, dynamic> json) async{
     // Restore minimal subsets requested: grils (3 fields), documents consultés (3), vérifications (3)
     // Per-gril fields
+
+
     final int savedNbTableaux = (json['nbTableaux'] ?? 0) is int
         ? (json['nbTableaux'] as int)
         : int.tryParse((json['nbTableaux'] ?? '0').toString()) ?? 0;
@@ -855,7 +900,6 @@ final _mailStand = TextEditingController();
         if (i < grMPP.length) _marqueModelPPCtrls[i].text = (grMPP[i] ?? '').toString();
         if (i < grE.length) _rideauxEnseignesCtrls[i].text = (grE[i] ?? '').toString();
         if (i < grTot.length) _poidGrilTotalCtrls[i].text = (grTot[i] ?? '').toString();
-
       }
     }
 
@@ -886,6 +930,7 @@ final _mailStand = TextEditingController();
       }
     }
 
+    /*
     // Tableau des vérifications (3, 5, 6: status string S/NS/SO + observation)
     final verif = json['verifications'];
     if (verif is Map) {
@@ -897,7 +942,8 @@ final _mailStand = TextEditingController();
           final obs = (item['obs'] ?? '') as String;
           // Restore photoPath for selected articles (3,5,6)
           final photoPath = (item['photoPath'] ?? '') as String;
-          if (photoPath.isNotEmpty && ['3','5','6'].contains(k)) {
+          if (photoPath.isNotEmpty && ['3','5','6', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21'
+            , '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '36', '37', '38', '39', '45', '47', '48'].contains(k)) {
             final idx = int.parse(k);
             _articlePhotos[idx] = SubPhotoEntry(
               number: '0',
@@ -949,6 +995,87 @@ final _mailStand = TextEditingController();
       }
     }
 
+     */
+    final verif = json['verifications'];
+    if (verif is Map) {
+      for (final k in ['3','5','6', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21',
+        '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '36', '37', '38', '39', '45', '47', '48']) {
+        final item = verif[k];
+        if (item is Map) {
+          checkboxValues2[int.parse(k)] = (item['status'] as String?);
+          final obs = (item['obs'] ?? '') as String;
+          final photoPath = (item['photoPath'] ?? '') as String;
+
+          // ✅ VALIDATE image path before using it
+          if (photoPath.isNotEmpty && await _validateImagePath(photoPath)) {
+            final idx = int.parse(k);
+            _articlePhotos[idx] = SubPhotoEntry(
+              number: '0',
+              description: obs.isNotEmpty ? obs : 'Article $k',
+              imagePath: photoPath,
+            );
+          } else if (photoPath.isNotEmpty) {
+            // Try to resolve using current Documents directory with same file name
+            final remapped = await _resolveImageInCurrentDocs(photoPath);
+            if (remapped != null) {
+              final idx = int.parse(k);
+              print('ℹ️ Remapped article $k photo to current container: $remapped');
+              _articlePhotos[idx] = SubPhotoEntry(
+                number: '0',
+                description: obs.isNotEmpty ? obs : 'Article $k',
+                imagePath: remapped,
+              );
+            } else {
+              // Image file is missing - keep empty and log
+              print('⚠️ Image file missing for article $k: $photoPath');
+            }
+          }
+
+    // Restore observation text
+    switch (k) {
+    case '3': _article3Obsrvt.text = obs; break;
+    case '5': _article5Obsrvt.text = obs; break;
+    case '6': _article6Obsrvt.text = obs; break;
+    case '7': _article7Obsrvt.text = obs; break;
+    case '9': _article9Obsrvt.text = obs; break;
+    case '10': _article10Obsrvt.text = obs; break;
+    case '11': _article11Obsrvt.text = obs; break;
+    case '12': _article12Obsrvt.text = obs; break;
+    case '13': _article13Obsrvt.text = obs; break;
+    case '14': _article14Obsrvt.text = obs; break;
+    case '15': _article15Obsrvt.text = obs; break;
+    case '16': _article16Obsrvt.text = obs; break;
+    case '17': _article17Obsrvt.text = obs; break;
+    case '18': _article18Obsrvt.text = obs; break;
+    case '19': _article19Obsrvt.text = obs; break;
+    case '20': _article20Obsrvt.text = obs; break;
+    case '21': _article21Obsrvt.text = obs; break;
+    case '22': _article22Obsrvt.text = obs; break;
+    case '23': _article23Obsrvt.text = obs; break;
+    case '24': _article24Obsrvt.text = obs; break;
+    case '25': _article25Obsrvt.text = obs; break;
+    case '26': _article26Obsrvt.text = obs; break;
+    case '27': _article27Obsrvt.text = obs; break;
+    case '28': _article28Obsrvt.text = obs; break;
+    case '29': _article29Obsrvt.text = obs; break;
+    case '30': _article30Obsrvt.text = obs; break;
+    case '31': _article31bsrvt.text = obs; break;
+    case '32': _article32bsrvt.text = obs; break;
+    case '33': _article33bsrvt.text = obs; break;
+    case '34': _article34bsrvt.text = obs; break;
+    case '36': _article36bsrvt.text = obs; break;
+    case '37': _article37bsrvt.text = obs; break;
+    case '38': _article38bsrvt.text = obs; break;
+    case '39': _article39bsrvt.text = obs; break;
+    case '45': _article45bsrvt.text = obs; break;
+    case '47': _article47bsrvt.text = obs; break;
+    case '48': _article48bsrvt.text = obs; break;
+    }
+    }
+    }
+    }
+
+
     // Restore signature from base64 if present
     final sigB64 = json['signaturePng'];
     if (sigB64 is String && sigB64.isNotEmpty) {
@@ -991,20 +1118,26 @@ final _mailStand = TextEditingController();
     _date.text = (json['date'] ?? '') as String;
     _textConclusion.text = (json['textConclusion'] ?? '') as String;
     _textPreconisations.text = (json['textPreconisations'] ?? '') as String;
-    _buildingPhotoPath = (json['buildingPhotoPath'] ?? '') as String;
+    final loadedBuildingPath = (json['buildingPhotoPath'] ?? '') as String;
+    if (loadedBuildingPath.isNotEmpty && await _validateImagePath(loadedBuildingPath)) {
+      _buildingPhotoPath = loadedBuildingPath;
+    } else {
+      // Try to resolve using current Documents directory with same file name
+      final resolved = await _resolveImageInCurrentDocs(loadedBuildingPath);
+      if (resolved != null) {
+        print('ℹ️ Remapped building photo to current container: $resolved');
+        _buildingPhotoPath = resolved;
+      } else {
+        if (loadedBuildingPath.isNotEmpty) {
+          print('⚠️ Building photo missing at reload: $loadedBuildingPath');
+        }
+        _buildingPhotoPath = '';
+      }
+    }
 
     _installateurName.text = (json['installateurName'] ?? '') as String;
     _proprioMatosName.text = (json['proprioMatosName'] ?? '') as String;
     _nbStructures.text = (json['nbStructuresTot'] ?? '') as String;
-
-    /*
-    _nbTowerCtrls.text = (json['nbTowers'] ?? '') as String;
-    _nbPalansCtrls.text = (json['nbPalans'] ?? '') as String;
-    _marqueModelPPCtrls.text = (json['marqueModelPP'] ?? '') as String;
-    _rideauxEnseignesCtrls.text = (json['rideauxEnseignes'] ?? '') as String;
-    _poidGrilTotalCtrls.text = (json['poidGrilTot'] ?? '') as String;
-*/
-
 
     final sub = json['subPhotos'];
     _subPhotos = [];
@@ -1019,12 +1152,15 @@ final _mailStand = TextEditingController();
         }
       }
     }
+    // Ensure UI updates after async load restores non-controller fields (e.g., image paths)
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // Page 2 controllers
   final _textConclusion = TextEditingController();
   final _textPreconisations = TextEditingController();
-
 
   // Building photo
   String _buildingPhotoPath = '';
@@ -1058,9 +1194,6 @@ final _mailStand = TextEditingController();
     _startTime.dispose();
     _endTime.dispose();
     _date.dispose();
-
-
-
 
      _techName.dispose();
     _localAdress.dispose();
@@ -1124,7 +1257,6 @@ final _mailStand = TextEditingController();
     _question11.dispose();
     _question12.dispose();
     _question13.dispose();
-
 
     _article3.dispose();
     _article5.dispose();
@@ -1200,8 +1332,6 @@ final _mailStand = TextEditingController();
     _article47.dispose();
     _article48.dispose();
 
-
-
     _avisFav.dispose();
     _avisDefav.dispose();
 
@@ -1262,7 +1392,7 @@ final _mailStand = TextEditingController();
     );
     setState(() => _currentPage = 0);
   }
-
+/*
   Future<void> _pickFromGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -1365,6 +1495,155 @@ final _mailStand = TextEditingController();
     }
   }
 
+
+ */
+  Future<void> _pickFromCamera() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+      if (!mounted) return;
+      if (pickedFile != null) {
+        // ✅ Save permanently instead of using temp path
+        final permanentPath = await _saveImagePermanently(pickedFile.path);
+        setState(() {
+          _buildingPhotoPath = permanentPath;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'ouverture de la caméra: $e')),
+      );
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final permanentPath = await _saveImagePermanently(image.path);
+      setState(() {
+        _buildingPhotoPath = permanentPath;
+      });
+    }
+  }
+
+  Future<void> _pickArticlePhoto(int articleIndex) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+      if (!mounted) return;
+      if (pickedFile != null) {
+        final permanentPath = await _saveImagePermanently(pickedFile.path);
+        setState(() {
+          String obsText;
+          switch (articleIndex) {
+            case 3: obsText = _article3Obsrvt.text.trim(); break;
+            case 5: obsText = _article5Obsrvt.text.trim(); break;
+            case 7: obsText = _article7Obsrvt.text.trim(); break;
+            default: obsText = 'Article $articleIndex';
+          }
+          _articlePhotos[articleIndex] = SubPhotoEntry(
+            number: '0',
+            description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
+            imagePath: permanentPath,  // ✅ Use permanent path
+          );
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la prise de photo (article $articleIndex): $e')),
+      );
+    }
+  }
+
+  Future<void> _pickArticlePhotoFromGallery(int articleIndex) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (!mounted) return;
+      if (pickedFile != null) {
+        final permanentPath = await _saveImagePermanently(pickedFile.path);
+        setState(() {
+          String obsText;
+          switch (articleIndex) {
+            case 3: obsText = _article3Obsrvt.text.trim(); break;
+            case 5: obsText = _article5Obsrvt.text.trim(); break;
+            case 7: obsText = _article7Obsrvt.text.trim(); break;
+            default: obsText = 'Article $articleIndex';
+          }
+          _articlePhotos[articleIndex] = SubPhotoEntry(
+            number: '0',
+            description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
+            imagePath: permanentPath,  // ✅ Use permanent path
+          );
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sélection depuis la galerie (article $articleIndex): $e')),
+      );
+    }
+  }
+
+  Future<String> _saveImagePermanently(String tempPath) async {
+    if (kIsWeb) {
+      return tempPath; // Web handles differently
+    }
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ext = tempPath.split('.').last;
+      final permanentPath = '${dir.path}/image_$timestamp.$ext';
+
+      // Copy the file to permanent storage
+      final tempFile = File(tempPath);
+      await tempFile.copy(permanentPath);
+
+      return permanentPath;
+    } catch (e) {
+      print('Error saving image: $e');
+      return tempPath; // Fallback to original
+    }
+  }
+  Future<bool> _validateImagePath(String path) async {
+    if (kIsWeb) return true; // Can't validate on web
+    if (path.isEmpty) return false;
+
+    try {
+      final file = File(path);
+      return await file.exists();
+    } catch (e) {
+      print('Error validating image path: $e');
+      return false;
+    }
+  }
+
+  // If an absolute path saved in a previous run points to an old app container,
+  // try to resolve the same file name inside the current app Documents directory.
+  Future<String?> _resolveImageInCurrentDocs(String savedPath) async {
+    if (kIsWeb) return savedPath;
+    if (savedPath.isEmpty) return null;
+    try {
+      final basename = savedPath.split('/').isNotEmpty ? savedPath.split('/').last : savedPath;
+      final dir = await getApplicationDocumentsDirectory();
+      final candidate = '${dir.path}/$basename';
+      if (await File(candidate).exists()) {
+        return candidate;
+      }
+      // Also try common subfolder naming we might introduce later
+      final imagesCandidate = '${dir.path}/images/$basename';
+      if (await File(imagesCandidate).exists()) {
+        return imagesCandidate;
+      }
+    } catch (e) {
+      print('Error resolving image path for $savedPath: $e');
+    }
+    return null;
+  }
+
   Future<void> _saveSignature() async {
     try {
       final bytes = await _signatureController.toPngBytes();
@@ -1455,7 +1734,6 @@ final _mailStand = TextEditingController();
       content.add(TextContent('EndTime', _endTime.text.trim()));
       content.add(TextContent('Date', _date.text.trim()));
 
-
       content.add(TextContent('TechName', _techName.text.trim()));
       content.add(TextContent('LocalAdress', _localAdress.text.trim()));
       content.add(TextContent('LocalTel', _localTel.text.trim()));
@@ -1493,7 +1771,6 @@ final _mailStand = TextEditingController();
       content.add(TextContent('WindSpeed', _windSpeed.text.trim()));
       content.add(TextContent('DocConsultName', _docConsultName.text.trim()));
       content.add(TextContent('DocConsultResp', _docConsultResp.text.trim()));
-
 
       for (int i = 1; i <= 13; i++) {
         bool? value = checkboxValues[i];
@@ -1533,7 +1810,6 @@ final _mailStand = TextEditingController();
         content.add(TextContent('Article${i}SO', value == 'SO' ? 'x' : ' '));
         content.add(TextContent('Article${i}HM', value == 'HM' ? 'x' : ' '));
 
-
         // If you later want to export per-article comments, fill comment here
         String comment = '';
         switch (i) {
@@ -1546,7 +1822,6 @@ final _mailStand = TextEditingController();
           case 7: comment = _article11.text.trim(); break;
         }
         content.add(TextContent('Article${i}Comment', comment));
-
       }
 
       content.add(TextContent('Article3Observations', _article3Obsrvt.text.trim()));
@@ -1587,7 +1862,6 @@ final _mailStand = TextEditingController();
       content.add(TextContent('Article45Observations', _article45bsrvt.text.trim()));
       content.add(TextContent('Article47Observations', _article47bsrvt.text.trim()));
       content.add(TextContent('Article48Observations', _article48bsrvt.text.trim()));
-
 
       // Building photo
       if (_buildingPhotoPath.isNotEmpty ) {
@@ -1724,7 +1998,6 @@ final _mailStand = TextEditingController();
             ..add(TextContent('ObsNo', obsIndex.toString()))
             ..add(TextContent('ObsDetail', obsComment))
             ..add(TextContent('ObsArticleRef', i.toString()))
-           // ..add(TextContent('ObsPhotoNo', ''));
             ..add(TextContent('ObsPhotoNo', obsIndex.toString()));
 
           // Remember which photo number corresponds to which article
@@ -1777,16 +2050,12 @@ final _mailStand = TextEditingController();
         }
       }
 
-
       for (int i = 1; i <= 2; i++) {
         bool? value = checkboxValues[i];
-
         // Marquer un "x" dans les colonnes Oui/Non du document généré
         content.add(TextContent('Avis${i}Favorable', value == true ? 'x' : ' '));
         content.add(TextContent('Avis${i}Defavorable', value == false ? 'x' : ' '));
-
        }
-
 
       // 3) Signature appended as a photo row and as a dedicated tag if present
       if (_signatureBytes != null && _signatureBytes!.isNotEmpty) {
@@ -1804,7 +2073,6 @@ final _mailStand = TextEditingController();
           print('⚠️ Unable to add signature image (file): $e');
         }
       }
-
 
       if (photoRows.isNotEmpty) {
         content.add(TableContent('AnomaliesTable', photoRows));
@@ -1898,16 +2166,14 @@ final _mailStand = TextEditingController();
         pw.Widget buildHeader(pw.Context context) {
           return pw.Container(
             child: pw.Row(
-
                   children: [
                 pw.Image(
                 logoImage,
                   width: 550,
                   height: 200,
                 fit: pw.BoxFit.contain,
-
                 )
-                  ],
+              ],
             ),
           );
         }
@@ -1920,11 +2186,9 @@ final _mailStand = TextEditingController();
                 pw.SizedBox(height: 4),
                 pw.Image(
                     footerImage,
-
                     width: 550,
                     height: 165,
                     fit: pw.BoxFit.contain,
-
                   ),
                 pw.SizedBox(height: 2),
                 pw.Text('Page ${context.pageNumber} sur ${context.pagesCount}', style: const pw.TextStyle(fontSize: 7)),
@@ -1950,7 +2214,6 @@ final _mailStand = TextEditingController();
             ),
           );
         }
-
 
         pw.TableRow keyValueTableRow(String key, String value) {
           return pw.TableRow(
@@ -1979,7 +2242,6 @@ final _mailStand = TextEditingController();
           );
         }
 
-
         pw.Widget infoTablePage(pw.Context pdfContext, {int? totalPagesOverride}) {
           return pw.Column(children: [
             pw.SizedBox(height: 10),
@@ -2001,7 +2263,6 @@ final _mailStand = TextEditingController();
             pw.SizedBox(height: 12),
             pw.SizedBox(height: 20),
             pw.SizedBox(height: 10),  // Plus d'espace
-
 
             pw.Container(
               decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey700, width: 2)),
@@ -2176,7 +2437,6 @@ final _mailStand = TextEditingController();
             ])),
           ]);
         }
-
 
         pw.Widget renseignements() {
           return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
@@ -2364,7 +2624,6 @@ final _mailStand = TextEditingController();
                             textAlign: pw.TextAlign.center,
 
                           ),
-                          // Cette cellule couvre les 2 colonnes
                         ),
                         pw.SizedBox(),  // Cellule vide (requise par TableRow mais sera ignorée visuellement)
                       ],
@@ -2382,7 +2641,6 @@ final _mailStand = TextEditingController();
                   ],
                 ),
               ),
-
             ],
           );
         }
@@ -2415,9 +2673,7 @@ final _mailStand = TextEditingController();
                             fontWeight: pw.FontWeight.bold,
                           ),
                           textAlign: pw.TextAlign.center,
-
                         ),
-                        // Cette cellule couvre les 2 colonnes
                       ),
                       pw.SizedBox(),  // Cellule vide (requise par TableRow mais sera ignorée visuellement)
                     ],
@@ -2728,7 +2984,6 @@ final _mailStand = TextEditingController();
                         ),
                       ],
                     ),
-
                     // Data rows
                     _buildCatRow('Nombre', _nbStructures.text.trim()),
                    ],
@@ -2837,9 +3092,6 @@ final _mailStand = TextEditingController();
               }
             }
           }
-          //here also add the stuff necessary so it does not disappear on the next page and dtermine what is up here and whatever else is going on
-          //oui and S NS HM SO
-
           // Now pack tokens into chunks not exceeding maxChars.
           final chunks = <String>[];
           var current = StringBuffer();
@@ -2867,7 +3119,6 @@ final _mailStand = TextEditingController();
           }
           return chunks;
         }
-
         // Articles pour lesquels la case HM doit être remplie en noir par défaut
         final Set<String> _hmBlackArticles = {
          '3', '5', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23',
@@ -2980,7 +3231,6 @@ final _mailStand = TextEditingController();
                   title,
                   style: pw.TextStyle(
                     fontSize: 9,
-
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
@@ -3096,12 +3346,8 @@ final _mailStand = TextEditingController();
               ..._rowsToTables(_buildVerifRows('21', 'Sièges et bancs fixes : Qualité, état, assemblage...', _article21Obsrvt.text.trim(), checkboxValues2[21] ?? ''), widths, bw),
               ..._rowsToTables(_buildVerifRows('22', 'Sièges et banc non fixes : Nombre', _article22Obsrvt.text.trim(), checkboxValues2[22] ?? ''), widths, bw),
               ..._rowsToTables(_buildVerifRows('23', 'Sièges : Caractéristiques, PV de réaction au feu...', _article23Obsrvt.text.trim(), checkboxValues2[23] ?? ''), widths, bw),
-
-
               ..._rowsToTables(_buildVerifRows('24', 'Barrière anti-renversement : Présence, état, assemblage...', _article24Obsrvt.text.trim(), checkboxValues2[24] ?? ''), widths, bw),
-
               _tableFromRow(_buildSectionHeaderRow('EXPLOITATION'), widths, bw),
-
               ..._rowsToTables(_buildVerifRows('25', '25. Impact sur le niveau de sécurité du lieu', _article25Obsrvt.text.trim(), checkboxValues2[25] ?? ''),widths, bw),
           ..._rowsToTables(_buildVerifRows('26', '26. Examen d\'adéquation, accroches, accessoires de levage, moyens de levage (type de palan, sécurisation, redondance, etc.), rapport de VGP', _article26Obsrvt.text.trim(), checkboxValues2[26] ?? ''),widths, bw),
           ..._rowsToTables(_buildVerifRows('27', '27. Habillages : PV de réaction au feu, état, assemblage...', _article27Obsrvt.text.trim(), checkboxValues2[27] ?? ''),widths, bw),
@@ -3122,316 +3368,9 @@ final _mailStand = TextEditingController();
               _tableFromRow(_buildSectionHeaderRow('ENSEMBLE DÉMONTABLE EXISTANT'), widths, bw),
               ..._rowsToTables(_buildVerifRows('47', '47. Solidité et stabilité : Présence de documents', _article47bsrvt.text.trim(), checkboxValues2[47] ?? ''),widths, bw),
           ..._rowsToTables(_buildVerifRows('48', '48. Marquage', _article48bsrvt.text.trim(), checkboxValues2[48] ?? ''),widths, bw),
-
             ],
           );
         }
-
-        pw.Widget verifications() {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Center(
-                child: pw.Text(
-                  'TABLEAU DES VÉRIFICATIONS',
-                  style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-                ),
-              ),
-              pw.SizedBox(height: 10),
-
-              pw.Table(
-                columnWidths: {
-                  0: const pw.FixedColumnWidth(43),  // Colonne large pour les documents
-                  1: const pw.FixedColumnWidth(120), // Colonne OUI
-                  2: const pw.FixedColumnWidth(120), // Colonne NON
-                  3: const pw.FixedColumnWidth(35), // Colonne NON
-                  4: const pw.FixedColumnWidth(35), // Colonne NON
-                  5: const pw.FixedColumnWidth(35), // Colonne NON
-                  6: const pw.FixedColumnWidth(35), // Colonne NON
-                },
-                border: pw.TableBorder.all(
-                  color: PdfColors.black,
-                  width: 1,
-                ),
-                children: [
-                    // Header row
-                    pw.TableRow(
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.grey300,
-                      ),
-                      children: [
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            'ARTICLE',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            'POINTS À EXAMINER ',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            'OBSERVATIONS',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            'S',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            'NS',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            'SO',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(2),
-                          child: pw.Text(
-                            'HM',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    _buildSectionHeaderRow('GÉNÉRALITÉS'),
-
-                    ..._buildVerifRows('3', 'Principes Généraux', _article3Obsrvt.text.trim(), checkboxValues2[3] ?? ''),
-                    ..._buildVerifRows('5', 'Adéquation de la capacité d\'acceuil', _article5Obsrvt.text.trim(), checkboxValues2[5] ?? ''),
-                    _buildSectionHeaderRow('IMPLANTATION'),
-
-                    ..._buildVerifRows('6', 'Lieu d\'implantation : voisinages dangereux et risques d\'inflammation', _article6Obsrvt.text.trim(), checkboxValues2[6] ?? ''),
-                    ..._buildVerifRows('7', 'Adéquation avec le sol : État du sol, calage, plaque de répartition...', _article7Obsrvt.text.trim(), checkboxValues2[7] ?? ''),
-                    _buildSectionHeaderRow('SOLIDITÉ'),
-
-                    ..._buildVerifRows('9', 'Marquage : Marque, modèle, année...', _article9Obsrvt.text.trim(), checkboxValues2[9] ?? ''),
-                    ..._buildVerifRows('10', 'Respect des charges d\'exploitation et charges climatiques', _article10Obsrvt.text.trim(), checkboxValues2[10] ?? ''),
-                    ..._buildVerifRows('11', 'Adéquation, état et assemblages des ossatures', _article11Obsrvt.text.trim(), checkboxValues2[11] ?? ''),
-                    _buildSectionHeaderRow('AMÉNAGEMENTS'),
-                    ..._buildVerifRows('12', 'Planchers : État, jeu, décalage...', _article12Obsrvt.text.trim(), checkboxValues2[12] ?? ''),
-                    ..._buildVerifRows('13', 'Contremarches : État, jeu, décalage...', _article13Obsrvt.text.trim(), checkboxValues2[13] ?? ''),
-                    ..._buildVerifRows('14', 'Places assises pour les gradins : Nombre, implantation...', _article14Obsrvt.text.trim(), checkboxValues2[14] ?? ''),
-                    ..._buildVerifRows('15', 'Places debout : Longueur et circulations', _article15Obsrvt.text.trim(), checkboxValues2[15] ?? ''),
-                    ..._buildVerifRows('16', 'Dégagements : Nombre, qualité, répartition et balisage', _article16Obsrvt.text.trim(), checkboxValues2[16] ?? ''),
-                    ..._buildVerifRows('17', 'Vomitoires et circulations : Configuration et projection', _article17Obsrvt.text.trim(), checkboxValues2[17] ?? ''),
-                    ..._buildVerifRows('18', 'Dessous : Inaccessibilité au public, potentiel calorifique...', _article18Obsrvt.text.trim(), checkboxValues2[18] ?? ''),
-                    ..._buildVerifRows('19', 'Escaliers et rampes accessibles au public : Qualité, état, assemblage...', _article19Obsrvt.text.trim(), checkboxValues2[19] ?? ''),
-                    ..._buildVerifRows('20', 'Garde-corps : Qualité, état, assemblage...', _article20Obsrvt.text.trim(), checkboxValues2[20] ?? ''),
-                    ..._buildVerifRows('21', 'Sièges et bancs fixes : Qualité, état, assemblage...', _article21Obsrvt.text.trim(), checkboxValues2[21] ?? ''),
-                    ..._buildVerifRows('22', 'Sièges et banc non fixes : Nombre', _article22Obsrvt.text.trim(), checkboxValues2[22] ?? ''),
-                    ..._buildVerifRows('23', 'Sièges : Caractéristiques, PV de réaction au feu...', _article23Obsrvt.text.trim(), checkboxValues2[23] ?? ''),
-
-              //      _buildVerifRow('24', 'Barrière anti-renversement : Présence, état, assemblage...', _article24Obsrvt.text.trim(), checkboxValues2[24] ?? ''),
-
-
-
-
-
-                  ],
-
-                ),
-              pw.SizedBox(height: 10),
-
-
-
-            ],
-          );
-        }
-
-        pw.Widget verifications2() {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Center(
-                child: pw.Text(
-                  'TABLEAU DES VÉRIFICATIONS',
-                  style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-                ),
-              ),
-              pw.SizedBox(height: 10),
-
-              pw.Table(
-                columnWidths: {
-                  0: const pw.FixedColumnWidth(55),  // Colonne large pour les documents
-                  1: const pw.FixedColumnWidth(120), // Colonne OUI
-                  2: const pw.FixedColumnWidth(120), // Colonne NON
-                  3: const pw.FixedColumnWidth(35), // Colonne NON
-                  4: const pw.FixedColumnWidth(35), // Colonne NON
-                  5: const pw.FixedColumnWidth(35), // Colonne NON
-                  6: const pw.FixedColumnWidth(35), // Colonne NON
-                },
-                border: pw.TableBorder.all(
-                  color: PdfColors.black,
-                    width: 2,
-                  ),
-                  children: [
-                    // Header row
-                    pw.TableRow(
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.grey300,
-                      ),
-                      children: [
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            'ARTICLE',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            'POINTS À EXAMINER ',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            'OBSERVATIONS',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            'S',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            'NS',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            'SO',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            'HM',
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-
-
-
-                    ..._buildVerifRows('25', '25. Impact sur le niveau de sécurité du lieu', _article25Obsrvt.text.trim(), checkboxValues2[25] ?? ''),
-                    ..._buildVerifRows('26', '26. Examen d\'adéquation, accroches, accessoires de levage, moyens de levage (type de palan, sécurisation, redondance, etc.), rapport de VGP', _article26Obsrvt.text.trim(), checkboxValues2[26] ?? ''),
-                    ..._buildVerifRows('27', '27. Habillages : PV de réaction au feu, état, assemblage...', _article27Obsrvt.text.trim(), checkboxValues2[27] ?? ''),
-                    ..._buildVerifRows('28', '28. Cas des passerelles ne servant pas d\'espace d\'observation : bardage sur 2m de hauteur', _article28Obsrvt.text.trim(), checkboxValues2[28] ?? ''),
-   /*                 _buildVerifRow('29', '29. Câbles électriques : absence d\'entrave à la circulation des personnes / Installations électriques : présence du plan avec localisation des dispositifs de coupure d\'urgence', _article29Obsrvt.text.trim(), checkboxValues2[29] ?? ''),
-                    ..._buildVerifRows('30', '30. Présence du rapport de vérification des installations électriques', _article30Obsrvt.text.trim(), checkboxValues2[30] ?? ''),
-                    _buildVerifRow('31', '31. Éclairage de sécurité en adéquation avec les conditions d\'exploitation', _article31bsrvt.text.trim(), checkboxValues2[31] ?? ''),
-
-
- */
-            /*        _buildVerifRow('32', '32. Anémomètre (plein air) : Présence, implantation et fonctionnement / Modalités d\'évacuation', _article32bsrvt.text.trim(), checkboxValues2[32] ?? ''),
-                    _buildVerifRow('33', '33. Diffusion de l\'alarme et de l\'alerte', _article33bsrvt.text.trim(), checkboxValues2[33] ?? ''),
-                    _buildVerifRow('34', '34. Moyens d\'extinction', _article34bsrvt.text.trim(), checkboxValues2[34] ?? ''),
-                    _buildVerifRow('36', '36. Notices techniques : Présence', _article36bsrvt.text.trim(), checkboxValues2[36] ?? ''),
-                    _buildVerifRow('37', '37. Conception : Présence d\'un avis sur modèle type ou sur dossier technique', _article37bsrvt.text.trim(), checkboxValues2[37] ?? ''),
-                    _buildVerifRow('38', '38. Attestation de bon montage : Présence', _article38bsrvt.text.trim(), checkboxValues2[38] ?? ''),
-                    _buildVerifRow('39', '39. Dossier de sécurité : Présence et cohérence', _article39bsrvt.text.trim(), checkboxValues2[39] ?? ''),
-                    _buildVerifRow('45', '45. État de conservation', _article45bsrvt.text.trim(), checkboxValues2[45] ?? ''),
-                    _buildVerifRow('47', '47. Solidité et stabilité : Présence de documents', _article47bsrvt.text.trim(), checkboxValues2[47] ?? ''),
-                    _buildVerifRow('48', '48. Marquage', _article48bsrvt.text.trim(), checkboxValues2[48] ?? ''),
-
-
-
-             */
-                  ],
-
-                ),
-              pw.SizedBox(height: 10),
-
-
-
-            ],
-          );
-        }
-
-
 
         // Build the top header row (labels)
         pw.TableRow _buildTableHeaderRowObs({double cellPadding = 2}) {
@@ -3454,7 +3393,6 @@ final _mailStand = TextEditingController();
                 padding: pw.EdgeInsets.all(cellPadding),
                 child: pw.Text('N° PHOTO', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
               ),
-
             ],
           );
         }
@@ -3593,7 +3531,6 @@ final _mailStand = TextEditingController();
             1: const pw.FixedColumnWidth(250),
             2: const pw.FixedColumnWidth(50),
             3: const pw.FixedColumnWidth(40),
-
           };
           const bw = 1.0;
           return pw.Column(
@@ -3618,7 +3555,6 @@ final _mailStand = TextEditingController();
                 padding: pw.EdgeInsets.all(cellPadding),
                 child: pw.Text('Photos des Articles Non Satisfaisant', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
               ),
-
             ],
           );
         }
@@ -3722,7 +3658,7 @@ final _mailStand = TextEditingController();
               return '';
           }
         }
-
+/*
         List<pw.TableRow> _buildObsRowsFromNSPhotos() {
           final rows = <pw.TableRow>[];
           for (int i = 1; i <= 48; i++) {
@@ -3746,7 +3682,6 @@ final _mailStand = TextEditingController();
               } else {
                 imageWidget = pw.Text('Aucune photo associée', style: const pw.TextStyle(fontSize: 9));
               }
-
               rows.add(
                 pw.TableRow(
                   children: [
@@ -3768,6 +3703,76 @@ final _mailStand = TextEditingController();
           }
           return rows;
         }
+
+
+ */
+        // Replace _buildObsRowsFromNSPhotos() method around line 6890
+        List<pw.TableRow> _buildObsRowsFromNSPhotos() {
+          final rows = <pw.TableRow>[];
+          for (int i = 1; i <= 48; i++) {
+            if (checkboxValues2[i] == 'NS') {
+              final obsComment = _getObsCommentForArticle(i);
+              final SubPhotoEntry? photo = _articlePhotos[i];
+
+              pw.Widget imageWidget;
+              if (photo != null && photo.imagePath.isNotEmpty) {
+                try {
+                  // ✅ Check if file exists before reading
+                  final file = File(photo.imagePath);
+                  if (file.existsSync()) {
+                    final bytes = file.readAsBytesSync();
+                    imageWidget = pw.Image(
+                      pw.MemoryImage(bytes),
+                      width: 350,
+                      height: 220,
+                      fit: pw.BoxFit.contain,
+                    );
+                  } else {
+                    // File doesn't exist
+                    imageWidget = pw.Text(
+                      'Photo non disponible (fichier supprimé)',
+                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.red),
+                    );
+                  }
+                } catch (e) {
+                  print('Error loading image for article $i: $e');
+                  imageWidget = pw.Text(
+                    'Erreur de chargement photo',
+                    style: const pw.TextStyle(fontSize: 9, color: PdfColors.red),
+                  );
+                }
+              } else {
+                imageWidget = pw.Text(
+                  'Aucune photo associée',
+                  style: const pw.TextStyle(fontSize: 9),
+                );
+              }
+
+              rows.add(
+                pw.TableRow(
+                  children: [
+                    pw.Container(
+                      padding: const pw.EdgeInsets.all(6),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'Article $i: ${obsComment.isNotEmpty ? obsComment : 'Sans description'}',
+                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.SizedBox(height: 6),
+                          imageWidget,
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+          return rows;
+        }
+
 
         pw.Widget rappelObsPhotos() {
           final widths = <int, pw.TableColumnWidth>{
@@ -3956,7 +3961,6 @@ final _mailStand = TextEditingController();
         // Pre-build async sections before adding the page because pw.MultiPage.build must be synchronous
     //    final pw.Widget anomaliesSectionWidget = await anomaliesSection();
         final pw.TableRow signatureTableRow = await _buildSignatureTableRow();
-
 
           // Helper to add all report pages to the given document. Optionally overrides total pages in the info table
           void _addReportPages(pw.Document doc, {int? totalPagesOverride, void Function(int)? onComputed}) {
@@ -4157,14 +4161,15 @@ final _mailStand = TextEditingController();
     Future<void> _sendEmailWithAttachment({bool preview = false}) async {
       try {
         final recipientEmail = _mailStand.text.trim();
-        final String recipient = recipientEmail.isNotEmpty ? recipientEmail : 'client@example.com';
-        final subject = 'Rapport de Vérification Après Montage: ${_salonName.text} Hall ${_standHall.text} - Stand: ${_standName.text} ${_standNb.text}';
+        final String recipient = recipientEmail.isNotEmpty ? recipientEmail : '';
+        final subject = 'Rapport de Vérification Après Montage: ${_salonName.text} Nom du stand: ${_standName.text} - Hall ${_standHall.text} Stand ${_standNb.text}';
         final body = 'Bonjour,\n\n'
             'Veuillez trouver ci-joint le rapport de vérification après montage demandé.\n\n'
             'Date: ${_dateTransmission.text}\n'
             'Salon: ${_salonName.text}\n'
+            'Nom du stand: ${_standName.text} \n'
             'Hall: ${_standHall.text}\n'
-            'Stand: ${_standName.text} ${_standNb.text}\n\n'
+            'Numéro: ${_standNb.text}\n\n'
             'Cordialement,\n'
             '${_techName.text},\n'
             'Versant Event.';
@@ -4267,6 +4272,7 @@ final _mailStand = TextEditingController();
         );
       }
     }
+
   Future<void> _sendToClient() async {
     try {
       // Generate the document first
@@ -4331,7 +4337,6 @@ final _mailStand = TextEditingController();
           ],
         ),
       );
-
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -4364,11 +4369,9 @@ final _mailStand = TextEditingController();
       },
       child: Scaffold(
        backgroundColor: fondRosePale,
-     //   backgroundColor: Color(0xFF1A1A1A),
         appBar: AppBar(
           title: Text(
             _buildFicheTitle(),
-            //  title: Text('Rapport de Vérification Après Montage - Page ${_currentPage + 1}/2',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -4390,7 +4393,6 @@ final _mailStand = TextEditingController();
           ],
         ),
         body: PageView(
-
           controller: _pageController,
           physics: NeverScrollableScrollPhysics(),
           children: [
@@ -4402,9 +4404,7 @@ final _mailStand = TextEditingController();
     );
   }
 
-
   Widget _buildPage1() {
-
     return Padding(
       padding: EdgeInsets.all(16),
       child: Form(
@@ -4415,7 +4415,6 @@ final _mailStand = TextEditingController();
             children: [
 
               SizedBox(height: 32),
-
               Text(
                 'PHOTO GÉNÉRALE DE L\'ENSEMBLE DÉMONTABLE',
                 textAlign: TextAlign.center,
@@ -4471,8 +4470,7 @@ final _mailStand = TextEditingController();
                 ),
               ],
 
-              SizedBox(height: 36),
-              SizedBox(height: 32),
+              SizedBox(height: 68),
               Text(
                 'INFORMATIONS GÉNÉRALES',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
@@ -4481,7 +4479,7 @@ final _mailStand = TextEditingController();
               TextFormField(
                 controller: _techName,
                 decoration: InputDecoration(
-                  labelText: 'Nom du technicien',
+                  labelText: 'Nom et Prénom du technicien',
                 //  labelStyle: TextStyle(color: roseVE),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
@@ -4496,7 +4494,7 @@ final _mailStand = TextEditingController();
                     borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
-                style: TextStyle(color: Colors.black), //  typed text white
+                style: TextStyle(color: Colors.black),
                    validator: (value) => value!.isEmpty ? 'Entrez votre référence' : null,
               ),
               SizedBox(height: 12),
@@ -4505,7 +4503,7 @@ final _mailStand = TextEditingController();
 
                 decoration: InputDecoration(
                   labelText: 'Adresse  du local',
-                  labelStyle: TextStyle(color: fondRosePale),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4514,72 +4512,63 @@ final _mailStand = TextEditingController();
                   ),
                 ),
                 maxLines: 2,
-                style: TextStyle(color: Colors.white),
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _localTel,
-
                 decoration: InputDecoration(
                   labelText: 'Téléphone  du local',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _localMail,
-
                 decoration: InputDecoration(
                   labelText: 'Mail  du local',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _doName,
-
                 decoration: InputDecoration(
                   labelText: 'Donneur d\'ordre',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
-
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.black), //  typed text white
               //  validator: (value) => value!.isEmpty ? 'Ce champ est requis' : null,
 
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _objMission,
-
                 decoration: InputDecoration(
                   labelText: 'Objet de la mission',
-                 // labelStyle: TextStyle(color: roseVE),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -4587,21 +4576,19 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 3,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               TextFormField(
                 controller: _dateTransmission,
                 decoration: InputDecoration(
                   labelText: 'Date de transmission',
-                 // labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -4609,14 +4596,14 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
-                  suffixIcon: Icon(Icons.calendar_today, color: bleuAmont),
+                  suffixIcon: Icon(Icons.calendar_today, color: roseVE),
                 ),
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.black),
                 readOnly: true,
                 onTap: () async {
                   DateTime selectedDate = DateTime.now();
@@ -4677,43 +4664,37 @@ final _mailStand = TextEditingController();
                   );
                 },
               ),
-              SizedBox(height: 32),
-
-              SizedBox(height: 32),
+              SizedBox(height: 64),
 
               Text(
                 'RENSEIGNEMENTS CONCERNANT L\'ÉVÈNEMENT',
-                textAlign: TextAlign.center, // 👈 important ici
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _salonName,
-
                 decoration: InputDecoration(
                   labelText: 'Nom Salon ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),TextFormField(
                 controller: _standName,
-
                 decoration: InputDecoration(
                   labelText: 'Nom Stand ',
-                  //labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -4721,23 +4702,20 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _standHall,
-
                 decoration: InputDecoration(
                   labelText: 'Hall',
-                 // labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -4745,23 +4723,20 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _standNb,
-
                 decoration: InputDecoration(
                   labelText: 'Numéro ',
-                 // labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -4769,23 +4744,20 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _mailStand,
-
                 decoration: InputDecoration(
                   labelText: 'Mail du client ',
-                 // labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -4793,56 +4765,50 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _siteName,
-
                 decoration: InputDecoration(
                   labelText: 'Site ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _siteAdress,
-
                 decoration: InputDecoration(
                   labelText: 'Adresse ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _standDscrptn,
-
                 decoration: InputDecoration(
                   labelText: 'Description sommaire ',
                   //labelStyle: TextStyle(color: roseVE),
@@ -4852,128 +4818,114 @@ final _mailStand = TextEditingController();
                         : roseVE;
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
-
-
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _dateMontage,
-
                 decoration: InputDecoration(
                   labelText: 'Date montage ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _dateEvnmt,
-
                 decoration: InputDecoration(
                   labelText: 'Date évènement ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _catErpType,
-
                 decoration: InputDecoration(
                   labelText: 'Catégorie et type ERP ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _effectifMax,
-
                 decoration: InputDecoration(
                   labelText: 'Effectif max du public admissible ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
-              SizedBox(height: 32),
 
-              SizedBox(height: 32),
+              SizedBox(height: 64),
                Text(
                 'RENSEIGNEMENTS CONCERNANT LES INTERVENANTS ',
-                textAlign: TextAlign.center, // 👈 important ici
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
 
               SizedBox(height: 12),
               TextFormField(
                 controller: _orgaName,
-
                 decoration: InputDecoration(
-                  labelText: 'Organisateur ',
-                  labelStyle: TextStyle(color: Colors.white),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                  label: infoLabel(context, 'Organisateur',
+                      "Personne physique ou morale qui est à l'initiative de la manifestation ou de l'événement et en coordonne le déroulement technique et logistique. L'organisateur est l'interlocuteur privilégié de l'autorité de police."),
+                  floatingLabelBehavior: FloatingLabelBehavior.always, // keeps label visible above
+                  enabledBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
-                maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: const TextStyle(color: Colors.black),
               ),
+
               SizedBox(height: 12),
               TextFormField(
                 controller: _installateurName,
-
                 decoration: InputDecoration(
                   labelText: 'Installateur ',
-                //  labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -4981,39 +4933,36 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _exploitSiteName,
-
                 decoration: InputDecoration(
                   labelText: 'Exploitant du site ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _proprioMatosName,
-
                 decoration: InputDecoration(
                   labelText: 'Propriétaire ',
-                //  labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -5021,19 +4970,17 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.black),
               ),
 
-              SizedBox(height: 32),
-
-              SizedBox(height: 32),
+              SizedBox(height: 64),
 
               Text(
                 'RENSEIGNEMENTS CONCERNANT L\'ENSEMBLE DÉMONTABLE',
@@ -5041,16 +4988,14 @@ final _mailStand = TextEditingController();
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _nbStructures,
-
                 decoration: InputDecoration(
                   labelText: 'Nombre de structures totales',
-                //  labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -5058,14 +5003,14 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.black),
 
               ),
 
@@ -5075,7 +5020,6 @@ final _mailStand = TextEditingController();
 
                 decoration: InputDecoration(
                   labelText: 'Nombre de tableaux désirés',
-                //  labelStyle: TextStyle(color: Colors.white),
                   labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                     final Color color = states.contains(WidgetState.error)
                         ? Theme.of(context).colorScheme.error
@@ -5083,15 +5027,14 @@ final _mailStand = TextEditingController();
                     return TextStyle(color: color, letterSpacing: 1.3);
                   }),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
-
+                style: TextStyle(color: Colors.black),
               ),
               SizedBox(height: 24),
             ElevatedButton(
@@ -5106,7 +5049,6 @@ final _mailStand = TextEditingController();
 
             SizedBox(height: 24),
 
-// Generate question chunks
             ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
@@ -5116,7 +5058,7 @@ final _mailStand = TextEditingController();
                   children: [
                     Text(
                       'Gril Technique${index + 1}',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 12),
 
@@ -5133,23 +5075,21 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 12),
 
                     // Ouverture
                     TextFormField(
                       controller: _ouvertureCtrls[index],
-
                       decoration: InputDecoration(
                         labelText: 'Ouverture',
-                       // labelStyle: TextStyle(color: Colors.white),
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5157,23 +5097,21 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 12),
 
                     // Profondeur
                     TextFormField(
                       controller: _profondeurCtrls[index],
-
                       decoration: InputDecoration(
                         labelText: 'Profondeur',
-                       // labelStyle: TextStyle(color: Colors.white),
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5181,13 +5119,13 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 24),
                     // Ouverture
@@ -5196,7 +5134,6 @@ final _mailStand = TextEditingController();
 
                       decoration: InputDecoration(
                         labelText: 'Si élevé sur pieds: nombre de towers',
-                      //  labelStyle: TextStyle(color: Colors.white),
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5204,13 +5141,13 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 12), // Ouverture
                     TextFormField(
@@ -5218,7 +5155,6 @@ final _mailStand = TextEditingController();
 
                       decoration: InputDecoration(
                         labelText: 'Si suspendu: nombre de palans',
-                      //  labelStyle: TextStyle(color: Colors.white),
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5226,13 +5162,13 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 12),
                     TextFormField(
@@ -5240,7 +5176,6 @@ final _mailStand = TextEditingController();
 
                       decoration: InputDecoration(
                         labelText: 'Marque et Modèle poutres et palans',
-                      //  labelStyle: TextStyle(color: Colors.white),
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5248,13 +5183,13 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 12),
                     TextFormField(
@@ -5262,7 +5197,6 @@ final _mailStand = TextEditingController();
 
                       decoration: InputDecoration(
                         labelText: 'Rideaux',
-                      //  labelStyle: TextStyle(color: Colors.white),
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5270,13 +5204,13 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 12),
                     TextFormField(
@@ -5284,7 +5218,6 @@ final _mailStand = TextEditingController();
 
                       decoration: InputDecoration(
                         labelText: 'Poids total du gril équipé',
-                      //  labelStyle: TextStyle(color: Colors.white),
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5292,13 +5225,13 @@ final _mailStand = TextEditingController();
                           return TextStyle(color: color, letterSpacing: 1.3);
                         }),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                         focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Colors.black),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.black),
                     ),
                     SizedBox(height: 12),
                   ],
@@ -5308,37 +5241,32 @@ final _mailStand = TextEditingController();
               SizedBox(height: 24),
               Text(
                 'VITESSE DU VENT ',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _windSpeed,
-
                 decoration: InputDecoration(
                   labelText: 'La vitesse du vent en exploitation est limitée à ',
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
+                    borderSide: BorderSide(color: Colors.black),
                   ),
                 ),
                 maxLines: 1,
-                style: TextStyle(color: Colors.white), //  typed text white
+                style: TextStyle(color: Colors.black),
 
               ),
-              SizedBox(height: 24),
 
-
-              SizedBox(height: 30),
+              SizedBox(height: 54),
               Text(
                 'DOCUMENTS CONSULTÉS ',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black),
               ),
               SizedBox(height: 12),
-
-
 
               SizedBox(height: 12),
               buildQuestionTile('La notice technique du fabricant', 1),
@@ -5368,14 +5296,13 @@ final _mailStand = TextEditingController();
               buildQuestionTile('VGP des palans' , 13),
 
               SizedBox(height: 64),
-
               Text(
                 'TABLEAU DES VÉRIFICATIONS',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
               SizedBox(height: 32),
@@ -5389,150 +5316,47 @@ final _mailStand = TextEditingController();
                   color: roseVE,
                 ),
               ),
-              SizedBox(height: 22),
-              SizedBox(height: 34),
+              SizedBox(height: 56),
+              buildVerifTile2('3. Principes Généraux', 3,
+                  'Un ensemble démontable est conçu, fabriqué, installé et entretenu de manière à assurer sa solidité et sa stabilité et, dans le cas des ossatures destinées à supporter des personnes, à permettre leur accueil et leur'
+                  'évacuation en toute sécurité. \nIl est permis de rapporter des éléments à ceux d’un ensemble démontable préexistant sous réserve de ne nuire ni à sa solidité ni à sa stabilité.'),
 
-              buildVerifTile2('3. Principes Généraux', 3),
               SizedBox(height: 5),
-              if (checkboxValues2[3] == 'NS') ...[
-                Row(
-                  children: [
 
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article3Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _pickArticlePhotoFromGallery(3),
-                       icon: Icon(Icons.photo_library, color: roseVE),
-                      label: Text('Galerie', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                       onPressed: () => _pickArticlePhoto(3),
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                if (_articlePhotos[3]?.imagePath != null && _articlePhotos[3]!.imagePath.isNotEmpty) ...[
-                  SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: roseVE, width: 1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.all(4),
-                        child: IoImage(
-                          path: _articlePhotos[3]!.imagePath,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
+            buildNsObservationSection(
+            //    context: context,
+                index: 3,
+                controller: _article3Obsrvt,
+                borderColor: roseVE,
+            //    labelColor: roseVE,
+                textColor: Colors.black,
+             //   message: 'Text to be added .',
 
-              buildVerifTile2('5. Adéquation de la capacité d\'acceuil', 5),
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+
+
+              SizedBox(height: 46),
+
+              buildVerifTile2('5. Adéquation de la capacité d\'acceuil', 5,
+                  'Pour l\'application des dispositions de l\'article 16, la capacité d\'accueil des personnes admises sur un ensemble démontable est calculée en tenant compte, cumulativement: '
+                      '\n\n- du nombre de personnes assises sur des sièges '
+                      '\n- du nombre de personnes assises sur des bancs ou des gradins à raison de deux personnes par mètre linéaire '
+                      '\n-du nombre de personnes en station debout dans des zones réservées aux spectateurs en dehors des dégagements utilisés pour l\'évacuation, à raison de trois personnes par mètre carré ou sur déclaration de l\’organisateur sans dépasser 3 pers / m2 '
+                      '\n- du personnel déclaré par l\'organisateur, susceptible d\'être présent sur l\'ensemble démontable '
+                      '\n- L\'organisateur prend les dispositions utiles pour contrôler l\'accès de l\'ensemble démontable destiné à supporter les personnes. Il limite l\'effectif des personnes accueillies à la capacité de celui-ci, tel qu\'il a été conçu et installé'),
               SizedBox(height: 5),
-              if (checkboxValues2[5] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article5Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _pickArticlePhotoFromGallery(5),
-                      icon: Icon(Icons.photo_library, color: roseVE),
-                      label: Text('Galerie', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _pickArticlePhoto(5),
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                if (_articlePhotos[5]?.imagePath != null && _articlePhotos[5]!.imagePath.isNotEmpty) ...[
-                  SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                      decoration: BoxDecoration(
-                      border: Border.all(color: roseVE, width: 1),
-                      borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: EdgeInsets.all(4),
-                  child: IoImage(
-                  path: _articlePhotos[5]!.imagePath,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
-                ),
-                ),
-                ),
-                ],
-
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-
-              SizedBox(height: 25),
+              buildNsObservationSection(
+                index: 5,
+                controller: _article5Obsrvt,
+               // labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 59),
 
               Text(
                 'IMPLANTATION',
@@ -5547,87 +5371,48 @@ final _mailStand = TextEditingController();
 
               SizedBox(height: 34),
 
-              buildVerifTile('6. Lieu d\'implantation : voisinages dangereux et risques d\'inflammation', 6),
+              buildVerifTile('6. Lieu d\'implantation : voisinages dangereux et risques d\'inflammation', 6,
+                  'L\’organisateur s’assure que l’ensemble démontable est éloigné des voisinages dangereux et implanté sur des aires ne présentant pas de risque d’inflammation '
+                      'rapide. Il prend, le cas échéant, toute mesure appropriée pour réduire ce risque au minimum. \nLe lieu de l’implantation permet l’évacuation rapide et sûre '
+                      'des personnes et l’intervention des services de secours et de lutte contre l’incendie.'),
               SizedBox(height: 5),
-              if (checkboxValues2[6] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article6Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 6,
+                controller: _article6Obsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
+              SizedBox(height: 46),
 
-              buildVerifTile2('7. Adéquation avec le sol : État du sol, calage, plaque de répartition…', 7),
+              buildVerifTile2('7. Adéquation avec le sol : État du sol, calage, plaque de répartition…', 7,
+                  '1. L’organisateur communique à l’installateur toutes les informations concernant la nature du support ou du sol sur lequel est prévue l’installation de l’ensemble démontable, notamment sa capacité portante. Ces informations'
+                  ' tiennent compte des conditions météorologiques prévisibles. \nAvant tout montage, l’organisateur s’assure avec l’installateur que la capacité portante des sols est compatible'
+                  'avec les descentes des charges et les déformations acceptables pour la structure. \nL\’organisateur s’assure également auprès du propriétaire du terrain que le sous-sol n’abrite pas de réseaux'
+                  ' enterrés, de cavités ou de carrières susceptibles de compromettre le montage ou la stabilité de l’ensemble démontable.'
+                  '\nLes informations relatives à la nature du sol sont jointes au dossier de sécurité de l’organisateur mentionné à l’article 39. '
+                  '\n\n2. La capacité portante du support ou du sol est déterminée comme suit:'
+                  '\n– soit par la communication de données chiffrées lorsque la capacité portante est connue;'
+                  '\n– soit en limitant la contrainte générée par la charge sur le sol des ensembles démontables de catégories OP2 et OS2 à 1 bar (1 daN/cm2) ;'
+                  '\n– soit par une étude de la capacité portante des appuis.'
+                  'L\’étude de la capacité portante ne s’impose pas pour :'
+                  '\n– l\’ensemble démontable de catégories OP1 et OS1;'
+                  '\n– tout ensemble démontable lorsque son implantation est habituelle sur le même site en prenant en compte les conséquences éventuelles des conditions climatiques.'),
               SizedBox(height: 5),
-              if (checkboxValues2[7] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article7Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _pickArticlePhoto(7),
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
+              buildNsObservationSection(
+                index: 7,
+                controller: _article7Obsrvt,
+            //    labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-
-
-
-              SizedBox(height: 32),
+              SizedBox(height: 66),
 
               Text(
                 'SOLIDITÉ',
@@ -5638,128 +5423,78 @@ final _mailStand = TextEditingController();
                   color: roseVE,
                 ),
               ),
-              SizedBox(height: 22),
 
-              SizedBox(height: 34),
+              SizedBox(height: 56),
 
-              buildVerifTile2('9. Marquage : Marque, modèle, année…', 9),
+              buildVerifTile2('9. Marquage : Marque, modèle, année…', 9,
+                  'Les principaux éléments de structure participant à la solidité et à la stabilité d’un ensemble démontable sont marqués de façon inaltérable pour assurer leur traçabilité.'
+                      '\n\n1. Le marquage du matériel est réalisé par le fabricant et comporte au moins les indications suivantes :'
+                      '\n– le nom ou le sigle du fabricant ;\n– la référence du produit;\n– l’année de fabrication.\nCe marquage, facilement repérable et lisible, est réalisé de manière pérenne.'
+                      '\n\n2. Les matériels suivants sont concernés:\nPour les tribunes démontables, les escaliers et les passerelles :\n– les fermes, les poteaux et les poutres de tribune ;'
+                      '\n– les éléments de contreventement ;\n– les garde-corps ; \n– les planchers ou les cadres supports de planchers ; \n– les vérins, socles et semelles.'
+                      '\n\nPour les échafaudages, les tours et les scènes : \n– les éléments qui assurent les descentes de charge verticales et leurs contreventements ;'
+                      '\n– les cadres et les supports de planchers préfabriqués; \n– les planchers ou les cadres supports de planchers.'
+                      '\n\nPour les totems, les grils techniques et les poutres : \n– l’ensemble des éléments les constituant.'),
               SizedBox(height: 5),
-              if (checkboxValues2[9] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article9Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 9,
+                controller: _article9Obsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('10. Respect des charges d\'exploitation et charges climatiques', 10),
+              buildVerifTile2('10. Respect des charges d\'exploitation et charges climatiques', 10,
+                  '1. Afin de respecter les principes mentionnés à l’article 3, le dimensionnement de l’ensemble démontable tient compte :'
+                  '\n– du poids propre des structures et des autres charges permanentes associées;'
+                  '\n– des charges d’exploitation statiques et dynamiques (horizontales et verticales) ;\n– des sollicitations dues aux éventuels tassements différentiels d’appui ;'
+                  '\n– des charges climatiques, lorsque l’ensemble démontable y est exposé. '
+                  '\n\nLe dimensionnement des structures des ensembles démontables de catégories OP2, OP3 et OS3 fait l’objet d’une note de calcul visée par un ingénieur spécialisé en structures.'
+                  '\n\n2. Les charges d’exploitation de l’ensemble démontable destiné à supporter des personnes respectent les '
+                  'valeurs définies au tableau suivant. Elles sont le cas échéant adaptées en fonction des contraintes particulières liées, d’une part, aux besoins spécifiques induits par '
+                  'l\’évènement et, d\’autre part, aux mouvements raisonnablement prévisibles du public au regard de l\’utilisation telle qu’elle est prévue par l\’organisateur.'
+                  '\nCes adaptations sont justifiées par l’organisateur dans le dossier de sécurité mentionné à l’article 39.'
+                  '\n\n3. Les charges climatiques admissibles dues aux effets du vent et de la neige sur la solidité et la stabilité de l’ensemble démontable sont précisées dans la notice technique du fabricant mentionné à l’article 36.'
+                  '\nL’ensemble démontable, qu’il soit destiné à être occupé ou non, est conçu pour résister à une vitesse de vent prédéterminée, appelée «vent de service», qui ne peut être inférieure à 20 m/s (72 km/h) '
+                  'sans subir de défaillancestructurelle, de déboîtement d’éléments constitutifs, de glissement, de soulèvement ou de renversement.'
+                  '\nLe calcul des charges dues au vent porte sur l’ensemble démontable ainsi que tous les éléments qui lui sont attachés tels que les bardages et les bâches.'
+                  '\n\n4. Les tribunes démontables réalisées selon les dispositions de la norme NF EN 13200-6 de septembre 2020 sont présumées satisfaire aux exigences énoncées au présent article.'
+                  '\n\n5. Le tableau des charges d’exploitation ne s’applique pas au praticable préfabriqué pour lequel la charge minimum d’exploitation à retenir est de 5 kN/m2 pour les charges verticales et 5 % de cette valeur pour les charges horizontales.'
+                  '\n\n6. Les abaques de la notice technique du fabricant définissent les charges admissibles des poutres en fonction des configurations.'),
               SizedBox(height: 5),
-              if (checkboxValues2[10] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article10Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 10,
+                controller: _article10Obsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('11. Adéquation, état et assemblages des ossatures', 11),
+              buildVerifTile2('11. Adéquation, état et assemblages des ossatures', 11,
+                  '1. Les assemblages d’ensembles démontables d’un même fabricant, lorsqu’ils sont prévus par les notices techniques, sont soumis à l’avis sur modèle défini à l’article 37.'
+                      '\n\n2. Les assemblages d’ensembles démontables, lorsqu’ils ne sont pas prévus par les notices techniques, sont soumis au dossier technique défini à l’article 37.'
+                      ' 5 août 2022 JOURNAL OFFICIEL DE LA RÉPUBLIQUE FRANÇAISE Texte 6 sur 136'
+                      '\n\n3. Un échafaudage utilisé comme sous-structure d’un ensemble démontable ou tout autre installation fait l’objet d’un avis sur dossier technique.'
+                      '\n\n4. Les points d’accroche fixes pris sur un autre ensemble démontable, sur la charpente ou sur la structure d’un'
+                      'bâtiment, font l’objet d’une note de calcul spécifique définie au 19o de l’article 2.'),
               SizedBox(height: 5),
-              if (checkboxValues2[11] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article11Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 11,
+                controller: _article11Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-
-              SizedBox(height: 32),
+              SizedBox(height: 66),
 
               Text(
                 'AMÉNAGEMENTS',
@@ -5770,520 +5505,237 @@ final _mailStand = TextEditingController();
                   color: roseVE,
                 ),
               ),
-              SizedBox(height: 22),
 
-              SizedBox(height: 34),
+              SizedBox(height: 56),
 
-              buildVerifTile2('12.	Planchers : État, jeu, décalage…', 12),
+              buildVerifTile2('12.	Planchers : État, jeu, décalage…', 12,
+                      '1. Les planchers sont conçus pour assurer la sécurité des personnes et en particulier pour éviter tout risque de glissement au regard des conditions climatiques. '
+                      'Les éléments constitutifs sont jointifs bout à bout, en tolérant le jeu nécessaire au montage et au démontage, afin d’éviter tout risque de trébuchement.'
+                      '\n\n2. Les planchers installés à l’intérieur des bâtiments ou en plein air sont au moins classés Cfl – s1 ou en catégorie M3. Le revêtement éventuel de la face supérieure est classé Dfl-s1 ou en '
+                      ' catégorie M4.'
+                      '\n\n3. Ils comportent une ossature classée C-s3, d0 ou en catégorie M2. '),
               SizedBox(height: 5),
-              if (checkboxValues2[12] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article12Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 12,
+                controller: _article12Obsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('13.	Contremarches : État, jeu, décalage…', 13),
+              buildVerifTile2('13.	Contremarches : État, jeu, décalage…', 13,
+                  '1. Afin de limiter les risques de chute, l’alignement des nez de gradins n’excède pas 35 degrés par rapport au plan horizontal.\n\n2. Les contremarches  '),
               SizedBox(height: 5),
-              if (checkboxValues2[13] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article13Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 13,
+                controller: _article13Obsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('14.	Places assises pour les gradins : Nombre, implantation…', 14),
+              buildVerifTile2('14.	Places assises pour les gradins : Nombre, implantation…', 14,
+                  '1. L’espacement entre deux rangées permet le passage libre, en position verticale, d’un gabarit de 0,35 mètre de front, de 1,20 mètre de hauteur et de 0,20 mètre comme autre '
+                  'dimension. Cette largeur est constante dans la rangée. \n\n2. L’essai du gabarit est réalisé selon les modalités suivantes :'
+                  '\n– lorsque les dossiers sont fixes, entre les rangées de sièges relevés;'
+                  '\n– lorsque les dossiers sont mobiles, entre une rangée de sièges relevés et une rangée de sièges inclinés dans leur position d’occupation.'
+                  '\n\n3. Les rangs de gradins ont une longueur maximale de 20 mètres entre deux dégagements et de 10 mètres entre'
+                  'un dégagement et une paroi ou un garde-corps, soit respectivement quarante et vingt sièges maximum.'
+                  'Lorsque l’ensemble démontable est installé à l’intérieur d’une construction close et couverte, ces longueurs et nombres de sièges sont réduits de moitié.'
+                  '\n\n4. Pour les tribunes circulaires ou à facettes (pans coupés), la longueur des rangs de gradins est mesurée en suivant le cheminement le plus long. '),
               SizedBox(height: 5),
-              if (checkboxValues2[14] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article14Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 14,
+                controller: _article14Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('15.	Places debout : Longueur et circulations', 15),
+              buildVerifTile2('15.	Places debout : Longueur et circulations', 15,
+                  'Les longueurs maximales des gradins sont celles prévues à l’article 14, § 3. Les circulations qui y conduisent sont matérialisées de manière à rester'
+                  ' visibles pendant toute la durée de la manifestation.'),
               SizedBox(height: 5),
-              if (checkboxValues2[15] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article15Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 15,
+                controller: _article15Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('16.	Dégagements : Nombre, qualité, répartition et balisage', 16),
+              buildVerifTile2('16.	Dégagements : Nombre, qualité, répartition et balisage', 16,
+                  '1. Chaque dégagement a une largeur minimale de passage proportionnelle au nombre total de personnes appelées à l\’emprunter.'
+                  '\nLa largeur d’un dégagement est calculée en fonction d’une largeur type appelée unité de passage (UP).'
+                      '\n\nL’unité de passage est fixée : \n– en plein air à 0,60 mètre pour cent cinquante personnes;\n – dans les autres cas (constructions closes et couvertes), à 0,60 mètre pour cent personnes;'
+                      '– \nlorsqu’un dégagement ne comporte qu’une ou deux unités de passage, la largeur est respectivement portée de 0,60 mètre à 0,90 mètre et de 1,20 mètre à 1,40 mètre.'
+                      '\nLa largeur de passage offerte par un dégagement admet une tolérance négative de 5 %. \n\n2. La largeur des issues des tribunes, des plateformes et des vomitoires comporte deux à huit unités de passage.'
+                      '\n5 août 2022 JOURNAL OFFICIEL DE LA RÉPUBLIQUE FRANÇAISE Texte 6 sur 136 \n\n3. L’ensemble démontable dont l’effectif admissible est supérieur à dix-neuf personnes comporte au moins deux dégagements.'
+                      '\n\n4. Pour permettre l’évacuation rapide et sûre des personnes, les dégagements sont judicieusement répartis, avec si possible en partie basse de la tribune un '
+                      'promenoir de deux unités de passage au maximum qui autorise le dégagement transversal. Dans le cas contraire, des dégagements sont prévus au droit des emmarchements des gradins.'
+                      '\n\n5. Des indications visibles de jour comme de nuit en cas d’exploitation nocturne balisent les cheminements d’évacuation et sont placées de telle sorte que les personnes puissent les apercevoir en tout point même en cas d’affluence. '),
               SizedBox(height: 5),
-              if (checkboxValues2[16] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article16Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 16,
+                controller: _article16Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('17.	Vomitoires et circulations : Configuration et projection', 17),
+              buildVerifTile2('17.	Vomitoires et circulations : Configuration et projection', 17,
+                  '1. Lorsqu’il existe des vomitoires, leur largeur est calculée en tenant compte du cumul des largeurs des dégagements qui leur sont rattachés.'
+                      '\n\n2. Les dégagements sous tribunes sont autorisés sous réserve de la présence de filets, d’habillages ou de clôtures latérales. Le risque de chute d’objets sur ces '
+                      'circulations est prévenu, soit lors de la conception de la tribune, soit par l’ajout d’un dispositif adéquat. La hauteur du passage libre est égale ou supérieure à deux '
+                      'mètres. Les circulations sous tribunes réservées au personnel sont autorisées dans les mêmes conditions à l’exception des filets, des habillages et des clôtures latérales.'),
               SizedBox(height: 5),
-              if (checkboxValues2[17] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article17Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 17,
+                controller: _article17Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('18.	Dessous : Inaccessibilité au public, potentiel calorifique…', 18),
+              buildVerifTile2('18.	Dessous : Inaccessibilité au public, potentiel calorifique…', 18,
+                  'Le dessous de l’ensemble démontable est rendu inaccessible au public et maintenu libre de tout potentiel calorifique à l’exception des équipements techniques nécessaires à l’exploitation. '),
               SizedBox(height: 5),
-              if (checkboxValues2[18] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article18Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 18,
+                controller: _article18Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('19.	Escaliers et rampes accessibles au public : Qualité, état, assemblage…', 19),
+              buildVerifTile2('19.	Escaliers et rampes accessibles au public : Qualité, état, assemblage…', 19,
+                  '1. Les escaliers et les rampes sont solidaires ou liaisonnés mécaniquement à l’ensemble démontable qu’ils desservent.'
+                      '\n\n2. Les escaliers sont à volées droites entre deux paliers. La largeur du palier est au minimum égale à la largeur de l’escalier.'
+                      'A l’exception des circulations desservant les places dans les gradins, chaque volée dont la pente est limitée au plus à 38 degrés, comporte au maximum vingt-cinq marches.'
+                      '\n\n3. Les marches respectent les règles de l’art. La présence de marche isolée est interdite.'
+                      '\n\n4. Les contremarches sont pleines ou ajourées. Lorsqu’elles sont ajourées, la hauteur du vide entre deux marches ne peut excéder 11 centimètres. S’il n’existe pas de contremarche, le recouvrement des marches successives est d’au moins 5 centimètres.'
+                      'Les circulations sous les escaliers sont protégées contre la chute d’objets.'
+                      '\n\n5. Les mains courantes des escaliers dont la largeur est égale ou supérieure à deux unités de passage sont installées de chaque côté. Cette disposition ne s’applique pas à l’emmarchement des gradins des tribunes. '),
               SizedBox(height: 5),
-              if (checkboxValues2[19] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article19Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 19,
+                controller: _article19Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('20.	Garde-corps : Qualité, état, assemblage…', 20),
+              buildVerifTile2('20.	Garde-corps : Qualité, état, assemblage…', 20,
+                  '1. Pour accueillir les personnes auxquelles l’ensemble démontable est destiné, ce dernier est équipé de dispositifs de protection ou d’alerte contre les chutes dès lors que la'
+                      ' hauteur entre le niveau de plancher accessible et la zone d’impact située en-dessous atteint 0,25 mètre. \nLorsque cette hauteur est égale ou supérieure à un mètre, l’ensemble'
+                      ' démontable est équipé de garde-corps. En aggravation pour les tribunes, cette hauteur est ramenée à 0,5 mètre pour la première rangée. '
+                      'L’obligation d’installer des garde-corps ne s’applique pas du côté « public» aux scènes et à leurs escaliers.'
+                      '\n\n2. Les garde-corps sont rigides, d’une résistance appropriée selon les dispositions de l’article 10, d’une hauteur'
+                      ' d’au moins un mètre et fixés de manière sûre.\nLes garde-corps des espaces accueillant du public réalisés selon la norme NF P 01-012 de juillet 1988 sont présumés satisfaire aux exigences énoncées au présent paragraphe.'
+                      '\n\n3. A l’arrière d’une tribune, la hauteur du garde-corps mesurée à partir de l’assise du siège est de 1,10 mètre au'
+                      ' minimum, si la distance entre l’assise et le garde-corps arrière est inférieure à 0,30 mètre. Si cette distance est égale'
+                      ' ou supérieure à 0,30 mètre, la hauteur du garde-corps est mesurée à partir du dernier plancher.'
+                      '\n\n4. Dans les tribunes dont la pente est supérieure à vingt-cinq degrés, des épingles de préhension sont installées de part et d’autre des circulations verticales. '),
               SizedBox(height: 5),
-              if (checkboxValues2[20] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article20Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 20,
+                controller: _article20Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('21.	Sièges et bancs fixes : Qualité, état, assemblage…', 21),
+              buildVerifTile2('21.	Sièges et bancs fixes : Qualité, état, assemblage…', 21,
+                  'Les sièges et les bancs sont fixés solidement au plancher de l’ensemble démontable. \nIls sont considérés comme fixes s’ils sont installés selon l’une des modalités suivantes:'
+                      '\n– les sièges sont rendus solidaires par rangée, chaque rangée étant fixée au plancher ou aux parois à ses extrémités;'
+                      '\n– les sièges ou bancs sont rendus solidaires par rangée, chaque rangée étant rel '),
               SizedBox(height: 5),
-              if (checkboxValues2[21] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article21Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 21,
+                controller: _article21Obsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('22.	Sièges et banc non fixes : Nombre', 22),
+              buildVerifTile2('22.	Sièges et banc non fixes : Nombre', 22,
+                  'Un ensemble de chaises ou de bancs non fixes ne comporte pas plus de dix-neuf sièges. Chaque ensemble ainsi constitué est délimité par des éléments de séparation d’une hauteur '
+                  'minimale de 0,70 mètre fixés à l’ensemble démontable.\nL’ensemble dispose d’au moins une issue de 0,90 m ouvrant directement sur une circulation. '),
+
               SizedBox(height: 5),
-              if (checkboxValues2[22] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article22Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-
+              buildNsObservationSection(
+                index: 22,
+                controller: _article22Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile2('23.	Sièges : Caractéristiques, PV de réaction au feu…', 23),
+              buildVerifTile2('23.	Sièges : Caractéristiques, PV de réaction au feu…', 23,
+                  '1. Les matériaux constituant les sièges non rembourrés et les structures de sièges rembourrés sont classés au moins en catégorie M3 ou D-s2, d0. Les sièges rembourrés respectent'
+                      ' les dispositions de l’arrêté du 6 mars 2006 portant approbation de l’instruction technique relative à leur comportement au feu.'
+                      '\n\n2. Les sièges en bois ou dérivés du bois non rembourrés d’une épaisseur inférieure à 9 mm sont interdits.  '),
               SizedBox(height: 5),
-              if (checkboxValues2[23] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article23Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 23,
+                controller: _article23Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
 
-              buildVerifTile('24.	Barrière anti-renversement : Présence, état, assemblage…', 24),
+              buildVerifTile('24.	Barrière anti-renversement : Présence, état, assemblage…', 24,
+                  'Des barrières anti-renversement peuvent être rendues nécessaires pour préserver l’intégrité de l’ensemble démontable contre les mouvements de la foule. Elles ne constituent pas '
+                      'des ensembles démontables et sont montées en continu conformément à la notice technique du fabricant.  '),
               SizedBox(height: 5),
-              if (checkboxValues2[24] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article24Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
+              buildNsObservationSection(
+                index: 24,
+                controller: _article24Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-
-              SizedBox(height: 32),
+              SizedBox(height: 66),
               Text(
                 'EXPLOITATION',
                 textAlign: TextAlign.center,
@@ -6293,412 +5745,203 @@ final _mailStand = TextEditingController();
                   color: roseVE,
                 ),
               ),
-              SizedBox(height: 22),
 
-              SizedBox(height: 34),
+              SizedBox(height: 56),
 
-              buildVerifTile('25.	Impact sur le niveau de sécurité du lieu ', 25),
+              buildVerifTile('25.	Impact sur le niveau de sécurité du lieu ', 25,
+                  'Les installations techniques et de sécurité de l’ensemble démontable ne dégradent pas le niveau de sécurité de l’établissement dans lequel elles s’implantent. '),
               SizedBox(height: 5),
-              if (checkboxValues2[25] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article25Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 25,
+                controller: _article25Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
+              SizedBox(height: 68),
 
-              buildVerifTile2('26.	Examen d\'adéquation, accroches, accessoires de levage, moyens de levage (type de palan, sécurisation, redondance, etc.), rapport de VGP', 26),
+              buildVerifTile2('26.	Examen d\'adéquation, accroches, accessoires de levage, moyens de levage (type de palan, sécurisation, redondance, etc.), rapport de VGP', 26,
+                  '1.Les dispositifs d’accroche des équipements techniques sont conçus et installés de façon à éviter tout risque de chute sur les personnes.'
+                  '\n\nDispositions générales'
+                  '\n\n2. Les points de fixation des dispositifs d’accroche pris sur la charpente ou la structure d’un bâtiment font l’objet d’une note de calcul spécifique définie au 19o de l’article 2. Un examen d’adéquation est réalisé.'
+                  '\n\n3. Les câbles, les estropes et les filins accrochés directement aux ossatures abrasives ou tranchantes sont protégés mécaniquement.'
+                  '\n\n4. L’accroche d’une structure par élingues ou par chaines sans équipement de levage ne nécessite pas de dispositif de sécurité par un système d’accroche distinct, sous réserve du doublement du coefficient d’utilisation des élingues et des accessoires de levage.'
+                  '\nCette disposition ne s’applique pas aux équipements techniques suspendus à la structure pour lesquels un'
+                  'dispositif de sécurité indépendant reste requis.'
+                  '\n\n5. Les élingues et estropes textiles sont autorisées sous réserve d’être systématiquement sécurisées par une sécurité secondaire incombustible. 5 août 2022 JOURNAL OFFICIEL DE LA RÉPUBLIQUE FRANÇAISE Texte 6 sur 136'
+                  '\n\nLes palans'
+                  '\n\n6. Les palans permettant de suspendre des équipements techniques au-dessus des personnes respectent les mesures suivantes :'
+                  '\n\na) Les palans manuels n’entrainent aucun mouvement au-dessus des personnes et sont sécurisés par un dispositif secondaire indépendant en adéquation avec la charge levée. Ce dispositif est tendu au maximum de manière à limiter le jeu;'
+                  '\n\nb) Lorsqu’ils n’entrainent aucun mouvement au-dessus des personnes, les palans électriques sont sécurisés selon l’une des modalités ci-après:'
+                  '\n– par un dispositif secondaire indépendant en adéquation avec la charge levée. Ce dispositif est tendu au maximum de manière à limiter le jeu ;'
+                  '\n– par un dispositif antichute de charge en adéquation avec la charge levée;'
+                  '\n– par une redondance des points de levage de façon à maintenir la charge en cas de défaillance de l’un d’eux, quelle que soit sa position. Chaque point de levage est sollicité au plus à 50 % de ses performances maximales. Cette configuration fait l’objet d’une analyse'
+                  ' particulière par l’installateur qui est jointe au dossier de sécurité;'
+                  '\n– par des palans déclassés de 50 % à la conception et équipés d’un double-frein entrant en action après l’arrêt du mouvement de la charge ;'
+                  '\n\nc) Lorsque les palans électriques entrainent des mouvements au-dessus des personnes et qu’ils ne sont pas équipés d’un dispositif de sécurité secondaire, ils respectent l’ensemble des dispositions suivantes:'
+                  '\n– ils sont déclassés de 50 % à la conception et équipés d’un double-frein entrant en action après l’arrêt du mouvement de la charge ;'
+                  '\n– ils sont équipés de dispositifs de mesure de charge limitant le levage d’une charge supérieure de 20 % par rapport à la capacité initiale;'
+                  '\n– lorsqu’ils sont utilisés en groupe ou lorsqu’ils sont guidés, ils sont équipés de dispositifs de mesure de jeu de suspente (sous-charge), de fin de course, d’arrêt d’urgence et de moyens de gestion globale de la cinématique d’ensemble;'
+                      '\n– les mouvements de charge sont sous la surveillance d’au moins un opérateur qui dispose des commandes prioritaires d’arrêt d’urgence des palans.'
+                      '\nLes palans peuvent rester en charge pendant toute la durée de la manifestation.'
+                      '\n\n7. Les palans et leurs dispositifs de sécurité sont conformes aux dispositions réglementaires qui les concernent notamment en termes de vérifications. '),
               SizedBox(height: 5),
-              if (checkboxValues2[26] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article26Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 26,
+                controller: _article26Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile('27.	Habillages : PV de réaction au feu, état, assemblage…', 27),
+              buildVerifTile('27.	Habillages : PV de réaction au feu, état, assemblage…', 27,
+                  '1. Les bardages, couvertures, décors et habillages ne compromettent ni la solidité de l’ensemble démontable, ni sa stabilité. Ces aménagements sont prévus préalablement dans la notice technique du fabricant mentionné à'
+                      'l’article 36 ou font l’objet d’un avis joint au dossier de sécurité mentionné à l’article 39.'
+                      '\n\n2. Les éléments de protection dans les circulations aménagées sous l’ensemble démontable et les matériaux destinés à en interdire l’accès sont classés au minimum C-s3, d0 ou en catégorie M2, ou en bois classé en catégorie M3.'
+                      '\n\n3. En plein air, les matériaux en bois destinés à interdire l’accès au-dessous de l’ensemble démontable sont classés au minimum D-s3, d0 ou en catégorie M 4 ;'
+                      '\n\n4. Quel que soit le lieu de l’implantation, la couverture de l’ensemble démontable est réalisée en matériau classé C-s3, d0 ou en catégorie M2.'
+                      '\n\n5. La preuve du classement des matériaux textiles est apportée soit par le marquage «NF réaction au feu», soit par la présentation d’un procès-verbal de réaction au feu. '),
               SizedBox(height: 5),
-              if (checkboxValues2[27] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article27Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 27,
+                controller: _article27Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile2('28.	Cas des passerelles ne servant pas d\'espace d\'observation : bardage sur 2m de hauteur', 28),
+              buildVerifTile2('28.	Cas des passerelles ne servant pas d\'espace d\'observation : bardage sur 2m de hauteur', 28,
+                  'Les passerelles sont occultées par un bardage ou un habillage d’au moins deux mètres de haut classé C-s3, d0 ou en catégorie M2 ou en bois classé M3, afin de ne pas servir d’espace d’observation pour le public.'),
               SizedBox(height: 5),
-              if (checkboxValues2[28] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article28Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
+              buildNsObservationSection(
+                index: 28,
+                controller: _article28Obsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
               buildVerifTile('29.	Câbles électriques : absence d\'entrave à la circulation des personnes '
-                  'Installations électriques : présence du plan avec localisation des dispositifs de coupure d\'urgence ', 29),
+                  'Installations électriques : présence du plan avec localisation des dispositifs de coupure d\'urgence ', 29,
+                  '1. Les installations électriques sont réalisées de façon à assurer la sécurité des personnes contre les dangers résultants de contacts directs ou indirects avec les parties actives de l’installation sous tension ou avec des masses mises accidentellement sous tension, et à prévenir les risques d’incendie ou d’explosion d’origine électrique. Les'
+                      'installations électriques réalisées selon les dispositions de la norme NF C 15-100 de décembre 2002 sont présumées satisfaire aux exigences énoncées au présent paragraphe. 5 août 2022 JOURNAL OFFICIEL DE LA RÉPUBLIQUE FRANÇAISE Texte 6 sur 136'
+                      '\n\n2. Les câbles électriques ne font pas obstacle à la circulation des personnes et sont protégés contre les risques mécaniques.'
+                      '\n\n3. Les tableaux électriques alimentant les installations techniques et d’éclairage peuvent être implantés sous les ensembles démontables sous réserve d’être en permanence accessibles aux personnes et organismes mentionnés à l’article 30.'
+                      '\n\n4. L’organisateur établit un plan des installations électriques à une échelle exploitable indiquant sous la forme d’un synoptique simplifié la localisation des dispositifs de coupure d’urgence permettant la mise hors tension des'
+                      'sources d’énergie électrique. Ce plan est joint au dossier de sécurité mentionné à l’article 39 et tenu à disposition du service de sécurité et des services de secours. '),
               SizedBox(height: 5),
-              if (checkboxValues2[29] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article29Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 29,
+                controller: _article29Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile('30.	Présence du rapport de vérification des installations électriques ', 30),
+              buildVerifTile('30.	Présence du rapport de vérification des installations électriques ', 30,
+                  '1. Lorsque leur puissance d’alimentation total excède 36 kVA, les installations électriques sont vérifiées avant leur mise en service par un organisme accrédité dans les conditions prévues à l’article R. 4226-21 du code du travail.'
+                      '\n\n2. Lorsque leur puissance d’alimentation est inférieure ou égale à 36 kVA, les installations sont vérifiées avant leur mise en service par un technicien compétent qui est une personne qualifiée au sens de l’article R. 4226-17 du code du travail. La personne qualifiée rédige son rapport dans les conditions prévues à l’article R. 4226-21 du code du travail.'
+                      '\n\n3. Les installations électriques sont entretenues et maintenues en bon état de fonctionnement pendant toute la durée de l’implantation de l’ensemble démontable. '),
               SizedBox(height: 5),
-              if (checkboxValues2[30] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article30Obsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 30,
+                controller: _article30Obsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile('31.	Éclairage de sécurité en adéquation avec les conditions d\'exploitation ', 31),
+              buildVerifTile('31.	Éclairage de sécurité en adéquation avec les conditions d\'exploitation ', 31,
+                  '1. L’éclairage assure la circulation facile des personnes ainsi que leur évacuation rapide et sûre. Il permet d’effectuer, le cas échéant, les manœuvres de sécurité adéquates. L’éclairage normal électrique est obligatoire lorsque les conditions d’éclairement naturel sont insuffisantes.'
+                      '\n\n2. L’éclairage normal est assuré par des appareils d’éclairage fixes ou suspendus reliés à des éléments stables. Il est interdit de recourir à l’éclairage normal au seul moyen de lampes à décharge d’un type tel que leur amorçage nécessite un temps supérieur à quinze secondes.'
+                      '\n\n3. L’alimentation électrique de l’éclairage normal est conçue de manière à ce que la défaillance d’un foyer lumineux ou la coupure d’un des circuits terminaux qui l’alimentent ne prive pas intégralement d’éclairage normal les emplacements accessibles aux personnes.'
+                      '\nSi les conditions d’exploitation nécessitent une mise à l’état de repos de l’éclairage normal, un dispositif permettant instantanément le rallumage est prévu à un emplacement surveillé en permanence. Les dispositifs de coupure de l’éclairage sont mis hors de portée du public.'
+                      '\n\n4. L’éclairage normal est complété par un éclairage de sécurité assurant au minimum la fonction d’évacuation. \n\nL’éclairage d’évacuation est assuré :'
+                      '\n– soit par des blocs autonomes d’éclairage de sécurité ;'
+                      '\n– soit par des blocs points lumineux alimentés par une source centralisée assurant une autonomie d’au moins une heure;'
+                      '\n– soit par la combinaison des deux.'
+                      '\nS’il est envisagé de mettre l’installation d’éclairage normal hors tension, un dispositif de mise à l’état de repos de l’éclairage de sécurité est prévu. '
+                      '\nEn exploitation, l’éclairage de sécurité assurant la fonction d’évacuation ne peut être mis à l’état de repos. '),
               SizedBox(height: 5),
-              if (checkboxValues2[31] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article31bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 31,
+                controller: _article31bsrvt,
+               // labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile2('32	Anémomètre (plein air) : Présence, implantation et fonctionnement Modalités d\'évacuation ', 32),
+              buildVerifTile2('32	Anémomètre (plein air) : Présence, implantation et fonctionnement Modalités d\'évacuation ', 32,
+                  '1. L’organisateur s’assure que les prévisions météorologiques permettent l’utilisation de l’ensemble démontable en toute sécurité. En particulier, il recueille les informations relatives à la vitesse de vent et aux précipitations attendues pendant la durée de la manifestation.'
+                      '\n\n2. L’ensemble démontable installé en plein air est évacué lorsque la vitesse de vent atteint la valeur d’exploitation définie dans la notice technique du fabricant mentionné à l’article 36 ou dans la note de calcul'
+                      'spécifique à l’ensemble démontable concerné. A cet effet, l’organisateur s’assure de l’installation au point le plus élevé de l’ossature d’au moins un anémomètre pour tout ensemble démontable de catégories OP3, OS2 et OS3. L’anémomètre est relié à un dispositif permettant d’informer l’organisateur de la vitesse du vent en permanence.'
+                      '\n\n3. Les ensembles démontables sont le cas échéant déneigés avant l’accueil du public.'
+                      '\n\n4. L’organisateur décrit dans le dossier de sécurité mentionné à l’article 39 les modalités de l’évacuation générale de l’ensemble démontable compte tenu des conditions météorologiques prévues. '),
               SizedBox(height: 5),
-              if (checkboxValues2[32] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article32bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 32,
+                controller: _article32bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile('33.	Diffusion de l\'alarme et de l\'alerte', 33),
+              buildVerifTile('33.	Diffusion de l\'alarme et de l\'alerte', 33,
+                  '1. L’organisateur prévoit un signal sonore d’évacuation générale des ensembles démontables destinés à accueillir des personnes (mégaphone, sonorisation ou équivalent). La diffusion du signal d’évacuation est précédée de l’arrêt du programme en cours et du rétablissement de'
+                      'l’éclairage normal. Ces actions peuvent être réalisées manuellement. Le signal sonore peut être complété par une diffusion d’un message visuel et sonore d’évacuation préenregistré.'
+                      '\n\n2. Un système d’alerte permet de demander immédiatement l’intervention d’un service public de secours et de lutte contre l’incendie.'
+                      '\n\n3. Les mesures relatives à l’alarme et à l’alerte sont précisées dans le dossier de sécurité mentionné à l’article 39. '),
               SizedBox(height: 5),
-              if (checkboxValues2[33] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article33bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 33,
+                controller: _article33bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile('34.	Moyens d\'extinction', 34),
+              buildVerifTile('34.	Moyens d\'extinction', 34,
+                  '1. La lutte contre l’incendie est assurée par des extincteurs portatifs à eau pulvérisée de six litres minimum, en nombre suffisant et judicieusement répartis, et par des extincteurs appropriés aux risques particuliers. Ils sont bien visibles et facilement accessibles.'
+                      '\n\n2. Des personnes, spécialement désignées par l’organisateur sont entraînées à la mise en œuvre des moyens d’extinction. '),
               SizedBox(height: 5),
-              if (checkboxValues2[34] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article34bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 34,
+                controller: _article34bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-
-
-              SizedBox(height: 32),
+              SizedBox(height: 68),
               Text(
                 'CONTRÔLE, VERIFICATION ET INSPECTION',
                 textAlign: TextAlign.center,
@@ -6708,168 +5951,77 @@ final _mailStand = TextEditingController();
                   color: roseVE,
                 ),
               ),
-              SizedBox(height: 22),
-              SizedBox(height: 34),
+              SizedBox(height: 56),
 
-              buildVerifTile2('36.	Notices techniques : Présence', 36),
+              buildVerifTile2('36.	Notices techniques : Présence', 36,
+                  'Le fabricant de l’ensemble démontable ou de ses éléments constitutifs fournit une notice technique rédigée en français qui permet d’identifier toutes les pièces constitutives de la structure, leurs différentes configurations ainsi que les processus de montage et de démontage en toute sécurité. '),
               SizedBox(height: 5),
-              if (checkboxValues2[36] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article36bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile2('37.	Conception : Présence d\'un avis sur modèle type ou sur dossier technique', 37),
-              SizedBox(height: 5),
-              if (checkboxValues2[37] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article37bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
-
-              buildVerifTile2('38.	Attestation de bon montage : Présence', 38),
-              SizedBox(height: 5),
-              if (checkboxValues2[38] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article38bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 36,
+                controller: _article36bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 68),
 
-              buildVerifTile2('39.	Dossier de sécurité : Présence et cohérence', 39),
+              buildVerifTile2('37.	Conception : Présence d\'un avis sur modèle type ou sur dossier technique', 37,
+                  '1. Avant leur première implantation, les ensembles démontables de catégories OP2, OP3, OS2 et OS3 font l’objet d’un contrôle de conception soit par un organisme agréé par le ministère en charge de la construction sur les articles A1 et D de la nomenclature, soit par un organisme accrédité pour le contrôle de la conception des '
+                      'ensembles démontables. \nCe contrôle est également requis en cas de modifications affectant la conception d’origine de ces ensembles démontables.'
+                      '\n\n2. L’organisme agréé ou accrédité établit un rapport conclusif relatif à la solidité et à la stabilité de l’ensemble démontable dont le contenu est précisé à l’annexe III et qui prend la forme:'
+                      '\n– d’un avis sur modèle type lorsque l’ensemble démontable est conçu pour plusieurs configurations d’assemblage répertoriées dans la notice technique du fabricant ;'
+                      '\n– d’un avis sur dossier technique lorsqu’il n’existe pas d’avis sur modèle ou lorsque l’avis sur modèle ne prend pas en compte la configuration utilisée;'
+                      'Le contenu du dossier permettant à l’organisme de l’établir est précisé à l’annexe II.'
+                      '\n\n3. Les ensembles démontables de catégories OP1 et OS1 font l’objet d’une déclaration du fabricant attestant du respect des dispositions relatives à la solidité et à la stabilité du présent arrêté. '),
               SizedBox(height: 5),
-              if (checkboxValues2[39] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article39bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 37,
+                controller: _article37bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
+              SizedBox(height: 68),
 
-              SizedBox(height: 32),
+              buildVerifTile2('38.	Attestation de bon montage : Présence', 38,
+                  '1. L’installateur s’assure du bon état de conservation des éléments constitutifs de l’ensemble démontable et fait remplacer les pièces défectueuses. 5 août 2022 JOURNAL OFFICIEL DE LA RÉPUBLIQUE FRANÇAISE Texte 6 sur 136'
+                      '\n\n2. L’ensemble démontable est assemblé conformément à la notice technique du fabricant ou au dossier technique lorsque la configuration utilisée n’est pas prévue par la notice technique. Une attention particulière est portée sur les moises et les contreventements.'
+                      '\n\n3. L’installateur établit une attestation de bon montage dont le modèle figure à l’annexe V et qui vaut document de vérification pour les ensembles démontables de catégories OP1 et OS1.'
+                      '\n\n4. L’organisateur fait procéder à la vérification notamment de la solidité et de la stabilité du montage des ensembles démontables de catégories OP2, OP3 et OS3 par un organisme accrédité pour la vérification du montage'
+                      'et l’inspection en exploitation. L’ensemble démontable de catégorie OP2 susceptible d’accueillir moins de 300 personnes ou d’une surface de moins de 500 m2 ainsi que les ensembles démontables de catégorie OS2 sont'
+                      'vérifiés par un technicien compétent. \nL’organisme accrédité et le technicien compétent rédigent un rapport de vérification dont le contenu figure à l’annexe VI. '),
+              SizedBox(height: 5),
+              buildNsObservationSection(
+                index: 38,
+                controller: _article38bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
+
+              buildVerifTile2('39.	Dossier de sécurité : Présence et cohérence', 39,
+                  'Préalablement à l’utilisation d’un ensemble démontable, l’organisateur établit un dossier regroupant toutes les informations relatives à la sécurité et aux conditions d’utilisation. Le dossier de sécurité est consultable sur les'
+                      'lieux d’utilisation de l’ensemble démontable et tenu à disposition des organismes chargés des vérifications et des inspections. \nLe contenu '),
+              SizedBox(height: 5),
+              buildNsObservationSection(
+                index: 39,
+                controller: _article39bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
+
               Text(
                 'IMPLANTATION PROLONGÉE',
                 textAlign: TextAlign.center,
@@ -6879,48 +6031,25 @@ final _mailStand = TextEditingController();
                   color: roseVE,
                 ),
               ),
-              SizedBox(height: 22),
-              SizedBox(height: 34),
+              SizedBox(height: 56),
 
-              buildVerifTile2('45.	État de conservation', 45),
+              buildVerifTile2('45.	État de conservation', 45,
+                  'L’examen de l’état de conservation a pour objet de vérifier le maintien de l’état de conformité initial de l’ensemble démontable et le bon état de conservation de ses éléments constitutifs ainsi que des dispositifs d’appuis.'
+                      '\n\nCet examen réalisé lors de l’inspection annuelle prévue à l’article 40, porte sur :'
+                      '\n– la conformité de l’ensemble démontable aux dispositions du présent arrêté et notamment à celles de l’article 7 ;'
+                      '\n– la tenue à jour du dossier de sécurité mentionné à l’article 39. '),
               SizedBox(height: 5),
-              if (checkboxValues2[45] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article45bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 45,
+                controller: _article45bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 32),
+              SizedBox(height: 68),
               Text(
                 'ENSEMBLE DÉMONTABLE EXISTANT',
                 textAlign: TextAlign.center,
@@ -6930,97 +6059,48 @@ final _mailStand = TextEditingController();
                   color: roseVE,
                 ),
               ),
-              SizedBox(height: 22),
-              SizedBox(height: 34),
+              SizedBox(height: 56),
 
-              buildVerifTile2('47.	Solidité et stabilité : Présence de documents', 47),
+              buildVerifTile2('47.	Solidité et stabilité : Présence de documents', 47,
+                  '1. La notice du fabricant mentionnée à l’article 36 ou tout autre document justifiant la solidité et de la stabilité de l’ensemble démontable au regard des dispositions qui lui étaient applicables au moment de sa conception sont joints au dossier de sécurité sans préjudice des dispositions du paragraphe 4.'
+                      '\n\n2. Lorsque le référentiel de conception et de fabrication n’est pas connu, le propriétaire justifie de la solidité et de la stabilité de l’ensemble démontable de catégories OP2, OP3, OS2 et OS3 par la note de calcul structure définie au 18o de l’article 2.'
+                      '\n\n3. En l’absence des justificatifs visés aux paragraphes 1 et 2, la solidité et la stabilité de l’ensemble démontable fait l’objet d’un contrôle prévu à l’article 37. '),
               SizedBox(height: 5),
-              if (checkboxValues2[47] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article47bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
-
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
+              buildNsObservationSection(
+                index: 47,
+                controller: _article47bsrvt,
+             //   labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
               SizedBox(height: 34),
               SizedBox(height: 34),
 
-              buildVerifTile2('48.	Marquage', 48),
+              buildVerifTile2('48.	Marquage', 48,
+                  'Le marquage des éléments principaux de l’ensemble démontable est complété s’il existe ou réalisé par le propriétaire conformément à l’article 9 dans un délai de cinq ans à compter de la date d’entrée en vigueur de'
+                      'l’arrêté fixant les règles de sécurité et les dispositions techniques applicables aux structures provisoires et démontables, et celui des éléments principaux de la tribune dans un délai d’un an. '),
               SizedBox(height: 5),
-              if (checkboxValues2[48] == 'NS') ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _article48bsrvt,
-                        decoration: InputDecoration(
-                          labelText: 'observation',
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                        maxLines: 1,
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    OutlinedButton.icon(
+              buildNsObservationSection(
+                index: 48,
+                controller: _article48bsrvt,
+              //  labelColor: bleuAmont,
+                borderColor: roseVE,
+                textColor: Colors.black,
+                galleryLabel: '',
+                cameraLabel: '',
+              ),
+              SizedBox(height: 68),
 
-                      onPressed: _pickFromCamera,
-                      icon: Icon(Icons.camera_alt, color: roseVE),
-                      label: Text('Prendre photo', style: TextStyle(color: roseVE)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: roseVE,
-                        side: BorderSide(color: roseVE, width: 2),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12),
-              ],
-              SizedBox(height: 34),
-              SizedBox(height: 34),
 
               ElevatedButton(
                   onPressed: _goToNextPage,
                   child: Text('Suivant', style: TextStyle(color: bleuAmont)),
                   style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-                      backgroundColor: Colors.white10)
+                      backgroundColor: Colors.white)
               ),
-
               SizedBox(height: 32),
             ],
           ),
@@ -7028,26 +6108,113 @@ final _mailStand = TextEditingController();
       ),
     );
   }
-  Widget buildVerifTile2(String title, int index) {
+  Widget infoLabel(BuildContext context, String title, String message) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 36.0), // gives space above the input text
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              title,
+              style: const TextStyle(color: Colors.black),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            behavior: HitTestBehavior.translucent, // makes it easier to tap
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(title),
+                    content: SingleChildScrollView(
+                      child: Text(
+                        message
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text("Fermer"),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: const Padding(
+              padding: EdgeInsets.all(4.0), // increases touch area
+              child: Icon(Icons.info_outline, color: Colors.blue, size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildVerifTile2(String title, int index, String message) {
+    if (checkboxValues2[index] == null) {
+      // Liste des index à pré-cocher pour "SO"
+      List<int> preCheckSOIndexes = [12, 13, 14, 15, 16, 17, 18, 19,20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34];
+      if (preCheckSOIndexes.contains(index)) {
+        checkboxValues2[index] = 'SO';
+      } else {
+        checkboxValues2[index] = ''; // ou null, selon ton usage
+      }
+    }
     String? value = checkboxValues2[index];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(title),
+                      content: SingleChildScrollView(
+                        child: Text(message),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text("Fermer"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+
+
+          ],
         ),
+
         SizedBox(height: 8),
         Row(
           children: [
             Column(
               children: [
-                Text('S', style: TextStyle(color: Colors.white)),
+                Text('S', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'S',
                   onChanged: (bool? val) {
@@ -7061,7 +6228,7 @@ final _mailStand = TextEditingController();
             SizedBox(width: 40),
             Column(
               children: [
-                Text('NS', style: TextStyle(color: Colors.white)),
+                Text('NS', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'NS',
                   onChanged: (bool? val) {
@@ -7075,7 +6242,7 @@ final _mailStand = TextEditingController();
             SizedBox(width: 40),
             Column(
               children: [
-                Text('SO', style: TextStyle(color: Colors.white)),
+                Text('SO', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'SO',
                   onChanged: (bool? val) {
@@ -7088,30 +6255,341 @@ final _mailStand = TextEditingController();
             ),
           ],
         ),
-        Divider(color: Colors.white30),
+        if (value == 'S' || value == 'SO')
+          Divider(color: roseVE),
+
+
+      ],
+
+
+
+    );
+  }
+  Widget buildNsObservationSection({
+    required int index,
+    required TextEditingController controller,
+    Color roseVE = roseVE,
+    Color borderColor = Colors.black,
+    Color textColor = Colors.black,
+    String galleryLabel = 'Galerie',
+    String cameraLabel = 'Prendre photo',
+    bool showGallery = true,
+    bool showCamera = true,
+  }) {
+    if (checkboxValues2[index] != 'NS') {
+      return const SizedBox.shrink();
+    }
+
+    return StatefulBuilder(
+      builder: (context, setInnerState) {
+        // Rebuild when text changes
+        controller.addListener(() {
+          setInnerState(() {});
+        });
+
+        final bool hasText = controller.text.isNotEmpty;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // 🔹 Observation field
+                Expanded(
+                  child: TextFormField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      labelText: 'Observation',
+                      labelStyle: TextStyle(
+                        color: hasText ? Colors.black : roseVE,
+                        letterSpacing: 1.3,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: hasText ? Colors.black : roseVE,
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: hasText ? Colors.black : roseVE,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    maxLines: 1,
+                    style: TextStyle(color: textColor),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // 🔹 Gallery button
+                if (showGallery)
+                  OutlinedButton.icon(
+                    onPressed: () => _pickArticlePhotoFromGallery(index),
+                    icon: Icon(Icons.photo_library, color: roseVE),
+                    label: Text(galleryLabel, style: TextStyle(color: roseVE)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: roseVE,
+                      side: BorderSide(color: roseVE, width: 2),
+                    ),
+                  ),
+
+                const SizedBox(width: 8),
+
+                // 🔹 Camera button
+                if (showCamera)
+                  OutlinedButton.icon(
+                    onPressed: () => _pickArticlePhoto(index),
+                    icon: Icon(Icons.camera_alt, color: roseVE),
+                    label: Text(cameraLabel, style: TextStyle(color: roseVE)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: roseVE,
+                      side: BorderSide(color: roseVE, width: 2),
+                    ),
+                  ),
+
+                // 🔹 “View Image” icon button (only if image exists)
+                if (_articlePhotos[index]?.imagePath != null &&
+                    _articlePhotos[index]!.imagePath.isNotEmpty)
+                  IconButton(
+                    icon: Icon(Icons.image, color: bleuAmont),
+                    tooltip: "Voir l'image",
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: IoImage(
+                                      path: _articlePhotos[index]!.imagePath,
+                                      width: 250,
+                                      height: 250,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("Fermer"),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // 🔹 Divider under the observation row
+            Divider(color: roseVE),
+          ],
+        );
+      },
+    );
+  }
+
+/*
+    //// method so it shows the photo below
+
+  // Reusable section for NS case: observation input, photo pick buttons, and image preview
+  Widget buildNsObservationSection({
+   // required BuildContext context,
+    required int index,
+    required TextEditingController controller,
+
+    Color labelColor = Colors.black,
+    Color borderColor = Colors.black,
+    Color textColor = Colors.black,
+  //  String message = '',
+    String galleryLabel = 'Galerie',
+    String cameraLabel = 'Prendre photo',
+    bool showGallery = true,
+    bool showCamera = true,
+  }) {
+    if (checkboxValues2[index] != 'NS') {
+      return SizedBox.shrink();
+    }
+
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: 'observation',
+                //  labelStyle: TextStyle(color: labelColor),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
+
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                ),
+                maxLines: 1,
+                style: TextStyle(color: textColor),
+              ),
+            ),
+            SizedBox(width: 12),
+
+/*            if (message.isNotEmpty)
+            IconButton(
+            icon: const Icon(Icons.info_outline, color: Colors.blue),
+            onPressed: () {
+            showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+            title: const Text("More Information"),
+            content: Text(message),
+            actions: [
+            TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Close"),
+            ),
+            ],
+            ),
+            );
+            },
+            ),
+
+ */
+
+    const SizedBox(width: 12),
+
+    if (showGallery)
+              OutlinedButton.icon(
+                onPressed: () => _pickArticlePhotoFromGallery(index),
+                icon: Icon(Icons.photo_library, color: roseVE),
+                label: Text(galleryLabel, style: TextStyle(color: roseVE)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: roseVE,
+                  side: BorderSide(color: roseVE, width: 2),
+                ),
+              ),
+            if (showCamera)
+              OutlinedButton.icon(
+                onPressed: () => _pickArticlePhoto(index),
+                icon: Icon(Icons.camera_alt, color: roseVE),
+                label: Text(cameraLabel, style: TextStyle(color: roseVE)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: roseVE,
+                  side: BorderSide(color: roseVE, width: 2),
+                ),
+              ),
+          ],
+        ),
+        if (_articlePhotos[index]?.imagePath != null && _articlePhotos[index]!.imagePath.isNotEmpty) ...[
+          SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: roseVE, width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: EdgeInsets.all(4),
+                child: IoImage(
+                  path: _articlePhotos[index]!.imagePath,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+        ],
+        SizedBox(height: 12),
       ],
     );
   }
-  Widget buildVerifTile(String title, int index) {
+*/
+  Widget buildVerifTile(String title, int index, String message) {
+    if (checkboxValues2[index] == null) {
+      // Liste des index à pré-cocher pour "SO"
+      List<int> preCheckSOIndexes = [12, 13, 14, 15, 16, 17, 18, 19,20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34];
+      if (preCheckSOIndexes.contains(index)) {
+        checkboxValues2[index] = 'SO';
+      } else {
+        checkboxValues2[index] = ''; // ou null, selon ton usage
+      }
+    }
     String? value = checkboxValues2[index];
     TextEditingController controller;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(title),
+                      content: SingleChildScrollView(
+                        child: Text(message),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text("Fermer"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ),
+
+
         SizedBox(height: 8),
         Row(
           children: [
             Column(
               children: [
-                Text('S', style: TextStyle(color: Colors.white)),
+                Text('S', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'S',
                   onChanged: (bool? val) {
@@ -7125,7 +6603,7 @@ final _mailStand = TextEditingController();
             SizedBox(width: 40),
             Column(
               children: [
-                Text('NS', style: TextStyle(color: Colors.white)),
+                Text('NS', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'NS',
                   onChanged: (bool? val) {
@@ -7139,7 +6617,7 @@ final _mailStand = TextEditingController();
             SizedBox(width: 40),
             Column(
               children: [
-                Text('SO', style: TextStyle(color: Colors.white)),
+                Text('SO', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'SO',
                   onChanged: (bool? val) {
@@ -7153,7 +6631,7 @@ final _mailStand = TextEditingController();
             SizedBox(width: 40),
             Column(
               children: [
-                Text('HM', style: TextStyle(color: Colors.white)),
+                Text('HM', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'HM',
                   onChanged: (bool? val) {
@@ -7166,8 +6644,8 @@ final _mailStand = TextEditingController();
             ),
           ],
         ),
-        Divider(color: Colors.white30),
-      ],
+        if (value == 'S' || value == 'SO')
+          Divider(color: roseVE),      ],
     );
   }
   Widget buildQuestionTile(String title, int index) {
@@ -7214,7 +6692,6 @@ final _mailStand = TextEditingController();
       case 13:
         controller = _question13;
         break;
-
       default:
         controller = TextEditingController();
     }
@@ -7227,7 +6704,7 @@ final _mailStand = TextEditingController();
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
         SizedBox(height: 8),
@@ -7235,7 +6712,7 @@ final _mailStand = TextEditingController();
           children: [
             Column(
               children: [
-                Text('Oui', style: TextStyle(color: Colors.white)),
+                Text('Oui', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == true,
                   activeColor: roseVE,
@@ -7250,7 +6727,7 @@ final _mailStand = TextEditingController();
             SizedBox(width: 40),
             Column(
               children: [
-                Text('Non', style: TextStyle(color: Colors.white)),
+                Text('Non', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == false,
                   onChanged: (bool? val) {
@@ -7263,7 +6740,7 @@ final _mailStand = TextEditingController();
             ),
           ],
         ),
-        Divider(color: Colors.white30),
+        Divider(color: Colors.black),
       ],
     );
   }
@@ -7291,7 +6768,7 @@ final _mailStand = TextEditingController();
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Colors.black,
           ),
         ),
         SizedBox(height: 8),
@@ -7299,7 +6776,7 @@ final _mailStand = TextEditingController();
           children: [
             Column(
               children: [
-                Text('Favorable', style: TextStyle(color: Colors.white)),
+                Text('Favorable', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == true,
                   activeColor: roseVE,
@@ -7314,7 +6791,7 @@ final _mailStand = TextEditingController();
             SizedBox(width: 40),
             Column(
               children: [
-                Text('Défavorable', style: TextStyle(color: Colors.white)),
+                Text('Défavorable', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == false,
                   onChanged: (bool? val) {
@@ -7341,29 +6818,36 @@ final _mailStand = TextEditingController();
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 32),
 
-              SizedBox(height: 24),
+              SizedBox(height: 25),
 
-              Text(
-                'AVIS FINAL',
-
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white
+              Center(
+                child: Text(
+                  'AVIS FINAL',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-              SizedBox(height: 12),
 
-              SizedBox(height: 12),
+              SizedBox(height: 24),
               buildAvisTile('Votre avis est ... ', 1),
-
-
 
               SizedBox(height: 32),
 
-              // Signature section
-              Text(
-                'SIGNATURE DU TECHNICIEN',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+              Center(
+                child: Text(
+                  'SIGNATURE DU TECHNICIEN',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
               ),
               SizedBox(height: 12),
               Container(
@@ -7397,18 +6881,22 @@ final _mailStand = TextEditingController();
                     ),
                   ),
                   SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: _saveSignature,
-                    icon: Icon(Icons.check, color: bleuAmont),
-                    label: Text('Enregistrer la signature', style: TextStyle(color: bleuAmont)),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white10),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveSignature,
+                      icon: Icon(Icons.check, color: bleuAmont),
+                      label: Text('Enregistrer la signature', style: TextStyle(color: bleuAmont)),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                    ),
                   ),
                 ],
               ),
               if ((_signatureBytes != null && _signatureBytes!.isNotEmpty) || _signaturePath.isNotEmpty) ...[
                 SizedBox(height: 8),
                 Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.center,
                   child: Container(
                     padding: EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -7441,9 +6929,10 @@ final _mailStand = TextEditingController();
                     child: Text('Précédent', style: TextStyle(color: bleuAmont)),
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-                      backgroundColor: Colors.white10,
+                      backgroundColor: Colors.white,
                     ),
                   ),
+                  /*
                   ElevatedButton(
                     onPressed: _saveDraft,
                     child: Text('Save', style: TextStyle(color: bleuAmont)),
@@ -7452,6 +6941,9 @@ final _mailStand = TextEditingController();
                       backgroundColor: Colors.white10,
                     ),
                   ),
+
+                   */
+                  /*
                   ElevatedButton(
                     onPressed: () => _generateWordFile(preview: true),
                     child: Text('Aperçu', style: TextStyle(color: bleuAmont)),
@@ -7460,21 +6952,14 @@ final _mailStand = TextEditingController();
                       backgroundColor: Colors.white10,
                     ),
                   ),
-                 
+                   */
                 ],
               ),
               SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: _showPdfPreview,
-                    child: Text('Aperçu PDF', style: TextStyle(color: bleuAmont)),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-                      backgroundColor: Colors.white10,
-                    ),
-                  ),
+/*
                   ElevatedButton(
                     onPressed: _generateWordFile,
                     child: Text('Générer', style: TextStyle(color: bleuAmont)),
@@ -7483,13 +6968,14 @@ final _mailStand = TextEditingController();
                       backgroundColor: Colors.white10,
                     ),
                   ),
+ */
                 ],
               ),
               SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
+/*
                   ElevatedButton.icon(
                     onPressed: () async {
                       // Utiliser l'email du destinataire depuis votre formulaire
@@ -7503,22 +6989,32 @@ final _mailStand = TextEditingController();
                       foregroundColor: blanc,
                     ),
                   ),
-                  ElevatedButton(
+
+ */
+                  ElevatedButton.icon(
+                    onPressed: _showPdfPreview,
+                    icon: Icon(Icons.search),
+                    label: Text('Aperçu PDF'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                  ElevatedButton.icon(
                     onPressed: () async {
                       // Unified flow: generate PDF and compose email.
                       await _sendEmailWithAttachment(preview: false);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor: roseVE,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text("Exporter en PDF"),
+                    icon: Icon(Icons.email),
+                    label: Text('Envoyer au client'),
                   ),
                 ],
-
               ),
               SizedBox(height: 32),
-
             ],
           ),
         ),

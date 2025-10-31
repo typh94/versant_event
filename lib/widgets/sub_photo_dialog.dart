@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io';
+import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
 import '../models/sub_photo_entry.dart';
 import 'io_image.dart';
 
@@ -36,12 +37,24 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
         final bytes = await image.readAsBytes();
         setState(() {
           _imageBytesWeb = bytes;
-          _imagePath = image.name; // just for display
+          _imagePath = image.name; // just for display on web
         });
       } else {
-        setState(() {
-          _imagePath = image.path;
-        });
+        try {
+          final dir = await getApplicationDocumentsDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final ext = image.path.split('.').last;
+          final permanentPath = '${dir.path}/image_$timestamp.$ext';
+          await File(image.path).copy(permanentPath);
+          setState(() {
+            _imagePath = permanentPath; // store permanent path
+          });
+        } catch (e) {
+          // Fallback to temp path if copy fails
+          setState(() {
+            _imagePath = image.path;
+          });
+        }
       }
     }
   }

@@ -8,4 +8,6 @@ const Color blackAmont = Color(0xFF353535);
 const Color roseVE = Color(0xFFFF008D);
 const Color greyAmont = Color(0xFF414042);
 const Color fondRosePale = Color(0xFFFFE6F2);
+const Color rose2 = Color(0xFFF06292);
+
 

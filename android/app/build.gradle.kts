@@ -1,12 +1,22 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+// Load keystore properties (Kotlin DSL)
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.versant_event_app.versant_event"
+    namespace = "com.versant_event_app.versant_event2"
+  //  namespace = "com.versant_event_app.versant_event"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,22 +29,37 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // Add signing configurations (Kotlin DSL)
+    signingConfigs {
+        create("release") {
+            val alias = keystoreProperties["keyAlias"] as String?
+            val keyPwd = keystoreProperties["keyPassword"] as String?
+            val storePath = keystoreProperties["storeFile"] as String?
+            val storePwd = keystoreProperties["storePassword"] as String?
+
+            if (alias != null) keyAlias = alias
+            if (keyPwd != null) keyPassword = keyPwd
+            if (storePath != null) storeFile = file(storePath)
+            if (storePwd != null) storePassword = storePwd
+        }
+    }
+
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.versant_event_app.versant_event"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+      //  applicationId = "com.versant_event_app.versant_event"
+        applicationId = "com.versant_event_app.versant_event2"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
+        // Use Flutter-managed versioning from pubspec.yaml (e.g., version: x.y.z+code)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Use proper signing for release builds
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

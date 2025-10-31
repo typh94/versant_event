@@ -3,7 +3,7 @@ description: "A new Flutter project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
-version: 1.0.0+1
+version: 1.0.1+8
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -45,5 +45,6 @@ flutter:
     - assets/template_ve.docx
     - assets/logo.png
     - assets/footer.png
+    - assets/logoVE.png
 
 

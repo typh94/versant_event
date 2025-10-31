@@ -43,7 +43,7 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tous mes Rapports'),
-        backgroundColor: blackAmont,
+        backgroundColor: roseVE,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -56,7 +56,7 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
               // Reload list when returning from the form (new draft may be created)
               await _load();
             },
-            color: bleuAmont,
+            color: Colors.white,
 
           ),
         ],
@@ -64,7 +64,7 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
 
     ),
 
-     backgroundColor: blackAmont,
+     backgroundColor: roseVE,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _drafts.isEmpty
@@ -97,16 +97,16 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                       if (updated.isNotEmpty) updated,
                     ].join(' • ');
                     return Container(
-                      color: Colors.black,
+                      color: Colors.white,
                       child: ListTile(
-                        title: Text(title,   style: TextStyle(color: Colors.white),
+                        title: Text(title,   style: TextStyle(color: Colors.black),
                         ),
 
                         subtitle: Text(
-                          subline,  style: TextStyle(color: Colors.white),
+                          subline,  style: TextStyle(color: Colors.black),
 
                         ),
-                       leading: const Icon(Icons.file_copy_sharp , color: bleuAmont,),
+                       leading: const Icon(Icons.file_copy_sharp , color: roseVE,),
                      //   trailing: const Icon(Icons.chevron_right, color: Colors.white,),
                         trailing:  IconButton(
                           icon: Icon(Icons.delete_outline),

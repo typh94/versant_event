@@ -165,10 +165,10 @@ class StorageService {
       drafts.sort((a, b) => (b['updatedAt'] ?? '').compareTo(a['updatedAt'] ?? ''));
     } else {
       final dir = await _appDocDir;
-      final files = dir
-          .listSync()
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.json'))
+      // Ensure we operate on a strongly typed Iterable<File> to avoid runtime type issues
+      final Iterable<File> typedFiles = (dir.listSync() as List).whereType<File>();
+      final List<File> files = typedFiles
+          .where((File f) => f.path.endsWith('.json'))
           .toList()
         ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
       for (final f in files) {

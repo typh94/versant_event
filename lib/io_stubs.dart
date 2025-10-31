@@ -18,10 +18,13 @@ class File {
   bool existsSync() => false;
   DateTime lastModifiedSync() => DateTime.fromMillisecondsSinceEpoch(0);
 
-  // Write / delete APIs
-  Future<void> writeAsBytes(List<int> bytes) async {}
+  // Write / delete APIs (signatures mimic dart:io where referenced)
+  Future<void> writeAsBytes(List<int> bytes, {bool flush = false}) async {}
   Future<void> writeAsString(String s) async {}
   Future<void> delete() async {}
+
+  // File operations used by app code
+  Future<File> copy(String newPath) async => File(newPath);
 }
 
 class Directory {
