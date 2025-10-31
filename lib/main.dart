@@ -4904,80 +4904,46 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
               ),
 
-              SizedBox(height: 12),
-              TextFormField(
-                controller: _orgaName,
-                decoration: InputDecoration(
-                  label: infoLabel(context, 'Organisateur',
-                      "Personne physique ou morale qui est à l'initiative de la manifestation ou de l'événement et en coordonne le déroulement technique et logistique. L'organisateur est l'interlocuteur privilégié de l'autorité de police."),
-                  floatingLabelBehavior: FloatingLabelBehavior.always, // keeps label visible above
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                ),
-                style: const TextStyle(color: Colors.black),
-              ),
 
               SizedBox(height: 12),
-              TextFormField(
+              buildInfoTextField(
+                context: context,
+                controller: _orgaName,
+                label: 'Organisateur',
+                infoMessage: "Personne physique ou morale qui est à l'initiative de la manifestation ou de l'événement et en coordonne le déroulement technique et logistique. L'organisateur est l'interlocuteur privilégié de l'autorité de police ",
+              ),
+
+
+              SizedBox(height: 12),
+              buildInfoTextField(
+                context: context,
                 controller: _installateurName,
-                decoration: InputDecoration(
-                  labelText: 'Installateur ',
-                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
-                    final Color color = states.contains(WidgetState.error)
-                        ? Theme.of(context).colorScheme.error
-                        : roseVE;
-                    return TextStyle(color: color, letterSpacing: 1.3);
-                  }),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                ),
-                maxLines: 1,
-                style: TextStyle(color: Colors.black),
+                label: 'Installateur',
+                infoMessage: "Personne physique ou morale qui réalise les opérations de montage et de démontage à la demande de l'organisateur ",
+                labelColor: roseVE,
+                changeColorWhenFilled: true,
               ),
+
+
+
+
+
+
               SizedBox(height: 12),
-              TextFormField(
-                controller: _exploitSiteName,
-                decoration: InputDecoration(
-                  labelText: 'Exploitant du site ',
-                  labelStyle: TextStyle(color: Colors.black),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                ),
-                maxLines: 1,
-                style: TextStyle(color: Colors.black),
+              buildInfoTextField(
+                context: context,
+                controller: _orgaName,
+                label: 'Exploitant du site',
+                infoMessage: "Personne physique ou morale, publique ou privée, qui exerce ou contrôle effectivement, à titre professionnel, une activité économique lucrative ou non lucrative",
               ),
+
+
               SizedBox(height: 12),
-              TextFormField(
+              buildInfoTextField(
+                context: context,
                 controller: _proprioMatosName,
-                decoration: InputDecoration(
-                  labelText: 'Propriétaire ',
-                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
-                    final Color color = states.contains(WidgetState.error)
-                        ? Theme.of(context).colorScheme.error
-                        : roseVE;
-                    return TextStyle(color: color, letterSpacing: 1.3);
-                  }),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black),
-                  ),
-                ),
-                maxLines: 1,
-                style: TextStyle(color: Colors.black),
+                label: 'Propriétaire',
+                infoMessage: "Personne physique ou morale qui possède un ensemble démontable et le met à disposition de l'organisateur",
               ),
 
               SizedBox(height: 64),
@@ -6108,9 +6074,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
       ),
     );
   }
+  /*
   Widget infoLabel(BuildContext context, String title, String message) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 36.0), // gives space above the input text
+      padding: const EdgeInsets.only(bottom: 8.0), // Reduced padding
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -6123,7 +6090,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           ),
           const SizedBox(width: 4),
           GestureDetector(
-            behavior: HitTestBehavior.translucent, // makes it easier to tap
+            behavior: HitTestBehavior.opaque, // Changed from translucent
             onTap: () {
               showDialog(
                 context: context,
@@ -6131,9 +6098,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   return AlertDialog(
                     title: Text(title),
                     content: SingleChildScrollView(
-                      child: Text(
-                        message
-                      ),
+                      child: Text(message),
                     ),
                     actions: [
                       TextButton(
@@ -6145,9 +6110,9 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 },
               );
             },
-            child: const Padding(
-              padding: EdgeInsets.all(4.0), // increases touch area
-              child: Icon(Icons.info_outline, color: Colors.blue, size: 18),
+            child: Container(
+              padding: const EdgeInsets.all(8.0), // Larger touch area
+              child: const Icon(Icons.info_outline, color: Colors.blue, size: 18),
             ),
           ),
         ],
@@ -6155,7 +6120,68 @@ class _FormToWordPageState extends State<FormToWordPage> {
     );
   }
 
-  Widget buildVerifTile2(String title, int index, String message) {
+   */
+  Widget buildInfoTextField({
+    required BuildContext context,
+    required TextEditingController controller,
+    required String label,
+    required String infoMessage,
+    Color? labelColor, // Custom color for the label
+    bool changeColorWhenFilled = false, // Enable color change behavior
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    int? maxLines = 1,
+  }) {
+
+
+
+
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      validator: validator,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+    labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+    final Color color = states.contains(WidgetState.error)
+    ? Theme.of(context).colorScheme.error
+        : roseVE;
+    return TextStyle(color: color, letterSpacing: 1.3);
+    }),
+    enabledBorder: UnderlineInputBorder(
+    borderSide: BorderSide(color: Colors.black),
+    ),
+    focusedBorder: UnderlineInputBorder(
+    borderSide: BorderSide(color: Colors.black),
+    ),
+
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.info_outline, color: Colors.blue, size: 18),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(label),
+                  content: SingleChildScrollView(
+                    child: Text(infoMessage),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("Fermer"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ),
+      style: const TextStyle(color: Colors.black),
+    );
+  }  Widget buildVerifTile2(String title, int index, String message) {
     if (checkboxValues2[index] == null) {
       // Liste des index à pré-cocher pour "SO"
       List<int> preCheckSOIndexes = [12, 13, 14, 15, 16, 17, 18, 19,20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34];
