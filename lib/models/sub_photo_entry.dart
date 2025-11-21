@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 // Model for sub-photo entries (refactor-only, no behavior change)
 class SubPhotoEntry {

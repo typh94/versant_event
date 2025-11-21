@@ -1,4 +1,4 @@
-import 'dart:convert';
+/*import 'dart:convert';
 import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io'; // Conditional for web
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
@@ -217,4 +217,270 @@ class StorageService {
   }
 
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
+}
+
+
+ */
+import 'database_helper.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'firestore_service.dart';
+
+class StorageService {
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+
+  // Archive/unarchive a draft
+  Future<void> archiveDraft(String id, bool archived) async {
+    await _dbHelper.setDraftArchived(id, archived);
+  }
+/*
+  // Save draft to database
+  Future<String> saveDraft(Map<String, dynamic> data, {String? id}) async {
+    final draftId = id ?? DateTime.now().millisecondsSinceEpoch.toString();
+
+    if (id != null) {
+      await _dbHelper.updateDraft(draftId, data);
+    } else {
+      await _dbHelper.insertDraft(draftId, data);
+    }
+
+    return draftId;
+  }
+
+ */
+  // The modification:
+  Future<String> saveDraft(Map<String, dynamic> data, {String? id, required String owner}) async {
+    final draftId = id ?? DateTime.now().millisecondsSinceEpoch.toString();
+
+    // Preserve the original owner on updates. Only set to the passed owner on insert.
+    String ownerToUse = owner;
+    if (id != null) {
+      final meta = await _dbHelper.getDraftMetadata(draftId);
+      final existingOwner = (meta != null ? meta['owner'] as String? : null);
+      if (existingOwner != null && existingOwner.isNotEmpty) {
+        ownerToUse = existingOwner; // keep original owner
+      }
+    }
+
+    final dataWithOwner = {
+      ...data,
+      'owner': ownerToUse,
+    };
+
+    if (id != null) {
+      await _dbHelper.updateDraft(draftId, dataWithOwner);
+    } else {
+      await _dbHelper.insertDraft(draftId, dataWithOwner);
+    }
+
+    // Also upsert to Firestore (best-effort). Do not throw if it fails.
+    try {
+      await FirestoreService.instance.setForm(draftId, dataWithOwner, merge: true);
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('✅ StorageService.saveDraft -> Saved to Firestore. id=$draftId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('❌ StorageService.saveDraft -> Firestore save failed (local save succeeded). id=$draftId error=$e');
+      }
+    }
+
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print('ℹ️ StorageService.saveDraft -> Saved locally in SQLite AND attempted Firestore sync. id=$draftId owner=$ownerToUse');
+    }
+
+    return draftId;
+  }
+
+  // Load draft from database
+  Future<Map<String, dynamic>?> loadDraft(String id) async {
+    return await _dbHelper.getDraft(id);
+  }
+
+  // Get all drafts for current user
+  Future<List<Map<String, dynamic>>> getAllDrafts(String owner) async {
+
+    return await _dbHelper.getDraftsByOwner(owner);
+  }
+/*
+  // List all drafts (for backwards compatibility with your DraftsListScreen)
+  Future<List<Map<String, dynamic>>> listDrafts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentUser = prefs.getString('current_user') ?? '';
+
+    // Get drafts from database
+    final drafts = await _dbHelper.getDraftsByOwner(currentUser);
+
+    // Transform the data to match the expected format in your UI
+    return drafts.map((draft) {
+      return {
+        'id': draft['id'],
+        'salonName': draft['salonName'] ?? draft['title'],
+        'standName': draft['standName'],
+        'hall': draft['hall'],
+        'standNb': draft['standNb'],
+        'updatedAt': draft['updated_at'],
+        'owner': draft['owner'],
+        // Include all other fields
+        ...draft,
+      };
+    }).toList();
+  }
+
+
+ */
+
+  /*
+  Future<List<Map<String, dynamic>>> listDrafts({required String owner}) async { // <-- Now requires 'owner'
+
+    // Get drafts from database
+    final drafts = await _dbHelper.getDraftsByOwner(owner); // <-- Uses the passed owner
+
+    // Transform the data to match the expected format in your UI
+    return drafts.map((draft) {
+      return {
+        'id': draft['id'],
+        'salonName': draft['salonName'] ?? draft['title'],
+        'standName': draft['standName'],
+        'hall': draft['hall'],
+        'standNb': draft['standNb'],
+        'updatedAt': draft['updated_at'],
+        'owner': draft['owner'],
+        // Include all other fields
+        ...draft,
+      };
+    }).toList();
+  }
+
+   */
+  Future<List<Map<String, dynamic>>> _transformDrafts(List<Map<String, dynamic>> drafts) async {
+    // ... votre code de transformation map(...) qui était dans listDrafts() ...
+    return drafts.map((draft) {
+      return {
+        'id': draft['id'],
+        'salonName': draft['salonName'] ?? draft['title'],
+        'standName': draft['standName'],
+        'hall': draft['hall'],
+        'standNb': draft['standNb'],
+        'updatedAt': draft['updated_at'],
+        'owner': draft['owner'],
+      };
+    }).toList();
+  }
+
+  /*
+  Future<List<Map<String, dynamic>>> listDraftsToDisplay({
+    required String currentUser,
+    required bool isAdmin,
+  }) async {
+    // 1. Récupération des données brutes
+    List<Map<String, dynamic>> rawDrafts;
+
+    if (isAdmin) {
+      rawDrafts = await _dbHelper.getAllDrafts();
+    } else {
+
+      rawDrafts = await _dbHelper.getDraftsByOwner(currentUser);
+    }
+
+    // 2. Transformation pour l'affichage
+    return _transformDrafts(rawDrafts);
+  }
+
+
+   */
+
+
+
+  Future<List<Map<String, dynamic>>> listDraftsToDisplay({
+    required String currentUser,
+    required bool isAdmin,
+    required String adminUsername, // <-- NÉCESSAIRE: Vous devez passer le nom de l'Admin
+  }) async {
+    List<Map<String, dynamic>> rawDrafts;
+
+    if (isAdmin) {
+      // Admin: sees all non-archived drafts
+      rawDrafts = await _dbHelper.getAllDrafts();
+    } else {
+      // Tech: sees own + admin's non-archived drafts
+      final ownersToFetch = [currentUser, adminUsername];
+      rawDrafts = await _dbHelper.getDraftsByOwnersList(ownersToFetch);
+
+      // Deduplicate by id
+      final seenIds = <String>{};
+      rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+    }
+
+    // Transform for UI
+    return _transformDrafts(rawDrafts);
+  }
+
+  // Archived lists (for Archive screen)
+  Future<List<Map<String, dynamic>>> listArchivedDraftsToDisplay({
+    required String currentUser,
+    required bool isAdmin,
+    required String adminUsername,
+  }) async {
+    List<Map<String, dynamic>> rawDrafts;
+
+    if (isAdmin) {
+      // Admin: sees all archived drafts
+      rawDrafts = await _dbHelper.getAllArchivedDrafts();
+    } else {
+      // Tech: sees his archived + admin's archived
+      final ownersToFetch = [currentUser, adminUsername];
+      rawDrafts = await _dbHelper.getArchivedDraftsByOwnersList(ownersToFetch);
+      final seenIds = <String>{};
+      rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+    }
+
+    return _transformDrafts(rawDrafts);
+  }
+
+  // Delete draft
+  Future<void> deleteDraft(String id) async {
+    await _dbHelper.deleteDraft(id);
+  }
+
+  // Save completed report
+  Future<int> saveReport(Map<String, dynamic> report) async {
+    return await _dbHelper.insertReport(report);
+  }
+
+  // Get all reports for current user
+  Future<List<Map<String, dynamic>>> getAllReports(String owner) async {
+    return await _dbHelper.getReportsByOwner(owner);
+  }
+
+  // Track images
+  Future<void> saveImageReference({
+    required String imagePath,
+    required String imageType,
+    String? draftId,
+    int? reportId,
+    String? description,
+    int? articleIndex,
+  }) async {
+    await _dbHelper.insertImage({
+      'report_id': reportId?.toString(),
+      'draft_id': draftId,
+      'image_type': imageType,
+      'image_path': imagePath,
+      'description': description,
+      'article_index': articleIndex,
+    });
+  }
+
+  // Get images for a draft
+  Future<List<Map<String, dynamic>>> getDraftImages(String draftId) async {
+    return await _dbHelper.getImagesByDraft(draftId);
+  }
+
+  // Get images for a report
+  Future<List<Map<String, dynamic>>> getReportImages(int reportId) async {
+    return await _dbHelper.getImagesByReport(reportId);
+  }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle, PlatformException;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:docx_template/docx_template.dart';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
 import 'package:signature/signature.dart';
@@ -11,12 +11,13 @@ import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'screens/login_page.dart';
 import 'screens/drafts_list_screen.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'services/storage_service.dart';
 import 'services/auth_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'widgets/io_image.dart';
@@ -24,13 +25,40 @@ import 'utils/save_file.dart';
 import 'package:versant_event/stubs/flutter_email_sender_stub.dart' if (dart.library.io) 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:printing/printing.dart';
 import 'screens/pdf_preview_screen.dart';
+import 'screens/firestore_demo_menu.dart';
 import 'dart:convert';
+import 'services/prefill_service.dart';
 import 'constants/app_colors.dart';
 import 'models/sub_photo_entry.dart';
 import 'widgets/sub_photo_dialog.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
+import 'services/database_helper.dart';
+import 'services/firebase_diag.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final databasesPath = await getDatabasesPath();
+  final dbPath = p.join(databasesPath, 'versant_event.db');
+  if (kDebugMode) {
+    print('================================================================');
+    print('🔍 SQLite DB File Expected Location: $dbPath');
+    print('================================================================');
+  }
+  // Initialize database
+   await DatabaseHelper.instance.database;
+
+  // ADD THIS: Print the database file path
+   try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    if (kDebugMode) print('✅ Firebase initialized');
+    if (kDebugMode) await FirebaseDiag.debugStatus();
+  } catch (e) {
+    print('Firebase initialization error: $e');
+  }
+
   final loggedIn = await AuthService.isLoggedIn();
   runApp(MaterialApp(
     home: loggedIn ? HomePage() : LoginScreen(),
@@ -40,6 +68,7 @@ void main() async {
 
 // HomePage
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -83,6 +112,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.pink[50],
+
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -90,7 +120,7 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: 10),
+                SizedBox(height: 60),
                 ShaderMask(
                   shaderCallback: (bounds) => LinearGradient(
                     colors: [roseVE, Color(0xFFFF6B9D)],
@@ -108,80 +138,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 100),
-
-                Text(
-                  'Rapports de Vérification',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-
                 SizedBox(height: 60),
-
-                Container(
-                  width: double.infinity,
-                  height: 150,
-                  child: Card(
-                    elevation: 8,
-                    shadowColor: roseVE.withOpacity(0.4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => FormToWordPage()),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [roseVE, Color(0xFFFF6B9D)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.add_circle_outline,
-                                size: 24,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Nouveau Rapport de Vérification',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 20),
-                Container(
+                SizedBox(
                   width: double.infinity,
                   height: 100,
                   child: Card(
@@ -251,6 +209,138 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
 
+                SizedBox(height: 40),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 150,
+                  child: Card(
+                    elevation: 8,
+                    shadowColor: roseVE.withOpacity(0.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => FormToWordPage()),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [roseVE, Color(0xFFFF6B9D)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.add_circle_outline,
+                                size: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Nouveau Rapport de Vérification',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 40),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 100,
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(color: roseVE.withOpacity(0.3), width: 2),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const FirestoreDemoMenu()),
+                        );
+                      },
+
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: roseVE.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.newspaper_outlined,
+                                size: 32,
+                                color: roseVE,
+                              ),
+                            ),
+                            SizedBox(width: 20),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Fiches Salon',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Créer et accéder aux fiches salon',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: roseVE.withOpacity(0.5),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 SizedBox(height: 60),
 
                 // Logout button
@@ -287,7 +377,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
 class FormToWordPage extends StatefulWidget {
+  const FormToWordPage({super.key});
+
   @override
   _FormToWordPageState createState() => _FormToWordPageState();
 }
@@ -295,7 +388,6 @@ class FormToWordPage extends StatefulWidget {
 class _FormToWordPageState extends State<FormToWordPage> {
   String _currentUsername = '';
   String _lastGeneratedDocPath = '';
-  // Keeps the path of the last generated PDF to attach/share it by email
   String _lastGeneratedPdfPath = '';
   int nbTableaux = 0;
 
@@ -304,7 +396,29 @@ class _FormToWordPageState extends State<FormToWordPage> {
       super.initState();
       AuthService.currentUsername().then((u) {
         if (mounted) setState(() => _currentUsername = u ?? '');
+        print('🔍 Current username: $_currentUsername');
       });
+
+      // Apply salon fiche prefill if available
+      final prefill = PrefillService.instance.takeSalonPrefill();
+      if (prefill != null) {
+        try {
+          _doName.text = (prefill['doName'] ?? '').toString();
+          _salonName.text = (prefill['salonName'] ?? '').toString();
+          _siteName.text = (prefill['siteName'] ?? '').toString();
+          // Note: controller is _siteAdress in this file
+          _siteAdress.text = (prefill['siteAddress'] ?? '').toString();
+          _dateMontage.text = (prefill['dateMontage'] ?? '').toString();
+          _dateEvnmt.text = (prefill['dateEvnmt'] ?? '').toString();
+          _catErpType.text = (prefill['catErpType'] ?? '').toString();
+          _effectifMax.text = (prefill['effectifMax'] ?? '').toString();
+          _orgaName.text = (prefill['orgaName'] ?? '').toString();
+          _installateurName.text = (prefill['installateurName'] ?? '').toString();
+          _exploitSiteName.text = (prefill['exploitSiteName'] ?? '').toString();
+        } catch (_) {
+          // Ignore mapping errors to avoid breaking the form
+        }
+      }
     }
 
   // Signature
@@ -318,6 +432,20 @@ class _FormToWordPageState extends State<FormToWordPage> {
   Uint8List? _lastGeneratedPdfBytes; // Web: keep generated PDF in memory for preview
 
   Map<int, String?> checkboxValues2 = {};
+
+    void _recomputeAvisFromVerifications() {
+      // Articles range 3 to 48 inclusive
+      bool anyNS = false;
+      for (int i = 3; i <= 48; i++) {
+        final v = checkboxValues2[i];
+        if (v == 'NS') {
+          anyNS = true;
+          break;
+        }
+      }
+      // If any NS -> Défavorable (false), else Favorable (true)
+      checkboxValues3[1] = anyNS ? false : true;
+    }
 
   final _formKey1 = GlobalKey<FormState>();
   final _formKey2 = GlobalKey<FormState>();
@@ -348,7 +476,9 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final _localAdress = TextEditingController(text: "12 rue des frères lumières Lumière 77290 MITRY MORY");
   final _localTel = TextEditingController(text: "01 46 38 58 71");
   final _localMail = TextEditingController(text: "contact@versantevenement.com");
-  final _doName = TextEditingController(text:"INFORMA MARKETS");
+  final _doName = TextEditingController();
+  //final _doName = TextEditingController(text:"REALNEWTECH");
+ // final _doName = TextEditingController(text:"INFORMA MARKETS");
   final _objMission = TextEditingController();
   final _pageNumber = TextEditingController();
   final _dateTransmission = TextEditingController();
@@ -356,39 +486,56 @@ class _FormToWordPageState extends State<FormToWordPage> {
   final _standName = TextEditingController();
   final _standHall = TextEditingController();
   final _standNb = TextEditingController();
-  final _salonName = TextEditingController(text: "FIE");
-  final _siteName = TextEditingController(text: "PORTE DE VERSAILLES");
-  final _siteAdress = TextEditingController(text: "1 Place de la porte de Versailles 75015 PARIS");
+ // final _salonName = TextEditingController(text: "FIE");
+ // final _salonName = TextEditingController(text: "RENT");
+  final _salonName = TextEditingController();
+//  final _siteName = TextEditingController(text: "PORTE DE VERSAILLES");
+ // final _siteAdress = TextEditingController(text: "1 Place de la porte de Versailles 75015 PARIS");
+  final _siteName = TextEditingController();
+  final _siteAdress = TextEditingController();
   final _standDscrptn = TextEditingController();
-  final _dateMontage = TextEditingController(text: "27/11/25 au 01/12/25");
-  final _dateEvnmt = TextEditingController(text: "02/12/25 au 04/12/25");
-  final _catErpType = TextEditingController(text: "T");
-  final _effectifMax = TextEditingController(text: "20000");
-  final _orgaName = TextEditingController(text: "INFORMA MARKETS");
+ // final _dateMontage = TextEditingController(text: "27/11/25 au 01/12/25");
+  //final _dateEvnmt = TextEditingController(text: "02/12/25 au 04/12/25");
+ // final _dateMontage = TextEditingController(text: "03/11/25 au 04/11/25");
+ // final _dateEvnmt = TextEditingController(text: "05/11/25 au 06/11/25");
+ // final _catErpType = TextEditingController(text: "T");
+  final _dateMontage = TextEditingController();
+  final _dateEvnmt = TextEditingController();
+  final _catErpType = TextEditingController();
+//  final _effectifMax = TextEditingController(text: "20000");
+ // final _orgaName = TextEditingController(text: "INFORMA MARKETS");
+ // final _effectifMax = TextEditingController(text: "10000");
+ // final _orgaName = TextEditingController(text: "REALNEWTECH");
+  final _effectifMax = TextEditingController();
+  final _orgaName = TextEditingController();
   final _installateurName = TextEditingController();
-  final _exploitSiteName = TextEditingController(text: "VIPARIS");
+  //final _exploitSiteName = TextEditingController(text: "VIPARIS");
+  final _exploitSiteName = TextEditingController();
   final _proprioMatosName = TextEditingController();
   final _nbStructures = TextEditingController();
   final _nbTableauxBesoin = TextEditingController();
   final _hauteur = TextEditingController();
-
-
+  
   // Per-gril controllers for independent values
-  List<TextEditingController> _hauteurCtrls = [];
-  List<TextEditingController> _ouvertureCtrls = [];
-  List<TextEditingController> _profondeurCtrls = [];
-  List<TextEditingController> _nbTowerCtrls = [];
-  List<TextEditingController> _nbPalansCtrls = [];
-  List<TextEditingController> _marqueModelPPCtrls = [];
-  List<TextEditingController> _rideauxEnseignesCtrls = [];
-  List<TextEditingController> _poidGrilTotalCtrls = [];
+  final List<TextEditingController> _hauteurCtrls = [];
+  final List<TextEditingController> _ouvertureCtrls = [];
+  final List<TextEditingController> _profondeurCtrls = [];
+  final List<TextEditingController> _nbTowerCtrls = [];
+  final List<TextEditingController> _nbPalansCtrls = [];
+  final List<TextEditingController> _marqueModelPPCtrls = [];
+  final List<TextEditingController> _rideauxEnseignesCtrls = [];
+  final List<TextEditingController> _poidGrilTotalCtrls = [];
 
   void _ensureGrilControllersLength(int count) {
     void grow(List<TextEditingController> list) {
-      while (list.length < count) list.add(TextEditingController());
+      while (list.length < count) {
+        list.add(TextEditingController());
+      }
       if (list.length > count) {
         // Dispose extra controllers
-        for (var c in list.sublist(count)) c.dispose();
+        for (var c in list.sublist(count)) {
+          c.dispose();
+        }
         list.removeRange(count, list.length);
       }
     }
@@ -491,7 +638,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
     12: null,
     13: null,
   };
+  Map<int, bool?> checkboxValues3 = {
+    1: null,
+    2: null,
 
+  };
   final _article3Response = TextEditingController();
   final _article3Obsrvt = TextEditingController();
   final _article3Photo = TextEditingController();
@@ -541,6 +692,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
   bool _draftApplied = false;
 
   Map<String, dynamic> _toDraftJson() {
+      // Auto-compute final "avis" based on verification articles 3..48
+      bool anyNS = false;
+      for (int i = 3; i <= 48; i++) {
+        if (checkboxValues2[i] == 'NS') { anyNS = true; break; }
+      }
+      checkboxValues3[1] = anyNS ? false : true;
     return {
       'title': _nosReferences.text,
       'owner': _currentUsername,
@@ -645,6 +802,18 @@ class _FormToWordPageState extends State<FormToWordPage> {
         '13': {
           'status': checkboxValues[13],
           'comment': _question3.text,
+        },
+      },
+
+      //avis
+      'avis': {
+        '1': {
+          'status': checkboxValues3[1],
+          'comment': _avisFav.text,
+        },
+        '2': {
+          'status': checkboxValues3[2],
+          'comment': _avisDefav.text,
         },
       },
 
@@ -851,6 +1020,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
       'doName': _doName.text,
       'objMission': _objMission.text,
       'salonName': _salonName.text,
+      // Added missing header fields to persist in draft
+      'siteName': _siteName.text,
+      'siteAdress': _siteAdress.text,
+      'dateMontage': _dateMontage.text,
+      'dateEvnmt': _dateEvnmt.text,
+      'catErpType': _catErpType.text,
+      'effectifMax': _effectifMax.text,
+      'orgaName': _orgaName.text,
+      'exploitSiteName': _exploitSiteName.text,
 
       'installateurName': _installateurName.text,
       'proprioMatosName': _proprioMatosName.text,
@@ -929,73 +1107,21 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
       }
     }
-
-    /*
-    // Tableau des vérifications (3, 5, 6: status string S/NS/SO + observation)
-    final verif = json['verifications'];
-    if (verif is Map) {
-      for (final k in ['3','5','6', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21'
-                      , '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '36', '37', '38', '39', '45', '47', '48' ]) {
-        final item = verif[k];
+    final avisdoc = json['avis'];
+    if (docs is Map) {
+      for (final k in ['1','2' ]) {
+        final item = avisdoc[k];
         if (item is Map) {
-          checkboxValues2[int.parse(k)] = (item['status'] as String?);
-          final obs = (item['obs'] ?? '') as String;
-          // Restore photoPath for selected articles (3,5,6)
-          final photoPath = (item['photoPath'] ?? '') as String;
-          if (photoPath.isNotEmpty && ['3','5','6', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21'
-            , '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '36', '37', '38', '39', '45', '47', '48'].contains(k)) {
-            final idx = int.parse(k);
-            _articlePhotos[idx] = SubPhotoEntry(
-              number: '0',
-              description: obs.isNotEmpty ? obs : 'Article $k',
-              imagePath: photoPath,
-            );
-          }
+          checkboxValues3[int.parse(k)] = item['status'] as bool?;
+          final comment = (item['comment'] ?? '') as String;
           switch (k) {
-            case '3': _article3Obsrvt.text = obs; break;
-            case '5': _article5Obsrvt.text = obs; break;
-            case '6': _article6Obsrvt.text = obs; break;
-            case '7': _article7Obsrvt.text = obs; break;
-            case '9': _article9Obsrvt.text = obs; break;
-            case '10': _article10Obsrvt.text = obs; break;
-            case '11': _article11Obsrvt.text = obs; break;
-            case '12': _article12Obsrvt.text = obs; break;
-            case '13': _article13Obsrvt.text = obs; break;
-            case '14': _article14Obsrvt.text = obs; break;
-            case '15': _article15Obsrvt.text = obs; break;
-            case '16': _article16Obsrvt.text = obs; break;
-            case '17': _article17Obsrvt.text = obs; break;
-            case '18': _article18Obsrvt.text = obs; break;
-            case '19': _article19Obsrvt.text = obs; break;
-            case '20': _article20Obsrvt.text = obs; break;
-            case '21': _article21Obsrvt.text = obs; break;
-            case '22': _article22Obsrvt.text = obs; break;
-            case '23': _article23Obsrvt.text = obs; break;
-            case '24': _article24Obsrvt.text = obs; break;
-            case '25': _article25Obsrvt.text = obs; break;
-            case '26': _article26Obsrvt.text = obs; break;
-            case '27': _article27Obsrvt.text = obs; break;
-            case '28': _article28Obsrvt.text = obs; break;
-            case '29': _article29Obsrvt.text = obs; break;
-            case '30': _article30Obsrvt.text = obs; break;
-            case '31': _article31bsrvt.text = obs; break;
-            case '32': _article32bsrvt.text = obs; break;
-            case '33': _article33bsrvt.text = obs; break;
-            case '34': _article34bsrvt.text = obs; break;
-            case '36': _article36bsrvt.text = obs; break;
-            case '37': _article37bsrvt.text = obs; break;
-            case '38': _article38bsrvt.text = obs; break;
-            case '39': _article39bsrvt.text = obs; break;
-            case '45': _article45bsrvt.text = obs; break;
-            case '47': _article47bsrvt.text = obs; break;
-            case '48': _article48bsrvt.text = obs; break;
-
-          }
+            case '1': _avisFav.text = comment; break;
+            case '2': _avisDefav.text = comment; break;
+           }
         }
       }
     }
-
-     */
+     
     final verif = json['verifications'];
     if (verif is Map) {
       for (final k in ['3','5','6', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21',
@@ -1075,7 +1201,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
     }
     }
 
-
     // Restore signature from base64 if present
     final sigB64 = json['signaturePng'];
     if (sigB64 is String && sigB64.isNotEmpty) {
@@ -1096,6 +1221,17 @@ class _FormToWordPageState extends State<FormToWordPage> {
     _localMail.text= (json['localMail'] ?? '') as String;
     _doName.text= (json['doName'] ?? '') as String;
     _salonName.text= (json['salonName'] ?? '') as String;
+
+    // Restore added header fields (supporting both siteAdress/siteAddress)
+    _siteName.text = (json['siteName'] ?? '') as String;
+    _siteAdress.text = (json['siteAdress'] ?? json['siteAddress'] ?? '') as String;
+    _dateMontage.text = (json['dateMontage'] ?? '') as String;
+    _dateEvnmt.text = (json['dateEvnmt'] ?? '') as String;
+    _catErpType.text = (json['catErpType'] ?? '') as String;
+    _effectifMax.text = (json['effectifMax'] ?? '') as String;
+    _orgaName.text = (json['orgaName'] ?? '') as String;
+    _exploitSiteName.text = (json['exploitSiteName'] ?? '') as String;
+
     _mailStand.text= (json['mailClient'] ?? '') as String;
     _standDscrptn.text= (json['dscrptnSommaire'] ?? '') as String;
 
@@ -1231,14 +1367,30 @@ class _FormToWordPageState extends State<FormToWordPage> {
     _poidGrilTotal.dispose();
 
     // Dispose per-gril controllers
-    for (final c in _hauteurCtrls) c.dispose();
-    for (final c in _ouvertureCtrls) c.dispose();
-    for (final c in _profondeurCtrls) c.dispose();
-    for (final c in _nbTowerCtrls) c.dispose();
-    for (final c in _nbPalansCtrls) c.dispose();
-    for (final c in _marqueModelPPCtrls) c.dispose();
-    for (final c in _rideauxEnseignesCtrls) c.dispose();
-    for (final c in _poidGrilTotalCtrls) c.dispose();
+    for (final c in _hauteurCtrls) {
+      c.dispose();
+    }
+    for (final c in _ouvertureCtrls) {
+      c.dispose();
+    }
+    for (final c in _profondeurCtrls) {
+      c.dispose();
+    }
+    for (final c in _nbTowerCtrls) {
+      c.dispose();
+    }
+    for (final c in _nbPalansCtrls) {
+      c.dispose();
+    }
+    for (final c in _marqueModelPPCtrls) {
+      c.dispose();
+    }
+    for (final c in _rideauxEnseignesCtrls) {
+      c.dispose();
+    }
+    for (final c in _poidGrilTotalCtrls) {
+      c.dispose();
+    }
 
     _windSpeed.dispose();
     _docConsultName.dispose();
@@ -1343,9 +1495,9 @@ class _FormToWordPageState extends State<FormToWordPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_draftApplied) return;
-    final __args = ModalRoute.of(context)?.settings.arguments;
-    if (__args is Map && __args['draftId'] != null) {
-      _draftId = __args['draftId'] as String?;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args['draftId'] != null) {
+      _draftId = args['draftId'] as String?;
       final storage = StorageService();
       storage.loadDraft(_draftId!).then((json) {
         if (json != null && mounted) {
@@ -1360,18 +1512,114 @@ class _FormToWordPageState extends State<FormToWordPage> {
     }
   }
 
-  Future<void> _saveDraft() async {
+ 
+  Future<void> _saveDraftToDatabase() async {
     final storage = StorageService();
-    final id = await storage.saveDraft(_toDraftJson(), id: _draftId);
-    if (mounted) {
-      setState(() {
-        _draftId = id;
-      });
+    final data = _toDraftJson();
+
+    // 1. Get the current user's username (owner ID)
+    final owner = await AuthService.currentUsername();
+
+    if (owner == null) {
+      // Handle error if user is not logged in
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fiche sauvegardée')),
+        SnackBar(content: Text('Erreur: Utilisateur non connecté')),
       );
+      return;
+    }
+
+    // 2. Pass the owner to the saveDraft method
+    _draftId = await storage.saveDraft(data, id: _draftId, owner: owner); // <-- CRITICAL FIX
+
+    if (!mounted) return;
+
+  }
+
+// Save image reference when picking a photo
+  Future<void> _saveImageWithTracking(String imagePath, String type) async {
+    final storage = StorageService();
+
+    await storage.saveImageReference(
+      imagePath: imagePath,
+      imageType: type,
+      draftId: _draftId,
+      description: 'Building photo',
+    );
+  }
+
+// Load draft with images
+  Future<void> _loadDraftWithImages(String draftId) async {
+    final storage = StorageService();
+
+    final draftData = await storage.loadDraft(draftId);
+    if (draftData != null) {
+      _loadFromDraftJson(draftData);
+
+      // Load associated images
+      final images = await storage.getDraftImages(draftId);
+      for (var img in images) {
+        print('Image: ${img['image_path']} - ${img['image_type']}');
+      }
     }
   }
+
+
+  Future<void> _saveDraft() async {
+    final storage = StorageService();
+    final data = _toDraftJson();
+
+    // 1. Get the current user's username (owner ID)
+    final owner = await AuthService.currentUsername();
+
+    // Ensure owner is available before saving
+    if (owner == null) {
+
+      return;
+    }
+
+    try {
+      // 2. Pass the required 'owner' argument
+      _draftId = await storage.saveDraft(
+          data,
+          id: _draftId,
+          owner: owner // <-- CRITICAL FIX: Pass the owner here
+      );
+
+
+    } catch (e) {
+      print('❌ Error saving draft: $e');
+
+
+
+
+
+
+    }
+  }
+
+  /*Future<void> _saveDraft() async {
+    final storage = StorageService();
+    final data = _toDraftJson();
+
+    try {
+      _draftId = await storage.saveDraft(data, id: _draftId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('✅ Fiche sauvegardée dans la base de données')),
+        );
+      }
+    } catch (e) {
+      print('❌ Error saving draft: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Erreur: $e')),
+        );
+      }
+    }
+  }
+
+   */
 
   void _goToNextPage() {
     if (_formKey1.currentState!.validate()) {
@@ -2154,15 +2402,28 @@ class _FormToWordPageState extends State<FormToWordPage> {
         final PdfColor rose = PdfColor.fromInt(0xFF008D); // #FF008D
         final PdfColor grisClair = PdfColors.grey300;
         final PdfColor grisTexte = PdfColors.grey700;
-        final logoBytes = await rootBundle.load('assets/logo.png');
+     //   final logoBytes = await rootBundle.load('assets/logo.png');
+        final logoBytes = await rootBundle.load('assets/logoVE.png');
         final logoBytes2 = await rootBundle.load('assets/footer.png');
         final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
         final footerImage = pw.MemoryImage(logoBytes2.buffer.asUint8List());
 
-        final pdf = pw.Document();
+        // Load fonts that support the Euro symbol (€) and other extended glyphs
+        final baseFont = await PdfGoogleFonts.notoSansRegular();
+        final boldFont = await PdfGoogleFonts.notoSansBold();
+        final italicFont = await PdfGoogleFonts.notoSansItalic();
+        final boldItalicFont = await PdfGoogleFonts.notoSansBoldItalic();
+        final pdfTheme = pw.ThemeData.withFont(
+          base: baseFont,
+          bold: boldFont,
+          italic: italicFont,
+          boldItalic: boldItalicFont,
+        );
+
+        final pdf = pw.Document(theme: pdfTheme);
         final dateStr = DateFormat('dd_MM_yyyy_HH_mm').format(DateTime.now());
         final ref = _nosReferences.text.trim();
-
+/*
         pw.Widget buildHeader(pw.Context context) {
           return pw.Container(
             child: pw.Row(
@@ -2178,6 +2439,60 @@ class _FormToWordPageState extends State<FormToWordPage> {
           );
         }
 
+ */
+        pw.Widget buildHeader(pw.Context context) {
+
+          return pw.Container(
+            padding: pw.EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                // Left side: Versant Event Logo
+                pw.Image(
+                  logoImage,
+                  width: 200, // Reduced for cohesion with footer
+                  height: 85,
+                  fit: pw.BoxFit.contain,
+                ),
+                // Right side: Event Rigging Information
+                pw.Column(
+                  mainAxisSize: pw.MainAxisSize.min,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      'EVENEMENT',
+                      style: pw.TextStyle(
+                        color: const PdfColor.fromInt(0xFFFF008D), // brand pink
+                        fontSize: 13,
+                        fontWeight: pw.FontWeight.bold,
+                    //    letterSpacing: 1,
+                      ),
+                    ),
+                    pw.Text(
+                      'RIGGING',
+                      style: pw.TextStyle(
+                        color: const PdfColor.fromInt(0xFFFF008D),
+                        fontSize: 13,
+
+                        fontWeight: pw.FontWeight.bold,
+                      //  letterSpacing: 1,
+                      ),
+                    ),
+                     pw.Text(
+                      'contact@versantevenement.com',
+                      style: pw.TextStyle(
+                        color: PdfColors.grey700,
+                        fontSize: 8,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+/*
         pw.Widget buildFooter(pw.Context context) {
           return pw.Container(
             padding: const pw.EdgeInsets.only(top: 8),
@@ -2196,6 +2511,103 @@ class _FormToWordPageState extends State<FormToWordPage> {
             ),
           );
         }
+
+ */pw.Widget buildFooter(pw.Context context) {
+          const rose = PdfColor.fromInt(0xFFFF008D);
+          const grisTexte = PdfColors.grey700;
+
+          return pw.Container(
+            padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                // Title line with short pink bars on each side
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Container(
+                      width: 30,
+                      height: 1.5,
+                      color: rose,
+                    ),
+                    pw.SizedBox(width: 6),
+                    pw.Expanded(
+                      flex: 0,
+                      child: pw.Text(
+                        'ELINGAGE DES SALONS, PONTS ET LUMIÈRE, LEVAGE, ÉTUDES ET PLANS DE STANDS, '
+                            'TRACAGE ROBOTISÉ, FLUIDES',
+                        style: pw.TextStyle(
+                          color: rose,
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 8,
+                          letterSpacing: 0.2,
+                        ),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                    ),
+                    pw.SizedBox(width: 6),
+                    pw.Container(
+                      width: 30,
+                      height: 1.5,
+                      color: rose,
+                    ),
+                  ],
+                ),
+
+                pw.SizedBox(height: 4),
+
+                // Contact information (gray text)
+                pw.Text(
+                  'Porte de Versailles : (+33)1 46 38 58 71  -  Paris nord villepinte : (+33)1 48 63 32 51  -  '
+                      'Lille Grand Palais / Bordeaux : (+33)1 48 63 32 51',
+                  style: pw.TextStyle(color: grisTexte, fontSize: 7),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 1.5),
+
+                pw.Text(
+                  '12 rue des frères Lumière, 77290 Mitry-Mory, contact@versantevenement.com',
+                  style: pw.TextStyle(color: grisTexte, fontSize: 7),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 1.5),
+
+                pw.Text(
+                  'SASU au capital de 471 629.00 €  -  RCS Meaux B 922 659 081  -  APE 9002 Z',
+                  style: pw.TextStyle(color: grisTexte, fontSize: 7),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 1.5),
+
+                pw.Text(
+                  'SIRET : 922 659 081 00017  -  TVA intra : FR 94 922 659 081',
+                  style: pw.TextStyle(color: grisTexte, fontSize: 7),
+                  textAlign: pw.TextAlign.center,
+                ),
+
+                pw.SizedBox(height: 4),
+// Grey bar background
+                pw.Positioned(
+                  left: 36, // left pink bar width + spacing
+                  right: 36, // right pink bar width + spacing
+                  top: 0,
+                  bottom: 0,
+                  child: pw.Container(
+                    height: 1,
+                    color: grisTexte, // same grey as text
+                  ),
+                ),
+                // Page number
+                pw.Text(
+                  'Page ${context.pageNumber} sur ${context.pagesCount}',
+                  style: pw.TextStyle(fontSize: 7, color: grisTexte),
+                ),
+              ],
+            ),
+          );
+        }
+
 
         pw.Widget keyValueRow(String key, String value) {
           return pw.Container(
@@ -2241,6 +2653,83 @@ class _FormToWordPageState extends State<FormToWordPage> {
             ],
           );
         }
+        pw.TableRow keyValueTableRow2(
+            String title,
+            String key,
+            String value,
+            String key2,
+            String value2,
+            String key3,
+            String value3,
+            ) {
+          return pw.TableRow(
+            children: [
+              // Left column: title
+              pw.Container(
+                padding: const pw.EdgeInsets.all(6),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey300,
+                  border: pw.Border(
+                    right: pw.BorderSide(color: PdfColors.grey700, width: 1.2),
+                  ),
+                ),
+                child: pw.Text(
+                  title,
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              // Right column: Hall + Numéro on same line
+              pw.Container(
+                padding: const pw.EdgeInsets.all(6),
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    // Hall
+                    pw.Text(
+                      '$key: ',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      '$value   ', // a few spaces for visual separation
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+
+                    // Numéro
+                    pw.Text(
+                      '$key2: ',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      '$value2   ',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      '$key3: ',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      '$value3   ', // a few spaces for visual separation
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
 
         pw.Widget infoTablePage(pw.Context pdfContext, {int? totalPagesOverride}) {
           return pw.Column(children: [
@@ -2271,8 +2760,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   0: const pw.FixedColumnWidth(100),
                   1: const pw.FixedColumnWidth(200),
                 },
+                /*
                 border: pw.TableBorder(
                   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                ),
+
+                 */
+                border: pw.TableBorder.all(
+                  //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  color: PdfColors.black,
+                  width: 1,
                 ),
                  children: [
                   keyValueTableRow('Technicien compétent', _techName.text.trim()),
@@ -2280,7 +2777,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   keyValueTableRow('Téléphone', _localTel.text.trim()),
                   keyValueTableRow('Mail', _localMail.text.trim()),
                   keyValueTableRow("Donneur d'ordres", _doName.text.trim()),
-                  keyValueTableRow('Objet de la mission', _objMission.text.trim()),
+                  keyValueTableRow('Objet de la mission\n\n\n', _objMission.text.trim()),
                   keyValueTableRow('Nombre de pages',   (totalPagesOverride != null && totalPagesOverride > 0)
                       ? totalPagesOverride.toString()
                       : (pdfContext.pagesCount > 0 ? pdfContext.pagesCount.toString() : '-')), 
@@ -2297,19 +2794,19 @@ class _FormToWordPageState extends State<FormToWordPage> {
             pw.SizedBox(height: 20),
             pw.Text(
               "Les dispositions légales du code de la construction et de l'habitation imposent aux structures provisoires et démontables qu'elles soient conçues et dimensionnées "
-                  "de sorte qu'elles résistent durablement à l\'effet combiné de leur propre poids, des charges climatiques extrêmes et des surcharges d'exploitation correspondant à leur usage normal (article L. 131-1). "
-                  "L\'arrêté du 25 juillet 2022 modifié permet prioritairement de répondre à cet objectif général de solidité et de stabilité des "
+                  "de sorte qu'elles résistent durablement à l'effet combiné de leur propre poids, des charges climatiques extrêmes et des surcharges d'exploitation correspondant à leur usage normal (article L. 131-1). "
+                  "L'arrêté du 25 juillet 2022 modifié permet prioritairement de répondre à cet objectif général de solidité et de stabilité des "
                   "structures. D'autres sujets connexes complètent l'arrêté et contribuent á la sécurité des personnes sans impacter la solidité et "
                   "la stabilité des structures. "
-                  "\n\nL\'avis final de l\'organisme accrédité ou du technicien compétent porte sur toutes les dispositions de l\'arrêté listées dans "
-                  "le tableau de vérification qui doit être joint au rapport. Toutefois, certaines dispositions à l\'exception de celles portant sur la solidité et la stabilité de "
-                  "la structure peuvent être notées « hors missions » (HM) en accord avec l\'organisateur. Dans ce cas, l\'avis final sera complété par une observation à destination "
-                  "de l\'organisateur permettant de préciser le périmètre de l\'avis favorable. \n"
+                  "\n\nL'avis final de l'organisme accrédité ou du technicien compétent porte sur toutes les dispositions de l'arrêté listées dans "
+                  "le tableau de vérification qui doit être joint au rapport. Toutefois, certaines dispositions à l'exception de celles portant sur la solidité et la stabilité de "
+                  "la structure peuvent être notées « hors missions » (HM) en accord avec l'organisateur. Dans ce cas, l'avis final sera complété par une observation à destination "
+                  "de l'organisateur permettant de préciser le périmètre de l'avis favorable. \n"
                   "\n\nNos observations décrivent les écarts constatés par rapport aux référentiels indiqués dans le tableau des vérifications. Des recommandations sur les suites à "
                   "donner peuvent y être associées, cependant, le choix de la solution définitive vous appartient."
-                  "\n\nD\'autre part, l\'absence d\'observation signifie que, lors de notre passage, l\'installation ou l\'équipement ne présentait pas d\'anomalie en rapport avec l\'objet de la mission. "
-                  "Bien entendu, si une vérification n\'a pas pu être effectuée, cette information est mentionnée et justifiée."
-                  "\n\nD\'une façon générale, les observations et résultats figurant dans ce rapport sont exprimés selon les informations recueillies, les conditions de vérification et les constats "
+                  "\n\nD'autre part, l'absence d'observation signifie que, lors de notre passage, l'installation ou l'équipement ne présentait pas d'anomalie en rapport avec l'objet de la mission. "
+                  "Bien entendu, si une vérification n'a pas pu être effectuée, cette information est mentionnée et justifiée."
+                  "\n\nD'une façon générale, les observations et résultats figurant dans ce rapport sont exprimés selon les informations recueillies, les conditions de vérification et les constats "
                   "réalisés à la date de notre intervention. Notre inspection est figée par un reportage photographique horodaté.",
 
               style: const pw.TextStyle(fontSize: 9),
@@ -2330,11 +2827,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
         pw.Widget referentielPage() {
           List<String> regles = [
-            "Articles L.131-1 et L.134-12 du code de la construction et de l\'habitation qui fixent des objectifs généraux de solidité, de stabilité et de protection contre les chutes de hauteur des structures provisoires et démontables.",
+            "Articles L.131-1 et L.134-12 du code de la construction et de l'habitation qui fixent des objectifs généraux de solidité, de stabilité et de protection contre les chutes de hauteur des structures provisoires et démontables.",
             "Arrêté du 25 juillet 2022 fixant les règles de sécurité et les dispositions techniques applicables aux structures provisoires et démontables.",
-            "Arrêté du 30 octobre 2023 modifiant l\'arrêté du 25 juin 1980 portant approbation des dispositions générales du règlement de sécurité contre les risques d\'incendie et de panique dans les établissements recevant du public.",
-            "Arrêté du 4 décembre 2023 modifiant l\'arrêté du 25 juillet 2022 fixant les règles de sécurité et les dispositions techniques applicables aux structures provisoires et démontables",
-            "Arrêté du 25 juin 1980 modifié \-règlement de sécurité contre les risques d\'incendie et de panique dans les ERP",
+            "Arrêté du 30 octobre 2023 modifiant l'arrêté du 25 juin 1980 portant approbation des dispositions générales du règlement de sécurité contre les risques d'incendie et de panique dans les établissements recevant du public.",
+            "Arrêté du 4 décembre 2023 modifiant l'arrêté du 25 juillet 2022 fixant les règles de sécurité et les dispositions techniques applicables aux structures provisoires et démontables",
+            "Arrêté du 25 juin 1980 modifié -règlement de sécurité contre les risques d'incendie et de panique dans les ERP",
             "Arrêter du 1er mars 2004 relatif aux vérifications des appareils et accessoires de levage.",
           ];
           List<String> normatifV = [
@@ -2349,7 +2846,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             "Norme NF-P 90.500 et NF EN 13200-6 pour les tribunes démontables",
           ];
           List<String> normatifF2 = [
-            "NF EN 17795-5 Opérations de levage et de mouvement dans l\'industrie de l\'événementiel",
+            "NF EN 17795-5 Opérations de levage et de mouvement dans l'industrie de l'événementiel",
             "NF EN 17115 Conception et fabrication de poutres en aluminium et acier",
             "NF EN 14492-2 Appareils de levage à charge suspendue - treuils et palans motorisés",
 
@@ -2359,7 +2856,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           ];
           List<String> normatifF3 = [
             "Les notices techniques des fabricants de matériels",
-            "Memento de l\'élingueur (INRS)",
+            "Memento de l'élingueur (INRS)",
           ];
           List<String> normatifV4 = [
             "Recommandation R408",
@@ -2367,7 +2864,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           ];
           List<String> normatifF4 = [
             "Guide de Travail - Grues et appareils de levage de Michel Munoz",
-            "Guide pratique du ministère de l\'intérieur",
+            "Guide pratique du ministère de l'intérieur",
           ];
           return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
             pw.Center(child: pw.Text('RÉFÉRENTIELS', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))),
@@ -2441,7 +2938,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
         pw.Widget renseignements() {
           return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
             pw.Center(child: pw.Text('RENSEIGNEMENTS CONCERNANT L\'ÉVÈNEMENT', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))),
-            pw.SizedBox(height: 10),
+            pw.SizedBox(height: 5),
 
             pw.Container(
               decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey700, width: 2)),
@@ -2450,13 +2947,21 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   0: const pw.FixedColumnWidth(100),
                   1: const pw.FixedColumnWidth(200),
                 },
+                /*
                 border: pw.TableBorder(
                   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                ),
+
+                 */
+                border: pw.TableBorder.all(
+                  //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  color: PdfColors.black,
+                  width: 1,
                 ),
                 children: [
                   keyValueTableRow('Nom', _salonName.text.trim()),
                   keyValueTableRow('Site', _siteName.text.trim()),
-                  keyValueTableRow('Stand', _standHall.text.trim() ),//_standNb.text.trim()
+                  keyValueTableRow2('Stand','Nom', _standName.text.trim(), 'Hall', _standHall.text.trim(), 'Numéro',_standNb.text.trim() ),//_standNb.text.trim()
                   keyValueTableRow('Adresse', _siteAdress.text.trim()),
                   keyValueTableRow("Description Sommaire", _standDscrptn.text.trim()),
                   keyValueTableRow('Date du montage', _dateMontage.text.trim()),
@@ -2469,7 +2974,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             pw.SizedBox(height: 10),
 
             pw.Center(child: pw.Text('RENSEIGNEMENTS CONCERNANT LES INTERVENANTS', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))),
-          pw.SizedBox(height: 10),
+          pw.SizedBox(height: 5),
 
           pw.Container(
           decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey700, width: 2)),
@@ -2478,9 +2983,17 @@ class _FormToWordPageState extends State<FormToWordPage> {
           0: const pw.FixedColumnWidth(100),
           1: const pw.FixedColumnWidth(200),
           },
+            /*
           border: pw.TableBorder(
           horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
           ),
+
+             */
+            border: pw.TableBorder.all(
+              //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+              color: PdfColors.black,
+              width: 1,
+            ),
           children: [
           keyValueTableRow('Organisateur', _orgaName.text.trim()),
           keyValueTableRow('Installateur', _installateurName.text.trim()),
@@ -2492,7 +3005,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             pw.SizedBox(height: 10),
 
             pw.Center(child: pw.Text('RENSEIGNEMENTS CONCERNANT L\'ENSEMBLE DÉMONTABLE', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold))),
-            pw.SizedBox(height: 20),
+            pw.SizedBox(height: 5),
 
             pw.Container(
               decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey700, width: 2)),
@@ -2501,8 +3014,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   0: const pw.FixedColumnWidth(100),
                   1: const pw.FixedColumnWidth(200),
                 },
+                /*
                 border: pw.TableBorder(
                   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                ),
+
+                 */
+                border: pw.TableBorder.all(
+                  //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  color: PdfColors.black,
+                  width: 1,
                 ),
                 children: [
                   pw.TableRow(
@@ -2553,8 +3074,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   0: const pw.FixedColumnWidth(100),
                   1: const pw.FixedColumnWidth(200),
                 },
+                /*
                 border: pw.TableBorder(
                   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                ),
+
+                 */
+                border: pw.TableBorder.all(
+                  //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  color: PdfColors.black,
+                  width: 1,
                 ),
                 children: [
                   pw.TableRow(
@@ -2604,8 +3133,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     0: const pw.FixedColumnWidth(100),
                     1: const pw.FixedColumnWidth(200),
                   },
+                  /*
                   border: pw.TableBorder(
                     horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  ),
+
+                   */
+                  border: pw.TableBorder.all(
+                    //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                    color: PdfColors.black,
+                    width: 1,
                   ),
                   children: [
                     pw.TableRow(
@@ -2655,8 +3192,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   0: const pw.FixedColumnWidth(100),
                   1: const pw.FixedColumnWidth(200),
                 },
+                /*
                 border: pw.TableBorder(
                   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                ),
+
+                 */
+                border: pw.TableBorder.all(
+                  //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  color: PdfColors.black,
+                  width: 1,
                 ),
                 children: [
                   pw.TableRow(
@@ -2702,8 +3247,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   0: const pw.FixedColumnWidth(200),
                   1: const pw.FixedColumnWidth(100),
                 },
+                /*
                 border: pw.TableBorder(
                   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                ),
+
+                 */
+                border: pw.TableBorder.all(
+                  //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  color: PdfColors.black,
+                  width: 1,
                 ),
                 children: [
                   keyValueTableRow('La vitesse du vent en exploitation est limitée à', _windSpeed.text.trim()),
@@ -2714,7 +3267,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
 
 // Helper pour créer une ligne de document
-        pw.TableRow _buildDocRow(String documentName, bool? isChecked) {
+        pw.TableRow buildDocRow(String documentName, bool? isChecked) {
           return pw.TableRow(
             children: [
               pw.Container(
@@ -2768,7 +3321,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   },
                   border: pw.TableBorder.all(
                     color: PdfColors.black,
-                    width: 2,
+                    width: 1,
                   ),
                   children: [
                     // Header row
@@ -2813,19 +3366,19 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     ),
 
                     // Data rows
-                    _buildDocRow('La notice technique du fabricant', checkboxValues[1]),
-                    _buildDocRow('Plans de détail et de principe', checkboxValues[2]),
-                    _buildDocRow('Notes de calculs', checkboxValues[3]),
-                    _buildDocRow('Abaques de charges', checkboxValues[4]),
-                    _buildDocRow('Avis technique sur modèle', checkboxValues[5]),
-                    _buildDocRow('Avis sur dossier technique', checkboxValues[6]),
-                    _buildDocRow('Étude de sol et capacité portante', checkboxValues[7]),
-                    _buildDocRow('Avis de solidité', checkboxValues[8]),
-                    _buildDocRow('Capacité portante du sol', checkboxValues[9]),
-                    _buildDocRow('PV de classement au feu', checkboxValues[10]),
-                    _buildDocRow('Attestation de bon montage', checkboxValues[11]),
-                    _buildDocRow('Dossier de sécurité', checkboxValues[12]),
-                    _buildDocRow('VGP des palans', checkboxValues[13]),
+                    buildDocRow('La notice technique du fabricant', checkboxValues[1]),
+                    buildDocRow('Les plans pans de détail de l\'ensemble démontable', checkboxValues[2]),
+                    buildDocRow('Les notes de calculs', checkboxValues[3]),
+                    buildDocRow('Les abaques de charges', checkboxValues[4]),
+                    buildDocRow('L\'avis sur modèle', checkboxValues[5]),
+                    buildDocRow('L\'avis sur dossier technique', checkboxValues[6]),
+                    buildDocRow('L\'étude de sol', checkboxValues[7]),
+                    buildDocRow('Un avis de solidité (antérieur a la parution de l\'arrêté)', checkboxValues[8]),
+                    buildDocRow('La capacité portante de la charpente', checkboxValues[9]),
+                    buildDocRow('Les PV de classement au feu des matériaux utilisés', checkboxValues[10]),
+                    buildDocRow('L\'attestation de bon montage', checkboxValues[11]),
+                    buildDocRow('Le dossier de sécurité de l\'évènement', checkboxValues[12]),
+                    buildDocRow('VGP des palans', checkboxValues[13]),
                   ],
                 ),
               ),
@@ -2833,7 +3386,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           );
         }
 
-        pw.TableRow _buildCatRow(String label, String valueForOs2) {
+        pw.TableRow buildCatRow(String label, String valueForOs2) {
           pw.Widget emptyCell() => pw.Container(
                 padding: pw.EdgeInsets.all(8),
                 alignment: pw.Alignment.center,
@@ -2844,10 +3397,18 @@ class _FormToWordPageState extends State<FormToWordPage> {
             children: [
               // Label column (Catégorie)
               pw.Container(
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey300,
+                ),
                 padding: pw.EdgeInsets.all(8),
                 child: pw.Text(
                   label,
-                  style: pw.TextStyle(fontSize: 9),
+                  //style: pw.TextStyle(fontSize: 9),
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+
                 ),
               ),
               emptyCell(),// OP1
@@ -2887,7 +3448,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 child: pw.Table(
                   columnWidths: {
-                    0: const pw.FlexColumnWidth(60),  // Colonne large pour les documents
+                    0: const pw.FixedColumnWidth(70),  // Colonne large pour les documents
                     1: const pw.FixedColumnWidth(60), // Colonne OUI
                     2: const pw.FixedColumnWidth(60), // Colonne NON
                     3: const pw.FixedColumnWidth(60), // Colonne NON
@@ -2897,7 +3458,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   },
                   border: pw.TableBorder.all(
                     color: PdfColors.black,
-                    width: 2,
+                    width: 1,
                   ),
                   children: [
                     // Header row
@@ -2985,7 +3546,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                       ],
                     ),
                     // Data rows
-                    _buildCatRow('Nombre', _nbStructures.text.trim()),
+                    buildCatRow('Nombre', _nbStructures.text.trim()),
                    ],
                 ),
               ),
@@ -3019,7 +3580,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           );
         }
 
-        pw.TableRow _buildVerifRow(String article, String pointExaminer, String observations, String noteObs) {
+        pw.TableRow buildVerifRow(String article, String pointExaminer, String observations, String noteObs) {
           // noteObs is expected to be one of: 'S', 'NS', 'SO', 'HM'. We mark the matching column with 'X'.
           String norm(String? v) => (v ?? '').trim().toUpperCase();
           final n = norm(noteObs);
@@ -3072,7 +3633,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
         // Split a long observations text into chunks to ensure no single table row grows beyond a page height.
         // Also handles very long strings without spaces by hard-splitting them.
-        List<String> _splitIntoChunks(String text, {int maxChars = 60}) {
+        List<String> splitIntoChunks(String text, {int maxChars = 60}) {
           final t = (text ?? '').trim();
           if (t.isEmpty) return [''];
           if (t.length <= maxChars) return [t];
@@ -3120,13 +3681,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
           return chunks;
         }
         // Articles pour lesquels la case HM doit être remplie en noir par défaut
-        final Set<String> _hmBlackArticles = {
+        final Set<String> hmBlackArticles = {
          '3', '5', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23',
           '26', '28', '32', '36','37','38','39','45', '47','48',
         };
 
         // Build one or more table rows for a verification entry, splitting long observations
-        List<pw.TableRow> _buildVerifRows(String article, String pointExaminer, String observations, String noteObs) {
+        List<pw.TableRow> buildVerifRows(String article, String pointExaminer, String observations, String noteObs) {
           String norm(String? v) => (v ?? '').trim().toUpperCase();
           final n = norm(noteObs);
 
@@ -3136,7 +3697,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             child: enabled && n == code ? pw.Text('X', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)) : pw.SizedBox(),
           );
 
-          final chunks = _splitIntoChunks(observations, maxChars: 600);
+          final chunks = splitIntoChunks(observations, maxChars: 600);
           final rows = <pw.TableRow>[];
 
           for (var i = 0; i < chunks.length; i++) {
@@ -3169,9 +3730,9 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   statusCell('S', enabled: isFirst),
                   statusCell('NS', enabled: isFirst),
                   statusCell('SO', enabled: isFirst),
-                  _hmBlackArticles.contains(article) && isFirst
+                  hmBlackArticles.contains(article) && isFirst
                       ? pw.Container(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(35),
                           decoration: pw.BoxDecoration(color: PdfColors.black),
                         //  child: pw.SizedBox.expand(),
                         //  constraints: const pw.BoxConstraints(minHeight: 18, ),
@@ -3183,7 +3744,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           }
           return rows;
         }
-        pw.TableRow _buildSectionHeaderRow(String title) {
+        pw.TableRow buildSectionHeaderRow(String title) {
           return pw.TableRow(
             decoration: pw.BoxDecoration(
               color: PdfColors.grey200,
@@ -3254,7 +3815,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
 
         // Build the top header row (labels)
-        pw.TableRow _buildTableHeaderRow({double cellPadding = 2}) {
+        pw.TableRow buildTableHeaderRow({double cellPadding = 2}) {
           return pw.TableRow(
             decoration: pw.BoxDecoration(color: PdfColors.grey300),
             children: [
@@ -3291,7 +3852,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
 
         // Render a single row as its own table to allow page breaks between rows
-        pw.Widget _tableFromRow(pw.TableRow row, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
+        pw.Widget tableFromRow(pw.TableRow row, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
           return pw.Table(
             columnWidths: widths,
             border: pw.TableBorder.all(color: PdfColors.black, width: borderWidth),
@@ -3299,8 +3860,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
           );
         }
 
-        List<pw.Widget> _rowsToTables(List<pw.TableRow> rows, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
-          return rows.map((r) => _tableFromRow(r, widths, borderWidth)).toList();
+        List<pw.Widget> rowsToTables(List<pw.TableRow> rows, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
+          return rows.map((r) => tableFromRow(r, widths, borderWidth)).toList();
         }
 
         // Multi-page friendly rendering of the first verification table
@@ -3322,58 +3883,68 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 child: pw.Text('TABLEAU DES VÉRIFICATIONS', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
               ),
               pw.SizedBox(height: 10),
-              _tableFromRow(_buildTableHeaderRow(cellPadding: 2), widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('GÉNÉRALITÉS'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('3', 'Principes Généraux', _article3Obsrvt.text.trim(), checkboxValues2[3] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('5', 'Adéquation de la capacité d\'acceuil', _article5Obsrvt.text.trim(), checkboxValues2[5] ?? ''), widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('IMPLANTATION'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('6', 'Lieu d\'implantation : voisinages dangereux et risques d\'inflammation', _article6Obsrvt.text.trim(), checkboxValues2[6] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('7', 'Adéquation avec le sol : État du sol, calage, plaque de répartition...', _article7Obsrvt.text.trim(), checkboxValues2[7] ?? ''), widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('SOLIDITÉ'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('9', 'Marquage : Marque, modèle, année...', _article9Obsrvt.text.trim(), checkboxValues2[9] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('10', 'Respect des charges d\'exploitation et charges climatiques', _article10Obsrvt.text.trim(), checkboxValues2[10] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('11', 'Adéquation, état et assemblages des ossatures', _article11Obsrvt.text.trim(), checkboxValues2[11] ?? ''), widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('AMÉNAGEMENTS'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('12', 'Planchers : État, jeu, décalage...', _article12Obsrvt.text.trim(), checkboxValues2[12] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('13', 'Contremarches : État, jeu, décalage...', _article13Obsrvt.text.trim(), checkboxValues2[13] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('14', 'Places assises pour les gradins : Nombre, implantation...', _article14Obsrvt.text.trim(), checkboxValues2[14] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('15', 'Places debout : Longueur et circulations', _article15Obsrvt.text.trim(), checkboxValues2[15] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('16', 'Dégagements : Nombre, qualité, répartition et balisage', _article16Obsrvt.text.trim(), checkboxValues2[16] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('17', 'Vomitoires et circulations : Configuration et projection', _article17Obsrvt.text.trim(), checkboxValues2[17] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('18', 'Dessous : Inaccessibilité au public, potentiel calorifique...', _article18Obsrvt.text.trim(), checkboxValues2[18] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('19', 'Escaliers et rampes accessibles au public : Qualité, état, assemblage...', _article19Obsrvt.text.trim(), checkboxValues2[19] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('20', 'Garde-corps : Qualité, état, assemblage...', _article20Obsrvt.text.trim(), checkboxValues2[20] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('21', 'Sièges et bancs fixes : Qualité, état, assemblage...', _article21Obsrvt.text.trim(), checkboxValues2[21] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('22', 'Sièges et banc non fixes : Nombre', _article22Obsrvt.text.trim(), checkboxValues2[22] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('23', 'Sièges : Caractéristiques, PV de réaction au feu...', _article23Obsrvt.text.trim(), checkboxValues2[23] ?? ''), widths, bw),
-              ..._rowsToTables(_buildVerifRows('24', 'Barrière anti-renversement : Présence, état, assemblage...', _article24Obsrvt.text.trim(), checkboxValues2[24] ?? ''), widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('EXPLOITATION'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('25', '25. Impact sur le niveau de sécurité du lieu', _article25Obsrvt.text.trim(), checkboxValues2[25] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('26', '26. Examen d\'adéquation, accroches, accessoires de levage, moyens de levage (type de palan, sécurisation, redondance, etc.), rapport de VGP', _article26Obsrvt.text.trim(), checkboxValues2[26] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('27', '27. Habillages : PV de réaction au feu, état, assemblage...', _article27Obsrvt.text.trim(), checkboxValues2[27] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('28', '28. Cas des passerelles ne servant pas d\'espace d\'observation : bardage sur 2m de hauteur', _article28Obsrvt.text.trim(), checkboxValues2[28] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('29', '29. Câbles électriques : absence d\'entrave à la circulation des personnes / Installations électriques : présence du plan avec localisation des dispositifs de coupure d\'urgence', _article29Obsrvt.text.trim(), checkboxValues2[29] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('30', '30. Présence du rapport de vérification des installations électriques', _article30Obsrvt.text.trim(), checkboxValues2[30] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('31', '31. Éclairage de sécurité en adéquation avec les conditions d\'exploitation', _article31bsrvt.text.trim(), checkboxValues2[31] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('32', '32. Anémomètre (plein air) : Présence, implantation et fonctionnement / Modalités d\'évacuation', _article32bsrvt.text.trim(), checkboxValues2[32] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('33', '33. Diffusion de l\'alarme et de l\'alerte', _article33bsrvt.text.trim(), checkboxValues2[33] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('34', '34. Moyens d\'extinction', _article34bsrvt.text.trim(), checkboxValues2[34] ?? ''),widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('CONTRÔLE, VERIFICATION ET INSPECTION'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('36', '36. Notices techniques : Présence', _article36bsrvt.text.trim(), checkboxValues2[36] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('37', '37. Conception : Présence d\'un avis sur modèle type ou sur dossier technique', _article37bsrvt.text.trim(), checkboxValues2[37] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('38', '38. Attestation de bon montage : Présence', _article38bsrvt.text.trim(), checkboxValues2[38] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('39', '39. Dossier de sécurité : Présence et cohérence', _article39bsrvt.text.trim(), checkboxValues2[39] ?? ''),widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('IMPLANTATION PROLONGÉE'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('45', '45. État de conservation', _article45bsrvt.text.trim(), checkboxValues2[45] ?? ''),widths, bw),
-              _tableFromRow(_buildSectionHeaderRow('ENSEMBLE DÉMONTABLE EXISTANT'), widths, bw),
-              ..._rowsToTables(_buildVerifRows('47', '47. Solidité et stabilité : Présence de documents', _article47bsrvt.text.trim(), checkboxValues2[47] ?? ''),widths, bw),
-          ..._rowsToTables(_buildVerifRows('48', '48. Marquage', _article48bsrvt.text.trim(), checkboxValues2[48] ?? ''),widths, bw),
+              tableFromRow(buildTableHeaderRow(cellPadding: 2), widths, bw),
+              tableFromRow(buildSectionHeaderRow('GÉNÉRALITÉS'), widths, bw),
+              ...rowsToTables(buildVerifRows('3', 'Principes Généraux', _article3Obsrvt.text.trim(), checkboxValues2[3] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('5', 'Adéquation de la capacité d\'acceuil', _article5Obsrvt.text.trim(), checkboxValues2[5] ?? ''), widths, bw),
+              tableFromRow(buildSectionHeaderRow('IMPLANTATION'), widths, bw),
+              ...rowsToTables(buildVerifRows('6', 'Lieu d\'implantation : voisinages dangereux et risques d\'inflammation.\nHM dûment justifié', _article6Obsrvt.text.trim(), checkboxValues2[6] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('7', 'Adéquation avec le sol : État du sol, calage, plaque de répartition...', _article7Obsrvt.text.trim(), checkboxValues2[7] ?? ''), widths, bw),
+              tableFromRow(buildSectionHeaderRow('SOLIDITÉ'), widths, bw),
+              ...rowsToTables(buildVerifRows('9', 'Marquage : Marque, modèle, année...', _article9Obsrvt.text.trim(), checkboxValues2[9] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('10', 'Respect des charges d\'exploitation et charges climatiques', _article10Obsrvt.text.trim(), checkboxValues2[10] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('11', 'Adéquation, état et assemblages des ossatures.\nÀ détailler selon le type de structure', _article11Obsrvt.text.trim(), checkboxValues2[11] ?? ''), widths, bw),
+              tableFromRow(buildSectionHeaderRow('AMÉNAGEMENTS'), widths, bw),
+              ...rowsToTables(buildVerifRows('12', 'Planchers : État, jeu, décalage...', _article12Obsrvt.text.trim(), checkboxValues2[12] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('13', 'Contremarches : État, jeu, décalage...', _article13Obsrvt.text.trim(), checkboxValues2[13] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('14', 'Places assises pour les gradins : Nombre, implantation...', _article14Obsrvt.text.trim(), checkboxValues2[14] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('15', 'Places debout : Longueur et circulations', _article15Obsrvt.text.trim(), checkboxValues2[15] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('16', 'Dégagements : Nombre, qualité, répartition et balisage', _article16Obsrvt.text.trim(), checkboxValues2[16] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('17', 'Vomitoires et circulations : Configuration et projection', _article17Obsrvt.text.trim(), checkboxValues2[17] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('18', 'Dessous : Inaccessibilité au public, potentiel calorifique...', _article18Obsrvt.text.trim(), checkboxValues2[18] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('19', 'Escaliers et rampes accessibles au public : Qualité, état, assemblage...', _article19Obsrvt.text.trim(), checkboxValues2[19] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('20', 'Garde-corps : Qualité, état, assemblage...', _article20Obsrvt.text.trim(), checkboxValues2[20] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('21', 'Sièges et bancs fixes : Qualité, état, assemblage...', _article21Obsrvt.text.trim(), checkboxValues2[21] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('22', 'Sièges et banc non fixes : Nombre', _article22Obsrvt.text.trim(), checkboxValues2[22] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('23', 'Sièges : Caractéristiques, PV de réaction au feu...', _article23Obsrvt.text.trim(), checkboxValues2[23] ?? ''), widths, bw),
+              ...rowsToTables(buildVerifRows('24', 'Barrière anti-renversement : Présence, état, assemblage...', _article24Obsrvt.text.trim(), checkboxValues2[24] ?? ''), widths, bw),
+              tableFromRow(buildSectionHeaderRow('EXPLOITATION'), widths, bw),
+              ...rowsToTables(buildVerifRows('25', '25. Impact sur le niveau de sécurité du lieu', _article25Obsrvt.text.trim(), checkboxValues2[25] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('26', '26. Examen d\'adéquation, accroches, accessoires de levage, moyens de levage (type de palan, sécurisation, redondance, etc.), rapport de VGP.\nÀ détailler selon le type de structure', _article26Obsrvt.text.trim(), checkboxValues2[26] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('27', '27. Habillages : PV de réaction au feu, état, assemblage...\nHM ne peut concerner que les décors', _article27Obsrvt.text.trim(), checkboxValues2[27] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('28', '28. Cas des passerelles ne servant pas d\'espace d\'observation : bardage sur 2m de hauteur', _article28Obsrvt.text.trim(), checkboxValues2[28] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('29', '29. Câbles électriques : absence d\'entrave à la circulation des personnes / Installations électriques : présence du plan avec localisation des dispositifs de coupure d\'urgence.\nHM complété du nom de l\'organisme en charge de la vérification', _article29Obsrvt.text.trim(), checkboxValues2[29] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('30', '30. Présence du rapport de vérification des installations électriques.\nHM complété du nom de l\'organisme en charge de la vérification', _article30Obsrvt.text.trim(), checkboxValues2[30] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('31', '31. Éclairage de sécurité en adéquation avec les conditions d\'exploitation.\nHM complété du nom de l\'organisme en charge de la vérification', _article31bsrvt.text.trim(), checkboxValues2[31] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('32', '32. Anémomètre (plein air) : Présence, implantation et fonctionnement / Modalités d\'évacuation', _article32bsrvt.text.trim(), checkboxValues2[32] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('33', '33. Diffusion de l\'alarme et de l\'alerte', _article33bsrvt.text.trim(), checkboxValues2[33] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('34', '34. Moyens d\'extinction', _article34bsrvt.text.trim(), checkboxValues2[34] ?? ''),widths, bw),
+              tableFromRow(buildSectionHeaderRow('CONTRÔLE, VERIFICATION ET INSPECTION'), widths, bw),
+              ...rowsToTables(buildVerifRows('36', '36. Notices techniques : Présence', _article36bsrvt.text.trim(), checkboxValues2[36] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('37', '37. Conception : Présence d\'un avis sur modèle type ou sur dossier technique', _article37bsrvt.text.trim(), checkboxValues2[37] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('38', '38. Attestation de bon montage : Présence', _article38bsrvt.text.trim(), checkboxValues2[38] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('39', '39. Dossier de sécurité : Présence et cohérence', _article39bsrvt.text.trim(), checkboxValues2[39] ?? ''),widths, bw),
+              tableFromRow(buildSectionHeaderRow('IMPLANTATION PROLONGÉE'), widths, bw),
+              ...rowsToTables(buildVerifRows('45', '45. État de conservation', _article45bsrvt.text.trim(), checkboxValues2[45] ?? ''),widths, bw),
+              tableFromRow(buildSectionHeaderRow('ENSEMBLE DÉMONTABLE EXISTANT'), widths, bw),
+              ...rowsToTables(buildVerifRows('47', '47. Solidité et stabilité : Présence de documents', _article47bsrvt.text.trim(), checkboxValues2[47] ?? ''),widths, bw),
+          ...rowsToTables(buildVerifRows('48', '48. Marquage', _article48bsrvt.text.trim(), checkboxValues2[48] ?? ''),widths, bw),
+              pw.Align( // Le widget d'alignement
+                alignment: pw.Alignment.centerLeft, // Alignement à gauche
+                child: pw.Text(
+                  "S = Satisfaisant | NS = Non-satisfaisant | SO = Sans objet | HM = Hors mission",
+                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                ),
+              ),
             ],
+
+
           );
+
         }
 
         // Build the top header row (labels)
-        pw.TableRow _buildTableHeaderRowObs({double cellPadding = 2}) {
+        pw.TableRow buildTableHeaderRowObs({double cellPadding = 2}) {
           return pw.TableRow(
             decoration: pw.BoxDecoration(color: PdfColors.grey300),
             children: [
@@ -3398,7 +3969,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
 
         // Render a single row as its own table to allow page breaks between rows
-        pw.Widget _tableFromRowObs(pw.TableRow row, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
+        pw.Widget tableFromRowObs(pw.TableRow row, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
           return pw.Table(
             columnWidths: widths,
             border: pw.TableBorder.all(color: PdfColors.black, width: borderWidth),
@@ -3406,11 +3977,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
           );
         }
 
-        List<pw.Widget> _rowsToTablesObs(List<pw.TableRow> rows, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
-          return rows.map((r) => _tableFromRowObs(r, widths, borderWidth)).toList();
+        List<pw.Widget> rowsToTablesObs(List<pw.TableRow> rows, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
+          return rows.map((r) => tableFromRowObs(r, widths, borderWidth)).toList();
         }
 
-        String _getObsCommentForArticle(int i) {
+        String getObsCommentForArticle(int i) {
           switch (i) {
             case 3:
               return _article3Obsrvt.text.trim();
@@ -3491,12 +4062,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
           }
         }
 
-        List<pw.TableRow> _buildObsRowsFromNS() {
+        List<pw.TableRow> buildObsRowsFromNS() {
           final rows = <pw.TableRow>[];
           int obsIndex = 1;
           for (int i = 1; i <= 48; i++) {
             if (checkboxValues2[i] == 'NS') {
-              final obsComment =  _getObsCommentForArticle(i);
+              final obsComment =  getObsCommentForArticle(i);
               rows.add(
                 pw.TableRow(
                   children: [
@@ -3510,7 +4081,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     ),
                     pw.Container(
                       padding: pw.EdgeInsets.all(2),
-                      child: pw.Text('Article ' + i.toString(), style: pw.TextStyle(fontSize: 9), textAlign: pw.TextAlign.center),
+                      child: pw.Text('Article $i', style: pw.TextStyle(fontSize: 9), textAlign: pw.TextAlign.center),
                     ),
                     pw.Container(
                       padding: pw.EdgeInsets.all(2),
@@ -3537,17 +4108,17 @@ class _FormToWordPageState extends State<FormToWordPage> {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Center(
-                child: pw.Text('Rappel des Observations', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                child: pw.Text('RAPPEL DES OBSERVATIONS', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
               ),
               pw.SizedBox(height: 10),
-              _tableFromRowObs(_buildTableHeaderRowObs(cellPadding: 2), widths, bw),
-              ..._rowsToTablesObs(_buildObsRowsFromNS(), widths, bw),
+              tableFromRowObs(buildTableHeaderRowObs(cellPadding: 2), widths, bw),
+              ...rowsToTablesObs(buildObsRowsFromNS(), widths, bw),
             ],
           );
         }
 
 // Build the top header row (labels)
-        pw.TableRow _buildTableHeaderRowObsPhotos({double cellPadding = 2}) {
+        pw.TableRow buildTableHeaderRowObsPhotos({double cellPadding = 2}) {
           return pw.TableRow(
             decoration: pw.BoxDecoration(color: PdfColors.grey300),
             children: [
@@ -3560,7 +4131,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
 
         // Render a single row as its own table to allow page breaks between rows
-        pw.Widget _tableFromRowObsPhotos(pw.TableRow row, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
+        pw.Widget tableFromRowObsPhotos(pw.TableRow row, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
           return pw.Table(
             columnWidths: widths,
             border: pw.TableBorder.all(color: PdfColors.black, width: borderWidth),
@@ -3568,11 +4139,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
           );
         }
 
-        List<pw.Widget> _rowsToTablesObsPhotos(List<pw.TableRow> rows, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
-          return rows.map((r) => _tableFromRowObsPhotos(r, widths, borderWidth)).toList();
+        List<pw.Widget> rowsToTablesObsPhotos(List<pw.TableRow> rows, Map<int, pw.TableColumnWidth> widths, double borderWidth) {
+          return rows.map((r) => tableFromRowObsPhotos(r, widths, borderWidth)).toList();
         }
 
-        String _getObsCommentForArticlePhotos(int i) {
+        String getObsCommentForArticlePhotos(int i) {
           switch (i) {
             case 3:
               return _article3Photo.text.trim();
@@ -3707,17 +4278,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
  */
         // Replace _buildObsRowsFromNSPhotos() method around line 6890
-        List<pw.TableRow> _buildObsRowsFromNSPhotos() {
+        List<pw.TableRow> buildObsRowsFromNSPhotos() {
           final rows = <pw.TableRow>[];
           for (int i = 1; i <= 48; i++) {
             if (checkboxValues2[i] == 'NS') {
-              final obsComment = _getObsCommentForArticle(i);
+              final obsComment = getObsCommentForArticle(i);
               final SubPhotoEntry? photo = _articlePhotos[i];
 
               pw.Widget imageWidget;
               if (photo != null && photo.imagePath.isNotEmpty) {
                 try {
-                  // ✅ Check if file exists before reading
                   final file = File(photo.imagePath);
                   if (file.existsSync()) {
                     final bytes = file.readAsBytesSync();
@@ -3787,11 +4357,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Center(
-                child: pw.Text('Photos des Articles Non Satisfaisant', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                child: pw.Text('PHOTOGRAPHIES INDEXÉES DES ANOMALIES CONSTATÉES', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
               ),
               pw.SizedBox(height: 10),
-              _tableFromRowObsPhotos(_buildTableHeaderRowObsPhotos(cellPadding: 2), widths, bw),
-              ..._rowsToTablesObsPhotos(_buildObsRowsFromNSPhotos(), widths, bw),
+         //     _tableFromRowObsPhotos(_buildTableHeaderRowObsPhotos(cellPadding: 2), widths, bw),
+              ...rowsToTablesObsPhotos(buildObsRowsFromNSPhotos(), widths, bw),
             ],
           );
         }
@@ -3861,11 +4431,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     0: const pw.FixedColumnWidth(100),
                     1: const pw.FixedColumnWidth(50),
                   },
-                  border: pw.TableBorder(
-                    horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+
+                  border: pw.TableBorder.all(
+                 //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                    color: PdfColors.black,
+                    width: 1,
                   ),
+
                   children: [
-                    keyValueAvisRow('Avis Favorable', checkboxValues[1] == true),
+                    keyValueAvisRow('Avis Favorable', checkboxValues3[1] == true),
                   ],
                 ),
               ),
@@ -3882,11 +4456,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     0: const pw.FixedColumnWidth(100),
                     1: const pw.FixedColumnWidth(50),
                   },
-                  border: pw.TableBorder(
-                    horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                  border: pw.TableBorder.all(
+                    //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                    color: PdfColors.black,
+                    width: 1,
                   ),
                   children: [
-                    keyValueAvisRow('Avis Défavorable', checkboxValues[1] == false),
+                    keyValueAvisRow('Avis Défavorable', checkboxValues3[1] == false),
                   ],
                 ),
               ),
@@ -3895,16 +4471,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
 
         // Helper to prebuild signature table row with image if available
-        Future<pw.TableRow> _buildSignatureTableRow() async {
+        Future<pw.TableRow> buildSignatureTableRow() async {
           final labelCell = pw.Container(
-            padding: const pw.EdgeInsets.all(2),
+            padding: const pw.EdgeInsets.all(6),
             decoration: pw.BoxDecoration(
               color: PdfColors.grey300,
               border: pw.Border(
                 right: pw.BorderSide(color: PdfColors.grey700, width: 1.2),
               ),
             ),
-            child: pw.Text('Signature\n', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+            child: pw.Text('Signature:\n\n\n', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
           );
 
           pw.Widget valueChild;
@@ -3922,7 +4498,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
           }
 
           final valueCell = pw.Container(
-            padding: const pw.EdgeInsets.all(6),
+            alignment: pw.Alignment.center,
+            padding: const pw.EdgeInsets.all(2),
             child: valueChild,
           );
 
@@ -3940,16 +4517,22 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 child: pw.Table(
                   columnWidths: {
-                    0: const pw.FixedColumnWidth(100),
-                    1: const pw.FixedColumnWidth(50),
+                    0: const pw.FixedColumnWidth(50),
+                    1: const pw.FixedColumnWidth(100),
                   },
-                  border: pw.TableBorder(
-                    horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                 // border: pw.TableBorder(
+                  //  horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                 // ),
+                  border: pw.TableBorder.all(
+                    //   horizontalInside: pw.BorderSide(color: PdfColors.grey700, width: 2),
+                    color: PdfColors.black,
+                    width: 1,
                   ),
                   children: [
-                    keyValueTableRow('Fait à', _siteName.text.trim() ),
-                    keyValueTableRow('Le (date et heure', _dateTransmission.text.trim() ),
-                    keyValueTableRow('Par', _techName.text.trim() ),
+                    keyValueTableRow2('Fait à:', 'Site', _siteName.text.trim(), 'Hall', _standHall.text.trim(),'Stand', _standNb.text.trim()),
+
+                    keyValueTableRow('Le (date et heure):', _dateTransmission.text.trim() ),
+                    keyValueTableRow('Par:', _techName.text.trim() ),
                     signatureRow,
                   ],
                 ),
@@ -3960,10 +4543,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
         // Pre-build async sections before adding the page because pw.MultiPage.build must be synchronous
     //    final pw.Widget anomaliesSectionWidget = await anomaliesSection();
-        final pw.TableRow signatureTableRow = await _buildSignatureTableRow();
+        final pw.TableRow signatureTableRow = await buildSignatureTableRow();
 
           // Helper to add all report pages to the given document. Optionally overrides total pages in the info table
-          void _addReportPages(pw.Document doc, {int? totalPagesOverride, void Function(int)? onComputed}) {
+          void addReportPages(pw.Document doc, {int? totalPagesOverride, void Function(int)? onComputed}) {
             doc.addPage(
               pw.MultiPage(
                 pageFormat: PdfPageFormat.a4,
@@ -3971,7 +4554,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 header: (context) {
                   return pw.Container(
                     width: double.infinity,
-                    padding: pw.EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: pw.EdgeInsets.symmetric(horizontal: 20, vertical: 1),
                     child: buildHeader(context),  // Header en pleine largeur
                   );
                 },
@@ -4011,7 +4594,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   pw.NewPage(),
 
                   pw.Padding(
-                    padding: pw.EdgeInsets.fromLTRB(90, 20, 90, 20),
+                    padding: pw.EdgeInsets.fromLTRB(90, 7, 90, 7),
                     child: renseignements(),
                   ),
                   pw.NewPage(),
@@ -4073,16 +4656,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
           }
 
           // First pass: build a draft to compute the total number of pages
-          int _computedTotalPages = 0;
-          final pdfDraft = pw.Document();
-          _addReportPages(pdfDraft, onComputed: (n) {
-            if (n > _computedTotalPages) _computedTotalPages = n;
+          int computedTotalPages = 0;
+          final pdfDraft = pw.Document(theme: pdfTheme);
+          addReportPages(pdfDraft, onComputed: (n) {
+            if (n > computedTotalPages) computedTotalPages = n;
           });
           // Saving triggers layout and computes page count
           await pdfDraft.save();
 
           // Second pass: build the final document with the computed total pages injected
-          _addReportPages(pdf, totalPagesOverride: _computedTotalPages);
+          addReportPages(pdf, totalPagesOverride: computedTotalPages);
 
         if (kIsWeb) {
           final bytes = await pdf.save();
@@ -4291,9 +4874,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
       final clientEmail = _mailStand.text.trim();
       final recipientEmail = clientEmail.isNotEmpty ? clientEmail : 'typh94@live.fr';
 
-      final subject = 'Rapport de vérification' + (ref.isNotEmpty ? ' - ' + ref : '');
-      final body = 'Bonjour,\n\nVeuillez trouver ci-joint le rapport de vérification généré le ' +
-          DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()) + '.\n\nCordialement';
+      final subject = 'Rapport de vérification${ref.isNotEmpty ? ' - $ref' : ''}';
+      final body = 'Bonjour,\n\nVeuillez trouver ci-joint le rapport de vérification généré le ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}.\n\nCordialement';
 
       // Use Share to open share sheet with file attached
       final box = context.findRenderObject() as RenderBox?;
@@ -4306,11 +4888,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
           XFile(
             path,
             mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            name: 'rapport_' + (ref.isNotEmpty ? ref.replaceAll(' ', '_') : 'VE') + '.docx',
+            name: 'rapport_${ref.isNotEmpty ? ref.replaceAll(' ', '_') : 'VE'}.docx',
           ),
         ],
         subject: subject,
-        text: body + '\n\nDestinataire: ' + recipientEmail,
+        text: '$body\n\nDestinataire: $recipientEmail',
         sharePositionOrigin: origin,
       );
 
@@ -4350,10 +4932,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
     final h = _standHall.text.trim();
     final salon = _salonName.text.trim();
     final stand = _standNb.text.trim();
-    if (s.isEmpty && h.isEmpty) return 'Rapport de Vérification Après Montage';
-    if (salon.isNotEmpty && s.isNotEmpty && h.isNotEmpty && stand.isNotEmpty) return salon + ': ' + s + ' • Hall ' + h + ' ' + stand;
+    if (s.isEmpty && h.isEmpty) return 'Rapport de Vérification ';
+    if (salon.isNotEmpty && s.isNotEmpty && h.isNotEmpty && stand.isNotEmpty) return '$salon: $s • Hall $h $stand';
     if (s.isNotEmpty) return s;
-    return 'Hall ' + h;
+    return 'Hall $h';
   }
 
   @override
@@ -4361,9 +4943,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
     return WillPopScope(
       onWillPop: () async {
-        await _saveDraft();
+          await _saveDraft();
+        //  await _saveDraftToDatabase();
         if (mounted) {
           Navigator.pop(context, true);
+          print('🔍 Current username: $_currentUsername');
+
         }
         return false; // we handle the pop after saving
       },
@@ -4385,9 +4970,9 @@ class _FormToWordPageState extends State<FormToWordPage> {
               icon: Icon(Icons.save_outlined),
               onPressed: () async {
                 await _saveDraft();
-                if (mounted) {
-                  Navigator.pop(context, true);
-                }
+                if (!mounted) return;
+
+                // Do not pop the page; stay on the fiche while editing
               },
             ),
           ],
@@ -4495,7 +5080,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   ),
                 ),
                 style: TextStyle(color: Colors.black),
-                   validator: (value) => value!.isEmpty ? 'Entrez votre référence' : null,
+                   validator: (value) => value!.isEmpty ? 'Entrez votre Nom et Prénom' : null,
               ),
               SizedBox(height: 12),
               TextFormField(
@@ -4551,7 +5136,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 controller: _doName,
                 decoration: InputDecoration(
                   labelText: 'Donneur d\'ordre',
-                  labelStyle: TextStyle(color: Colors.black),
+               //   labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4581,9 +5172,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   focusedBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
+
                 ),
                 maxLines: 3,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez l\'objet de la mission' : null,
+
               ),
               TextFormField(
                 controller: _dateTransmission,
@@ -4663,6 +5257,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     },
                   );
                 },
+                validator: (value) => value!.isEmpty ? 'Choisissez la date de transmission' : null,
+
               ),
               SizedBox(height: 64),
 
@@ -4680,7 +5276,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 controller: _salonName,
                 decoration: InputDecoration(
                   labelText: 'Nom Salon ',
-                  labelStyle: TextStyle(color: Colors.black),
+                //  labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4710,6 +5312,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 maxLines: 1,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez le nom du stand' : null,
+
               ),
               SizedBox(height: 12),
               TextFormField(
@@ -4731,6 +5335,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 maxLines: 1,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez le Hall' : null,
+
               ),
               SizedBox(height: 12),
               TextFormField(
@@ -4752,6 +5358,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 maxLines: 1,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez le numéro de stand' : null,
+
               ),
               SizedBox(height: 12),
               TextFormField(
@@ -4773,13 +5381,21 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 maxLines: 1,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez le mail du client' : null,
+
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _siteName,
                 decoration: InputDecoration(
                   labelText: 'Site ',
-                  labelStyle: TextStyle(color: Colors.black),
+                //  labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4795,7 +5411,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 controller: _siteAdress,
                 decoration: InputDecoration(
                   labelText: 'Adresse ',
-                  labelStyle: TextStyle(color: Colors.black),
+                //  labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4827,13 +5449,21 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 maxLines: 1,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez une description sommaire' : null,
+
               ),
               SizedBox(height: 12),
               TextFormField(
                 controller: _dateMontage,
                 decoration: InputDecoration(
                   labelText: 'Date montage ',
-                  labelStyle: TextStyle(color: Colors.black),
+               //   labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4849,7 +5479,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 controller: _dateEvnmt,
                 decoration: InputDecoration(
                   labelText: 'Date évènement ',
-                  labelStyle: TextStyle(color: Colors.black),
+                 // labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4865,7 +5501,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 controller: _catErpType,
                 decoration: InputDecoration(
                   labelText: 'Catégorie et type ERP ',
-                  labelStyle: TextStyle(color: Colors.black),
+               //   labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4881,7 +5523,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 controller: _effectifMax,
                 decoration: InputDecoration(
                   labelText: 'Effectif max du public admissible ',
-                  labelStyle: TextStyle(color: Colors.black),
+                 // labelStyle: TextStyle(color: Colors.black),
+                  labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+                    final Color color = states.contains(WidgetState.error)
+                        ? Theme.of(context).colorScheme.error
+                        : roseVE;
+                    return TextStyle(color: color, letterSpacing: 1.3);
+                  }),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.black),
                   ),
@@ -4922,6 +5570,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 infoMessage: "Personne physique ou morale qui réalise les opérations de montage et de démontage à la demande de l'organisateur ",
                 labelColor: roseVE,
                 changeColorWhenFilled: true,
+                validator: (value) => value!.isEmpty ? 'Entrez l\'installateur' : null,
+
               ),
 
 
@@ -4932,7 +5582,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
               SizedBox(height: 12),
               buildInfoTextField(
                 context: context,
-                controller: _orgaName,
+                controller: _exploitSiteName,
                 label: 'Exploitant du site',
                 infoMessage: "Personne physique ou morale, publique ou privée, qui exerce ou contrôle effectivement, à titre professionnel, une activité économique lucrative ou non lucrative",
               ),
@@ -4944,6 +5594,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 controller: _proprioMatosName,
                 label: 'Propriétaire',
                 infoMessage: "Personne physique ou morale qui possède un ensemble démontable et le met à disposition de l'organisateur",
+                validator: (value) => value!.isEmpty ? 'Entrez le propriétaire du matériel' : null,
+
               ),
 
               SizedBox(height: 64),
@@ -4977,6 +5629,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 maxLines: 1,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez le nombre de structures totales' : null,
 
               ),
 
@@ -5001,6 +5654,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 ),
                 maxLines: 1,
                 style: TextStyle(color: Colors.black),
+                validator: (value) => value!.isEmpty ? 'Entrez le nombre de tableaux désirés' : null,
+
               ),
               SizedBox(height: 24),
             ElevatedButton(
@@ -5162,7 +5817,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                       controller: _rideauxEnseignesCtrls[index],
 
                       decoration: InputDecoration(
-                        labelText: 'Rideaux',
+                        labelText: 'Enseignes / Rideaux',
                         labelStyle: WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
                           final Color color = states.contains(WidgetState.error)
                               ? Theme.of(context).colorScheme.error
@@ -5309,7 +5964,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   'Pour l\'application des dispositions de l\'article 16, la capacité d\'accueil des personnes admises sur un ensemble démontable est calculée en tenant compte, cumulativement: '
                       '\n\n- du nombre de personnes assises sur des sièges '
                       '\n- du nombre de personnes assises sur des bancs ou des gradins à raison de deux personnes par mètre linéaire '
-                      '\n-du nombre de personnes en station debout dans des zones réservées aux spectateurs en dehors des dégagements utilisés pour l\'évacuation, à raison de trois personnes par mètre carré ou sur déclaration de l\’organisateur sans dépasser 3 pers / m2 '
+                      '\n-du nombre de personnes en station debout dans des zones réservées aux spectateurs en dehors des dégagements utilisés pour l\'évacuation, à raison de trois personnes par mètre carré ou sur déclaration de l’organisateur sans dépasser 3 pers / m2 '
                       '\n- du personnel déclaré par l\'organisateur, susceptible d\'être présent sur l\'ensemble démontable '
                       '\n- L\'organisateur prend les dispositions utiles pour contrôler l\'accès de l\'ensemble démontable destiné à supporter les personnes. Il limite l\'effectif des personnes accueillies à la capacité de celui-ci, tel qu\'il a été conçu et installé'),
               SizedBox(height: 5),
@@ -5338,7 +5993,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
               SizedBox(height: 34),
 
               buildVerifTile('6. Lieu d\'implantation : voisinages dangereux et risques d\'inflammation', 6,
-                  'L\’organisateur s’assure que l’ensemble démontable est éloigné des voisinages dangereux et implanté sur des aires ne présentant pas de risque d’inflammation '
+                  'L’organisateur s’assure que l’ensemble démontable est éloigné des voisinages dangereux et implanté sur des aires ne présentant pas de risque d’inflammation '
                       'rapide. Il prend, le cas échéant, toute mesure appropriée pour réduire ce risque au minimum. \nLe lieu de l’implantation permet l’évacuation rapide et sûre '
                       'des personnes et l’intervention des services de secours et de lutte contre l’incendie.'),
               SizedBox(height: 5),
@@ -5357,15 +6012,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
               buildVerifTile2('7. Adéquation avec le sol : État du sol, calage, plaque de répartition…', 7,
                   '1. L’organisateur communique à l’installateur toutes les informations concernant la nature du support ou du sol sur lequel est prévue l’installation de l’ensemble démontable, notamment sa capacité portante. Ces informations'
                   ' tiennent compte des conditions météorologiques prévisibles. \nAvant tout montage, l’organisateur s’assure avec l’installateur que la capacité portante des sols est compatible'
-                  'avec les descentes des charges et les déformations acceptables pour la structure. \nL\’organisateur s’assure également auprès du propriétaire du terrain que le sous-sol n’abrite pas de réseaux'
+                  'avec les descentes des charges et les déformations acceptables pour la structure. \nL’organisateur s’assure également auprès du propriétaire du terrain que le sous-sol n’abrite pas de réseaux'
                   ' enterrés, de cavités ou de carrières susceptibles de compromettre le montage ou la stabilité de l’ensemble démontable.'
                   '\nLes informations relatives à la nature du sol sont jointes au dossier de sécurité de l’organisateur mentionné à l’article 39. '
                   '\n\n2. La capacité portante du support ou du sol est déterminée comme suit:'
                   '\n– soit par la communication de données chiffrées lorsque la capacité portante est connue;'
                   '\n– soit en limitant la contrainte générée par la charge sur le sol des ensembles démontables de catégories OP2 et OS2 à 1 bar (1 daN/cm2) ;'
                   '\n– soit par une étude de la capacité portante des appuis.'
-                  'L\’étude de la capacité portante ne s’impose pas pour :'
-                  '\n– l\’ensemble démontable de catégories OP1 et OS1;'
+                  'L’étude de la capacité portante ne s’impose pas pour :'
+                  '\n– l’ensemble démontable de catégories OP1 et OS1;'
                   '\n– tout ensemble démontable lorsque son implantation est habituelle sur le même site en prenant en compte les conséquences éventuelles des conditions climatiques.'),
               SizedBox(height: 5),
               buildNsObservationSection(
@@ -5421,7 +6076,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   '\n\nLe dimensionnement des structures des ensembles démontables de catégories OP2, OP3 et OS3 fait l’objet d’une note de calcul visée par un ingénieur spécialisé en structures.'
                   '\n\n2. Les charges d’exploitation de l’ensemble démontable destiné à supporter des personnes respectent les '
                   'valeurs définies au tableau suivant. Elles sont le cas échéant adaptées en fonction des contraintes particulières liées, d’une part, aux besoins spécifiques induits par '
-                  'l\’évènement et, d\’autre part, aux mouvements raisonnablement prévisibles du public au regard de l\’utilisation telle qu’elle est prévue par l\’organisateur.'
+                  'l’évènement et, d’autre part, aux mouvements raisonnablement prévisibles du public au regard de l’utilisation telle qu’elle est prévue par l’organisateur.'
                   '\nCes adaptations sont justifiées par l’organisateur dans le dossier de sécurité mentionné à l’article 39.'
                   '\n\n3. Les charges climatiques admissibles dues aux effets du vent et de la neige sur la solidité et la stabilité de l’ensemble démontable sont précisées dans la notice technique du fabricant mentionné à l’article 36.'
                   '\nL’ensemble démontable, qu’il soit destiné à être occupé ou non, est conçu pour résister à une vitesse de vent prédéterminée, appelée «vent de service», qui ne peut être inférieure à 20 m/s (72 km/h) '
@@ -5543,7 +6198,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
               SizedBox(height: 34),
 
               buildVerifTile2('16.	Dégagements : Nombre, qualité, répartition et balisage', 16,
-                  '1. Chaque dégagement a une largeur minimale de passage proportionnelle au nombre total de personnes appelées à l\’emprunter.'
+                  '1. Chaque dégagement a une largeur minimale de passage proportionnelle au nombre total de personnes appelées à l’emprunter.'
                   '\nLa largeur d’un dégagement est calculée en fonction d’une largeur type appelée unité de passage (UP).'
                       '\n\nL’unité de passage est fixée : \n– en plein air à 0,60 mètre pour cent cinquante personnes;\n – dans les autres cas (constructions closes et couvertes), à 0,60 mètre pour cent personnes;'
                       '– \nlorsqu’un dégagement ne comporte qu’une ou deux unités de passage, la largeur est respectivement portée de 0,60 mètre à 0,90 mètre et de 1,20 mètre à 1,40 mètre.'
@@ -6062,12 +6717,20 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
               ElevatedButton(
                   onPressed: _goToNextPage,
-                  child: Text('Suivant', style: TextStyle(color: bleuAmont)),
-                  style: ElevatedButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-                      backgroundColor: Colors.white)
-              ),
+                   //   backgroundColor: fondRosePale
+                    foregroundColor: roseVE,
+                    backgroundColor: fondRosePale,
+                    side: BorderSide(color: roseVE, width: 2),
+                  ),
+                  child: Text('Suivant', style: TextStyle(color: roseVE))
+
+
+    ),
+
               SizedBox(height: 32),
+
             ],
           ),
         ),
@@ -6765,14 +7428,30 @@ class _FormToWordPageState extends State<FormToWordPage> {
               ],
             ),
           ],
+
         ),
+
         Divider(color: Colors.black),
       ],
+
     );
+
   }
 
   Widget buildAvisTile(String title, int index) {
-    bool? value = checkboxValues[index];
+    bool? value;
+    if (index == 1) {
+      // Auto-compute Avis: if ANY article (3..48) is 'NS' => Défavorable, else Favorable
+      bool anyNS = false;
+      for (int i = 3; i <= 48; i++) {
+        if (checkboxValues2[i] == 'NS') { anyNS = true; break; }
+      }
+      value = anyNS ? false : true;
+      // Keep internal model in sync for export/persistence
+      checkboxValues3[1] = value;
+    } else {
+      value = checkboxValues3[index];
+    }
     TextEditingController controller;
 
     switch (index) {
@@ -6808,7 +7487,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   activeColor: roseVE,
                   onChanged: (bool? val) {
                     setState(() {
-                      checkboxValues[index] = val == true ? true : null;
+                      checkboxValues3[index] = val == true ? true : null;
                     });
                   },
                 ),
@@ -6822,7 +7501,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   value: value == false,
                   onChanged: (bool? val) {
                     setState(() {
-                      checkboxValues[index] = val == true ? false : null;
+                      checkboxValues3[index] = val == true ? false : null;
                     });
                   },
                 ),
@@ -6952,12 +7631,18 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 children: [
                   ElevatedButton(
                     onPressed: _goToPreviousPage,
-                    child: Text('Précédent', style: TextStyle(color: bleuAmont)),
-                    style: ElevatedButton.styleFrom(
+                    style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 24),
-                      backgroundColor: Colors.white,
+                      //   backgroundColor: fondRosePale
+                      foregroundColor: roseVE,
+                      backgroundColor: fondRosePale,
+                      side: BorderSide(color: roseVE, width: 2),
                     ),
+                    child: Text('Précédent', style: TextStyle(color: roseVE)),
                   ),
+
+
+
                   /*
                   ElevatedButton(
                     onPressed: _saveDraft,
@@ -6981,7 +7666,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                    */
                 ],
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -6997,7 +7682,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
  */
                 ],
               ),
-              SizedBox(height: 32),
+              SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

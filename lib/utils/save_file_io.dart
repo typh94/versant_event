@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io';
 

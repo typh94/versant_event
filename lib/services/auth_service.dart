@@ -29,7 +29,11 @@ class AuthService {
     await prefs.setString(_kRoleKey, match['role']!);
     return true;
   }
-
+  static Future<String?> currentUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Assurez-vous que la clé 'user_role' est utilisée lors du login
+    return prefs.getString('user_role');
+  }
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kUsernameKey);
