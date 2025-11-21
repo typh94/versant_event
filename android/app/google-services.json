@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "597409554991",
+    "project_id": "versanteventreports-2d0ee",
+    "storage_bucket": "versanteventreports-2d0ee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:597409554991:android:f2649dbb98ad58ecf45cda",
+        "android_client_info": {
+          "package_name": "com.versant_event_app.versant_event"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAV77ouNnBMm-0ilaN5TAhzxEoEKqOTyH4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:597409554991:android:44d8a34df23d572bf45cda",
+        "android_client_info": {
+          "package_name": "com.versant_event_app.versant_event2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAV77ouNnBMm-0ilaN5TAhzxEoEKqOTyH4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
