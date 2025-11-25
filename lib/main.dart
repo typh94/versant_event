@@ -38,18 +38,28 @@ import 'services/firebase_diag.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final databasesPath = await getDatabasesPath();
-  final dbPath = p.join(databasesPath, 'versant_event.db');
-  if (kDebugMode) {
-    print('================================================================');
-    print('🔍 SQLite DB File Expected Location: $dbPath');
-    print('================================================================');
-  }
-  // Initialize database
-   await DatabaseHelper.instance.database;
 
-  // ADD THIS: Print the database file path
-   try {
+  // Initialize SQLite only on non-web platforms
+  if (!kIsWeb) {
+    final databasesPath = await getDatabasesPath();
+    final dbPath = p.join(databasesPath, 'versant_event.db');
+    if (kDebugMode) {
+      print('================================================================');
+      print('🔍 SQLite DB File Expected Location: $dbPath');
+      print('================================================================');
+    }
+    // Initialize database
+    await DatabaseHelper.instance.database;
+  } else {
+    if (kDebugMode) {
+      print('================================================================');
+      print('🌐 Web platform detected: skipping SQLite initialization');
+      print('================================================================');
+    }
+  }
+
+  // Initialize Firebase (all platforms)
+  try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
