@@ -5,7 +5,7 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name="com.versant_event_app.versant_event2.MainActivity"
+            android:name="com.versant_event_app.versant_event.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""

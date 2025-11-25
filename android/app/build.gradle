@@ -1,0 +1,145 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "com.google.gms.google-services"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+// Load keystore properties
+Properties keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace "com.versant_event_app.versant_event"
+
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+    defaultConfig {
+        applicationId "com.versant_event_app.versant_event"
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+        // Default flavor for missing dimension (matches your Play listing)
+        missingDimensionStrategy 'dist', 'prodV2'
+    }
+
+    flavorDimensions 'dist'
+    productFlavors {
+        prodV1 {
+            dimension 'dist'
+            applicationId "com.versant_event_app.versant_event"
+        }
+        prodV2 {
+            dimension 'dist'
+            applicationId "com.versant_event_app.versant_event2"
+        }
+    }
+
+    // Define signing configs BEFORE referencing them in buildTypes
+    signingConfigs {
+        release {
+            if (keystoreProperties["keyAlias"]) keyAlias keystoreProperties["keyAlias"]
+            if (keystoreProperties["keyPassword"]) keyPassword keystoreProperties["keyPassword"]
+            if (keystoreProperties["storeFile"]) storeFile file(keystoreProperties["storeFile"])
+            if (keystoreProperties["storePassword"]) storePassword keystoreProperties["storePassword"]
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+
+// Ensure non-flavored Flutter commands still produce the expected AAB path
+// When running `flutter build appbundle --release` without --flavor, Flutter may
+// look for build/app/outputs/bundle/release/app-release.aab.
+// With our flavors, the artifact is at outputs/bundle/prodV2Release/app-prodV2-release.aab.
+// The block below aliases bundleRelease/assembleRelease to the prodV2 variants and
+// copies the AAB to the non-flavored location so Flutter can find it.
+afterEvaluate {
+    def prodV2Assemble = tasks.findByName("assembleProdV2Release")
+    def prodV2Bundle = tasks.findByName("bundleProdV2Release")
+
+    if (prodV2Assemble != null) {
+        // Create an alias for assembleRelease if it doesn't exist
+        if (tasks.findByName("assembleRelease") == null) {
+            tasks.register("assembleRelease") { t ->
+                t.group = "build"
+                t.description = "Alias to assembleProdV2Release for non-flavored builds"
+                t.dependsOn(prodV2Assemble)
+            }
+        }
+    }
+
+    if (prodV2Bundle != null) {
+        // Create an alias for bundleRelease if it doesn't exist
+        if (tasks.findByName("bundleRelease") == null) {
+            tasks.register("bundleRelease") { t ->
+                t.group = "build"
+                t.description = "Alias to bundleProdV2Release for non-flavored builds and copy to expected location"
+                t.dependsOn(prodV2Bundle)
+                t.doLast {
+                    def src = file("$buildDir/outputs/bundle/prodV2Release/app-prodV2-release.aab")
+                    def destDir = file("$buildDir/outputs/bundle/release")
+                    if (src.exists()) {
+                        destDir.mkdirs()
+                        copy {
+                            from src
+                            into destDir
+                            rename { String fileName -> "app-release.aab" }
+                        }
+                        println("Copied ${src} to ${new File(destDir, 'app-release.aab')}")
+                    } else {
+                        println("Expected AAB not found at: ${src}. If flavor name changed, adjust the path in build.gradle.")
+                    }
+                }
+            }
+        } else {
+            // If bundleRelease already exists (some toolchains create it), add a copy step after prodV2 bundle
+            tasks.named("bundleRelease").configure { t ->
+                t.dependsOn(prodV2Bundle)
+                t.doLast {
+                    def src = file("$buildDir/outputs/bundle/prodV2Release/app-prodV2-release.aab")
+                    def destDir = file("$buildDir/outputs/bundle/release")
+                    if (src.exists()) {
+                        destDir.mkdirs()
+                        copy {
+                            from src
+                            into destDir
+                            rename { String fileName -> "app-release.aab" }
+                        }
+                        println("Copied ${src} to ${new File(destDir, 'app-release.aab')}")
+                    } else {
+                        println("Expected AAB not found at: ${src}. If flavor name changed, adjust the path in build.gradle.")
+                    }
+                }
+            }
+        }
+    }
+}

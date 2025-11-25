@@ -1,0 +1,48 @@
+import com.android.build.gradle.LibraryExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Relocate build directories to project root build/ (optional, as before)
+def newBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.set(newBuildDir)
+
+subprojects {
+    def newSubprojectBuildDir = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.set(newSubprojectBuildDir)
+}
+
+subprojects { project ->
+    project.evaluationDependsOn(":app")
+}
+
+// Workaround: set missing namespace for third-party plugins that haven't migrated yet (e.g., msal_flutter)
+subprojects { sub ->
+    if (sub.name == "msal_flutter") {
+        sub.plugins.withId('com.android.library') {
+            sub.extensions.configure(LibraryExtension) { android ->
+                android.namespace = 'uk.co.moodio.msal_flutter'
+                android.compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_1_8
+                    targetCompatibility = JavaVersion.VERSION_1_8
+                }
+            }
+        }
+        // Force Kotlin JVM target to match Java
+        sub.tasks.withType(KotlinCompile).configureEach { task ->
+            task.kotlinOptions {
+                jvmTarget = '1.8'
+            }
+        }
+    }
+}
+
+// Clean task
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}
