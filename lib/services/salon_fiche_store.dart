@@ -16,6 +16,9 @@ class SalonFicheStore {
   Future<void> _loadFromDb() async {
     if (kIsWeb) {
       // On web, keep in-memory only to avoid sqflite usage
+      // debug: confirm skip
+      // ignore: avoid_print
+      print('SalonFicheStore: Web detected, skipping SQLite load.');
       return;
     }
     try {

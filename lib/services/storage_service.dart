@@ -406,13 +406,37 @@ class StorageService {
       try {
         final col = FirebaseFirestore.instance.collection(FirestoreService.formsCollection);
         QuerySnapshot<Map<String, dynamic>> snap;
+        List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = [];
         if (isAdmin) {
-          snap = await col.get(); // no order to avoid composite index requirement
+          // Admin: load all docs (no order to avoid composite index), client-sort later
+          snap = await col.get();
+          docs = snap.docs;
         } else {
+          // Tech: first try by owner filter
           final ownersToFetch = <String>{currentUser, if (adminUsername.isNotEmpty) adminUsername}.toList();
-          snap = await col.where('owner', whereIn: ownersToFetch).get();
+          try {
+            snap = await col.where('owner', whereIn: ownersToFetch).get();
+            docs = snap.docs;
+          } catch (e) {
+            if (kDebugMode) {
+              // ignore: avoid_print
+              print('ℹ️ listDraftsToDisplay(web): owner whereIn failed or empty. Falling back to full scan. err=$e');
+            }
+          }
+          // If no docs found, fall back to fetching all and filter client-side by heuristics
+          if (docs.isEmpty) {
+            final fallback = await col.get();
+            docs = fallback.docs.where((d) {
+              final data = d.data();
+              final owner = data['owner'];
+              final createdBy = data['createdBy'];
+              final techName = data['techName'];
+              final visibleToTech = (owner == currentUser) || (owner == adminUsername) ||
+                  (owner == null && (createdBy == currentUser || techName == currentUser));
+              return visibleToTech;
+            }).toList();
+          }
         }
-        final docs = snap.docs;
         rawDrafts = docs.map((d) {
           final data = d.data();
           return {

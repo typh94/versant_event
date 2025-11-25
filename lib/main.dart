@@ -35,6 +35,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'services/database_helper.dart';
 import 'services/firebase_diag.dart';
+import 'utils/build_info.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
