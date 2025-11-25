@@ -442,20 +442,45 @@ class _FormToWordPageState extends State<FormToWordPage> {
   Uint8List? _signatureBytes; // Web: store signature bytes in memory
   Uint8List? _lastGeneratedPdfBytes; // Web: keep generated PDF in memory for preview
 
+  Future<void> _ensureSignatureCaptured() async {
+    try {
+      if (!_signatureController.isEmpty) {
+        final bytes = await _signatureController.toPngBytes();
+        if (bytes != null && bytes.isNotEmpty) {
+          setState(() {
+            _signatureBytes = Uint8List.fromList(bytes);
+            _signaturePath = '';
+          });
+        }
+      }
+    } catch (_) {
+      // silent
+    }
+  }
+
   Map<int, String?> checkboxValues2 = {};
 
     void _recomputeAvisFromVerifications() {
       // Articles range 3 to 48 inclusive
       bool anyNS = false;
+      bool allSet = true;
       for (int i = 3; i <= 48; i++) {
         final v = checkboxValues2[i];
+        if (v == null) {
+          allSet = false;
+        }
         if (v == 'NS') {
           anyNS = true;
-          break;
         }
       }
-      // If any NS -> Défavorable (false), else Favorable (true)
-      checkboxValues3[1] = anyNS ? false : true;
+      // Only auto-set when ALL articles have a value
+      if (allSet) {
+        // If any NS -> Défavorable (false), else Favorable (true)
+        checkboxValues3[1] = anyNS ? false : true;
+      } else {
+        // Leave undecided until all are selected
+        checkboxValues3[1] = null;
+      }
     }
 
   final _formKey1 = GlobalKey<FormState>();
@@ -705,10 +730,17 @@ class _FormToWordPageState extends State<FormToWordPage> {
   Map<String, dynamic> _toDraftJson() {
       // Auto-compute final "avis" based on verification articles 3..48
       bool anyNS = false;
+      bool allSet = true;
       for (int i = 3; i <= 48; i++) {
-        if (checkboxValues2[i] == 'NS') { anyNS = true; break; }
+        final v = checkboxValues2[i];
+        if (v == null) allSet = false;
+        if (v == 'NS') anyNS = true;
       }
-      checkboxValues3[1] = anyNS ? false : true;
+      if (allSet) {
+        checkboxValues3[1] = anyNS ? false : true;
+      } else {
+        checkboxValues3[1] = null;
+      }
     return {
       'title': _nosReferences.text,
       'owner': _currentUsername,
@@ -1577,6 +1609,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
   Future<void> _saveDraft() async {
     final storage = StorageService();
+    // Ensure latest signature is captured into memory before building draft JSON
+    await _ensureSignatureCaptured();
     final data = _toDraftJson();
 
     // 1. Get the current user's username (owner ID)
@@ -2408,6 +2442,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
     }
   }
      Future<String> _generatePdfFromData() async {
+       // Ensure the latest signature strokes are captured before generating
+       await _ensureSignatureCaptured();
       try {
         // Colors (approximate to app brand)
         final PdfColor rose = PdfColor.fromInt(0xFF008D); // #FF008D

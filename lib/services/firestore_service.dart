@@ -11,11 +11,14 @@ class FirestoreService {
   static final instance = FirestoreService._();
 
   static const String formsCollection = 'forms';
+  static const String salonFichesCollection = 'salon_fiches';
 
   final _db = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _forms =>
       _db.collection(formsCollection);
+  CollectionReference<Map<String, dynamic>> get _salonFiches =>
+      _db.collection(salonFichesCollection);
 
   /// Create a new form. If [id] is provided, uses it; otherwise a new doc id is generated.
   /// [data] can be any map of fields relevant to your form.
@@ -109,56 +112,28 @@ class FirestoreService {
     return q.snapshots();
   }
 
-  // -------------------- Salon Fiches (Admin) --------------------
-  /// Create a new salon fiche document in the `salonFiches` collection.
-  /// Include fields like { 'name': 'Salon XYZ', 'address': '...', ... }
-  Future<String> createSalonFiche({required Map<String, dynamic> data, String? id}) async {
-    final now = FieldValue.serverTimestamp();
-    final payload = {
-      ...data,
-      'createdAt': now,
-      'updatedAt': now,
-    };
-    final col = _db.collection('salonFiches');
-    if (id != null && id.isNotEmpty) {
-      await col.doc(id).set(payload, SetOptions(merge: true));
-      return id;
-    } else {
-      final ref = await col.add(payload);
-      return ref.id;
-    }
+  /// Delete a form document by id.
+  Future<void> deleteForm(String id) async {
+    await _forms.doc(id).delete();
   }
 
-  /// Upsert a salon fiche by id.
+  // ===== Salon Fiches CRUD =====
+  Future<List<Map<String, dynamic>>> getAllSalonFiches() async {
+    final snap = await _salonFiches.get();
+    return snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+  }
+
   Future<void> setSalonFiche(String id, Map<String, dynamic> data, {bool merge = true}) async {
-    final col = _db.collection('salonFiches');
-    await col.doc(id).set({
+    await _salonFiches.doc(id).set({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: merge));
   }
 
-  /// Update fields of a salon fiche.
-  Future<void> updateSalonFiche(String id, Map<String, dynamic> fields) async {
-    final col = _db.collection('salonFiches');
-    await col.doc(id).update({
-      ...fields,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+  Future<void> deleteSalonFiche(String id) async {
+    await _salonFiches.doc(id).delete();
   }
 
-  /// Get a single salon fiche once.
-  Future<DocumentSnapshot<Map<String, dynamic>>> getSalonFicheOnce(String id) {
-    final col = _db.collection('salonFiches');
-    return col.doc(id).get();
-  }
-
-  /// Stream all salon fiches (for Admin to pick from), ordered by updatedAt desc.
-  Stream<QuerySnapshot<Map<String, dynamic>>> streamAllSalonFiches({int? limit}) {
-    Query<Map<String, dynamic>> q = _db.collection('salonFiches').orderBy('updatedAt', descending: true);
-    if (limit != null) q = q.limit(limit);
-    return q.snapshots();
-  }
 
   // -------------------- Form Locking --------------------
   /// Try to acquire an edit lock on a form. Returns true if lock acquired or already owned.

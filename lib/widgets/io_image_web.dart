@@ -8,9 +8,28 @@ class IoImage extends StatelessWidget {
 
   const IoImage({super.key, required this.path, this.width, this.height, this.fit});
 
+  bool get _isDisplayableUrl {
+    final p = path.trim();
+    return p.startsWith('blob:') || p.startsWith('data:image') || p.startsWith('http://') || p.startsWith('https://');
+  }
+
   @override
   Widget build(BuildContext context) {
-    // On web we cannot read arbitrary device file paths. Show a placeholder box.
+    if (_isDisplayableUrl) {
+      return Image.network(
+        path,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stack) {
+          return _placeholder();
+        },
+      );
+    }
+    return _placeholder();
+  }
+
+  Widget _placeholder() {
     return Container(
       width: width,
       height: height,

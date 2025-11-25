@@ -45,6 +45,67 @@ class _DateSlashFormatter extends TextInputFormatter {
   }
 }
 
+class _DateRangeSlashFormatter extends TextInputFormatter {
+  // Expected format: DD/MM/YYYY au DD/MM/YYYY
+  String _applyMask(String digits) {
+    // Split into two date parts of up to 8 digits each
+    final firstLen = digits.length.clamp(0, 8);
+    final first = digits.substring(0, firstLen);
+    final rest = digits.length > 8 ? digits.substring(8, digits.length.clamp(0, 16)) : '';
+
+    String fmt(String d) {
+      if (d.length <= 2) return d;
+      if (d.length <= 4) return d.substring(0, 2) + '/' + d.substring(2);
+      final day = d.substring(0, 2);
+      final month = d.substring(2, 4);
+      final year = d.substring(4);
+      return '$day/$month/$year';
+    }
+
+    final left = fmt(first);
+    if (rest.isEmpty) return left;
+    final right = fmt(rest);
+    return '$left au $right';
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    // Keep only digits and limit to 16 (two dates DDMMYYYYDDMMYYYY)
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final limited = digitsOnly.length > 16 ? digitsOnly.substring(0, 16) : digitsOnly;
+    final masked = _applyMask(limited);
+
+    // Cursor positioning: count digits before cursor to map into masked string
+    final origOffset = newValue.selection.extentOffset.clamp(0, newValue.text.length);
+    final beforeCursor = newValue.text.substring(0, origOffset);
+    final digitsBeforeCursor = beforeCursor.replaceAll(RegExp(r'[^0-9]'), '').length.clamp(0, 16);
+
+    int newOffset;
+    if (digitsBeforeCursor <= 2) {
+      newOffset = digitsBeforeCursor;
+    } else if (digitsBeforeCursor <= 4) {
+      newOffset = digitsBeforeCursor + 1; // first '/'
+    } else if (digitsBeforeCursor <= 8) {
+      newOffset = digitsBeforeCursor + 2; // both '/'
+    } else if (digitsBeforeCursor == 9) {
+      newOffset = 'DD/MM/YYYY au '.length; // jump after ' au '
+    } else {
+      // In second date portion
+      final secondDigits = digitsBeforeCursor - 8;
+      if (secondDigits <= 2) newOffset = 'DD/MM/YYYY au '.length + secondDigits;
+      else if (secondDigits <= 4) newOffset = 'DD/MM/YYYY au '.length + secondDigits + 1;
+      else newOffset = 'DD/MM/YYYY au '.length + secondDigits + 2;
+    }
+    if (newOffset > masked.length) newOffset = masked.length;
+
+    return TextEditingValue(
+      text: masked,
+      selection: TextSelection.collapsed(offset: newOffset),
+      composing: TextRange.empty,
+    );
+  }
+}
+
 class AdminSalonFichesScreen extends StatefulWidget {
   const AdminSalonFichesScreen({super.key});
 
@@ -192,23 +253,21 @@ class _AdminSalonFichesScreenState extends State<AdminSalonFichesScreen> {
                     children: [
                       Expanded(child: _buildTextField(
                         _dateMontage,
-                        'Date de montage',
-                        hintText: '  /  /  ',
+                        'Date de montage (plage)',
+                        hintText: '  /  /    au   /  /  ',
                         keyboardType: TextInputType.number,
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          _DateSlashFormatter(),
+                          _DateRangeSlashFormatter(),
                         ],
                       )), 
                       const SizedBox(width: 8),
                       Expanded(child: _buildTextField(
                         _dateEvnmt,
-                        'Date événement',
-                        hintText: '  /  /  ',
+                        'Date événement (plage)',
+                        hintText: '  /  /    au   /  /  ',
                         keyboardType: TextInputType.number,
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          _DateSlashFormatter(),
+                          _DateRangeSlashFormatter(),
                         ],
                       )), 
                     ],

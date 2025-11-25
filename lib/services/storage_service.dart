@@ -231,6 +231,18 @@ class StorageService {
 
   // Archive/unarchive a draft
   Future<void> archiveDraft(String id, bool archived) async {
+    if (kIsWeb) {
+      // On web, use Firestore since SQLite is not available
+      try {
+        await FirestoreService.instance.updateForm(id, {'archived': archived});
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ archiveDraft(web) failed: $e');
+        }
+      }
+      return;
+    }
     await _dbHelper.setDraftArchived(id, archived);
   }
 /*
@@ -254,7 +266,7 @@ class StorageService {
 
     // Preserve the original owner on updates. Only set to the passed owner on insert.
     String ownerToUse = owner;
-    if (id != null) {
+    if (!kIsWeb && id != null) {
       final meta = await _dbHelper.getDraftMetadata(draftId);
       final existingOwner = (meta != null ? meta['owner'] as String? : null);
       if (existingOwner != null && existingOwner.isNotEmpty) {
@@ -265,8 +277,28 @@ class StorageService {
     final dataWithOwner = {
       ...data,
       'owner': ownerToUse,
+      'archived': false,
     };
 
+    if (kIsWeb) {
+      // On web, directly upsert to Firestore and return id
+      try {
+        await FirestoreService.instance.setForm(draftId, dataWithOwner, merge: true);
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('✅ StorageService.saveDraft(web) -> Saved to Firestore. id=$draftId');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ StorageService.saveDraft(web) -> Firestore save failed. id=$draftId error=$e');
+        }
+        rethrow;
+      }
+      return draftId;
+    }
+
+    // IO platforms: save locally then sync to Firestore best-effort
     if (id != null) {
       await _dbHelper.updateDraft(draftId, dataWithOwner);
     } else {
@@ -295,9 +327,43 @@ class StorageService {
     return draftId;
   }
 
-  // Load draft from database
+  // Load draft from storage (Firestore on web, SQLite on IO)
   Future<Map<String, dynamic>?> loadDraft(String id) async {
-    return await _dbHelper.getDraft(id);
+    if (kIsWeb) {
+      try {
+        final snap = await FirestoreService.instance.getFormOnce(id);
+        if (!snap.exists) return null;
+        final data = snap.data();
+        if (data == null) return null;
+        // Normalize and include id for consumers expecting it
+        return {
+          'id': id,
+          ...data,
+        };
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ loadDraft(web) failed for $id: $e');
+        }
+        return null;
+      }
+    }
+    // IO platforms: first try local SQLite, then fall back to Firestore (to see web-created forms)
+    final local = await _dbHelper.getDraft(id);
+    if (local != null) return local;
+    try {
+      final snap = await FirestoreService.instance.getFormOnce(id);
+      if (!snap.exists) return null;
+      final data = snap.data();
+      if (data == null) return null;
+      return {'id': id, ...data};
+    } catch (e) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('ℹ️ loadDraft(IO): Firestore fallback failed for $id: $e');
+      }
+      return null;
+    }
   }
 
   // Get all drafts for current user
@@ -469,17 +535,103 @@ class StorageService {
         }
       }
     } else {
-      if (isAdmin) {
-        // Admin: sees all non-archived drafts
-        rawDrafts = await _dbHelper.getAllDrafts();
-      } else {
-        // Tech: sees own + admin's non-archived drafts
-        final ownersToFetch = [currentUser, adminUsername];
-        rawDrafts = await _dbHelper.getDraftsByOwnersList(ownersToFetch);
+      // IO platforms: merge local SQLite with Firestore so mobile sees web-created forms
+      try {
+        final col = FirebaseFirestore.instance.collection(FirestoreService.formsCollection);
+        List<Map<String, dynamic>> cloud = [];
 
-        // Deduplicate by id
-        final seenIds = <String>{};
-        rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+        if (isAdmin) {
+          // Admin: prefer non-archived forms
+          try {
+            final snap = await col.where('archived', isEqualTo: false).get();
+            cloud = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+          } catch (_) {
+            // Fallback: fetch all and filter client-side
+            final fallback = await col.get();
+            cloud = fallback.docs
+                .map((d) => {'id': d.id, ...d.data()})
+                .where((m) => (m['archived'] ?? false) != true)
+                .toList();
+          }
+          rawDrafts = await _dbHelper.getAllDrafts();
+        } else {
+          // Technician: own + admin's, non-archived
+          final ownersToFetch = <String>{currentUser, if (adminUsername.isNotEmpty) adminUsername}.toList();
+          List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = [];
+          try {
+            final snap = await col
+                .where('owner', whereIn: ownersToFetch)
+                .where('archived', isEqualTo: false)
+                .get();
+            docs = snap.docs;
+          } catch (e) {
+            // Fallback: whereIn or composite might fail; fetch by owners first, then filter non-archived
+            try {
+              final snap = await col.where('owner', whereIn: ownersToFetch).get();
+              docs = snap.docs
+                  .where((d) => (d.data()['archived'] ?? false) != true)
+                  .toList();
+            } catch (_) {
+              // Last resort: full scan then filter by owners and archived
+              final fallback = await col.get();
+              docs = fallback.docs.where((d) {
+                final data = d.data();
+                final owner = data['owner'];
+                final archived = data['archived'] == true;
+                return !archived && (owner == currentUser || owner == adminUsername);
+              }).toList();
+            }
+          }
+          cloud = docs.map((d) => {'id': d.id, ...d.data()}).toList();
+
+          // Local drafts for same owners
+          final localOwners = [currentUser, adminUsername];
+          rawDrafts = await _dbHelper.getDraftsByOwnersList(localOwners);
+        }
+
+        // Merge local and cloud by id, cloud wins on conflicts
+        final byId = <String, Map<String, dynamic>>{};
+        for (final d in rawDrafts) {
+          final id = d['id'] as String?;
+          if (id != null) byId[id] = d;
+        }
+        for (final c in cloud) {
+          final id = c['id'] as String?;
+          if (id != null) byId[id] = {...(byId[id] ?? {}), ...c};
+        }
+        rawDrafts = byId.values.toList();
+
+        // Sort by updatedAt desc if present
+        rawDrafts.sort((a, b) {
+          final ua = a['updatedAt'];
+          final ub = b['updatedAt'];
+          DateTime pa;
+          DateTime pb;
+          if (ua is Timestamp) {
+            pa = ua.toDate();
+          } else {
+            pa = DateTime.tryParse(ua?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+          }
+          if (ub is Timestamp) {
+            pb = ub.toDate();
+          } else {
+            pb = DateTime.tryParse(ub?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+          }
+          return pb.compareTo(pa);
+        });
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('ℹ️ listDraftsToDisplay(IO): Firestore merge failed, falling back to local only. err=$e');
+        }
+        if (isAdmin) {
+          rawDrafts = await _dbHelper.getAllDrafts();
+        } else {
+          final ownersToFetch = [currentUser, adminUsername];
+          rawDrafts = await _dbHelper.getDraftsByOwnersList(ownersToFetch);
+          final seenIds = <String>{};
+          rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+        }
       }
     }
 
@@ -493,17 +645,77 @@ class StorageService {
     required bool isAdmin,
     required String adminUsername,
   }) async {
-    List<Map<String, dynamic>> rawDrafts;
+    List<Map<String, dynamic>> rawDrafts = [];
 
-    if (isAdmin) {
-      // Admin: sees all archived drafts
-      rawDrafts = await _dbHelper.getAllArchivedDrafts();
+    if (kIsWeb) {
+      try {
+        final col = FirebaseFirestore.instance.collection(FirestoreService.formsCollection);
+        QuerySnapshot<Map<String, dynamic>> snap;
+        List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = [];
+        if (isAdmin) {
+          snap = await col.where('archived', isEqualTo: true).get();
+          docs = snap.docs;
+        } else {
+          final ownersToFetch = <String>{currentUser, if (adminUsername.isNotEmpty) adminUsername}.toList();
+          try {
+            snap = await col
+                .where('archived', isEqualTo: true)
+                .where('owner', whereIn: ownersToFetch)
+                .get();
+            docs = snap.docs;
+          } catch (e) {
+            if (kDebugMode) {
+              // ignore: avoid_print
+              print('ℹ️ listArchivedDraftsToDisplay(web): whereIn failed. Fallback scan. err=$e');
+            }
+            final fallback = await col.where('archived', isEqualTo: true).get();
+            docs = fallback.docs.where((d) {
+              final data = d.data();
+              final owner = data['owner'];
+              final createdBy = data['createdBy'];
+              final techName = data['techName'];
+              final visibleToTech = (owner == currentUser) || (owner == adminUsername) ||
+                  (owner == null && (createdBy == currentUser || techName == currentUser));
+              return visibleToTech;
+            }).toList();
+          }
+        }
+        rawDrafts = docs.map((d) => {'id': d.id, ...d.data()}).toList();
+        // Sort by updatedAt desc if present
+        rawDrafts.sort((a, b) {
+          final ua = a['updatedAt'];
+          final ub = b['updatedAt'];
+          DateTime pa;
+          DateTime pb;
+          if (ua is Timestamp) {
+            pa = ua.toDate();
+          } else {
+            pa = DateTime.tryParse(ua?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+          }
+          if (ub is Timestamp) {
+            pb = ub.toDate();
+          } else {
+            pb = DateTime.tryParse(ub?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+          }
+          return pb.compareTo(pa);
+        });
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ listArchivedDraftsToDisplay(web): $e');
+        }
+      }
     } else {
-      // Tech: sees his archived + admin's archived
-      final ownersToFetch = [currentUser, adminUsername];
-      rawDrafts = await _dbHelper.getArchivedDraftsByOwnersList(ownersToFetch);
-      final seenIds = <String>{};
-      rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+      if (isAdmin) {
+        // Admin: sees all archived drafts
+        rawDrafts = await _dbHelper.getAllArchivedDrafts();
+      } else {
+        // Tech: sees his archived + admin's archived
+        final ownersToFetch = [currentUser, adminUsername];
+        rawDrafts = await _dbHelper.getArchivedDraftsByOwnersList(ownersToFetch);
+        final seenIds = <String>{};
+        rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+      }
     }
 
     return _transformDrafts(rawDrafts);
@@ -511,6 +723,21 @@ class StorageService {
 
   // Delete draft
   Future<void> deleteDraft(String id) async {
+    if (kIsWeb) {
+      try {
+        await FirestoreService.instance.deleteForm(id);
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('✅ deleteDraft(web): deleted $id from Firestore');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ deleteDraft(web) failed: $e');
+        }
+      }
+      return;
+    }
     await _dbHelper.deleteDraft(id);
   }
 
