@@ -222,8 +222,9 @@ class StorageService {
 
  */
 import 'database_helper.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'firestore_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class StorageService {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -356,15 +357,15 @@ class StorageService {
 
    */
   Future<List<Map<String, dynamic>>> _transformDrafts(List<Map<String, dynamic>> drafts) async {
-    // ... votre code de transformation map(...) qui était dans listDrafts() ...
     return drafts.map((draft) {
+      final updatedAt = draft['updated_at'] ?? draft['updatedAt'];
       return {
         'id': draft['id'],
         'salonName': draft['salonName'] ?? draft['title'],
         'standName': draft['standName'],
         'hall': draft['hall'],
         'standNb': draft['standNb'],
-        'updatedAt': draft['updated_at'],
+        'updatedAt': updatedAt is Timestamp ? updatedAt.toDate().toIso8601String() : (updatedAt?.toString()),
         'owner': draft['owner'],
       };
     }).toList();
@@ -399,19 +400,63 @@ class StorageService {
     required bool isAdmin,
     required String adminUsername, // <-- NÉCESSAIRE: Vous devez passer le nom de l'Admin
   }) async {
-    List<Map<String, dynamic>> rawDrafts;
+    List<Map<String, dynamic>> rawDrafts = [];
 
-    if (isAdmin) {
-      // Admin: sees all non-archived drafts
-      rawDrafts = await _dbHelper.getAllDrafts();
+    if (kIsWeb) {
+      try {
+        final col = FirebaseFirestore.instance.collection(FirestoreService.formsCollection);
+        QuerySnapshot<Map<String, dynamic>> snap;
+        if (isAdmin) {
+          snap = await col.get(); // no order to avoid composite index requirement
+        } else {
+          final ownersToFetch = <String>{currentUser, if (adminUsername.isNotEmpty) adminUsername}.toList();
+          snap = await col.where('owner', whereIn: ownersToFetch).get();
+        }
+        final docs = snap.docs;
+        rawDrafts = docs.map((d) {
+          final data = d.data();
+          return {
+            'id': d.id,
+            ...data,
+          };
+        }).toList();
+        // Client-side sort by updatedAt desc if present
+        rawDrafts.sort((a, b) {
+          final ua = a['updatedAt'];
+          final ub = b['updatedAt'];
+          DateTime pa;
+          DateTime pb;
+          if (ua is Timestamp) {
+            pa = ua.toDate();
+          } else {
+            pa = DateTime.tryParse(ua?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+          }
+          if (ub is Timestamp) {
+            pb = ub.toDate();
+          } else {
+            pb = DateTime.tryParse(ub?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+          }
+          return pb.compareTo(pa);
+        });
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ listDraftsToDisplay(web): $e');
+        }
+      }
     } else {
-      // Tech: sees own + admin's non-archived drafts
-      final ownersToFetch = [currentUser, adminUsername];
-      rawDrafts = await _dbHelper.getDraftsByOwnersList(ownersToFetch);
+      if (isAdmin) {
+        // Admin: sees all non-archived drafts
+        rawDrafts = await _dbHelper.getAllDrafts();
+      } else {
+        // Tech: sees own + admin's non-archived drafts
+        final ownersToFetch = [currentUser, adminUsername];
+        rawDrafts = await _dbHelper.getDraftsByOwnersList(ownersToFetch);
 
-      // Deduplicate by id
-      final seenIds = <String>{};
-      rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+        // Deduplicate by id
+        final seenIds = <String>{};
+        rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
+      }
     }
 
     // Transform for UI

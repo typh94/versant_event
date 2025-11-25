@@ -31,8 +31,8 @@ class AuthService {
   }
   static Future<String?> currentUserRole() async {
     final prefs = await SharedPreferences.getInstance();
-    // Assurez-vous que la clé 'user_role' est utilisée lors du login
-    return prefs.getString('user_role');
+    // Read the same key that is written at login
+    return prefs.getString(_kRoleKey);
   }
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
