@@ -8,12 +8,14 @@ class _ArchivedDraftCard extends StatelessWidget {
   final String subtitle;
   final VoidCallback onUnarchive;
   final VoidCallback onDelete;
+  final bool showDelete;
 
   const _ArchivedDraftCard({
     required this.title,
     required this.subtitle,
     required this.onUnarchive,
     required this.onDelete,
+    this.showDelete = true,
   });
 
   @override
@@ -68,12 +70,13 @@ class _ArchivedDraftCard extends StatelessWidget {
                         onPressed: onUnarchive,
                       ),
                       const SizedBox(width: 8),
-                      _ChipIconButton(
-                        icon: Icons.delete_outline,
-                        label: 'Supprimer',
-                        color: roseVE,
-                        onPressed: onDelete,
-                      ),
+                      if (showDelete)
+                        _ChipIconButton(
+                          icon: Icons.delete_outline,
+                          label: 'Supprimer',
+                          color: roseVE,
+                          onPressed: onDelete,
+                        ),
                     ],
                   ),
                 ],
@@ -209,6 +212,7 @@ class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> {
                       child: _ArchivedDraftCard(
                         title: title,
                         subtitle: subtitle,
+                        showDelete: _isAdmin,
                         onUnarchive: () async {
                           final id = _drafts[index]['id'];
                           await StorageService().archiveDraft(id, false);

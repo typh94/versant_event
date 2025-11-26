@@ -332,6 +332,7 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                         child: _DraftCard(
                                           title: title,
                                           subtitle: subline,
+                                          showDelete: _isAdmin,
                                           onArchive: () async {
                                             final id = _filteredDrafts[index]['id'];
                                             await StorageService().archiveDraft(id, true);
@@ -385,6 +386,7 @@ class _DraftCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onArchive;
   final VoidCallback onDelete;
+  final bool showDelete;
 
   const _DraftCard({
     required this.title,
@@ -392,6 +394,7 @@ class _DraftCard extends StatelessWidget {
     required this.onTap,
     required this.onArchive,
     required this.onDelete,
+    this.showDelete = true,
   });
 
   @override
@@ -448,12 +451,13 @@ class _DraftCard extends StatelessWidget {
                           onPressed: onArchive,
                         ),
                         const SizedBox(width: 8),
-                        _ChipIconButton(
-                          icon: Icons.delete_outline,
-                          label: 'Supprimer',
-                          color: roseVE,
-                          onPressed: onDelete,
-                        ),
+                        if (showDelete)
+                          _ChipIconButton(
+                            icon: Icons.delete_outline,
+                            label: 'Supprimer',
+                            color: roseVE,
+                            onPressed: onDelete,
+                          ),
                       ],
                     ),
                   ],

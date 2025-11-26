@@ -14,7 +14,7 @@ class AuthService {
     {'username': 'AMM', 'password': 'alexis123', 'role': 'tech'},
     {'username': 'CHO', 'password': 'cham123', 'role': 'tech'},
     {'username': 'DIB', 'password': 'didier123', 'role': 'tech'},
-    {'username': 'PRESTA', 'password': 'cham123', 'role': 'tech'},
+    {'username': 'PRESTA', 'password': 'mehdi123', 'role': 'tech'},
     {'username': 'admin', 'password': 'admin123', 'role': 'admin'},
   ];
 
