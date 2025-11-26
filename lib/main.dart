@@ -1344,6 +1344,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
   // Building photo
   String _buildingPhotoPath = '';
+  Uint8List? _buildingPhotoBytes; // Web: keep in-memory bytes for preview/PDF
 
   // Sub-photo entries
   List<SubPhotoEntry> _subPhotos = [];
@@ -1799,8 +1800,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (pickedFile != null) {
         // ✅ Save permanently instead of using temp path
         final permanentPath = await _saveImagePermanently(pickedFile.path);
+        final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
         setState(() {
           _buildingPhotoPath = permanentPath;
+          if (webBytes != null && webBytes.isNotEmpty) {
+            _buildingPhotoBytes = webBytes;
+          }
         });
       }
     } catch (e) {
@@ -1815,8 +1820,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       final permanentPath = await _saveImagePermanently(image.path);
+      final webBytes = kIsWeb ? await image.readAsBytes() : null;
       setState(() {
         _buildingPhotoPath = permanentPath;
+        if (webBytes != null && webBytes.isNotEmpty) {
+          _buildingPhotoBytes = webBytes;
+        }
       });
     }
   }
@@ -2161,8 +2170,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
       content.add(TextContent('Article47Observations', _article47bsrvt.text.trim()));
       content.add(TextContent('Article48Observations', _article48bsrvt.text.trim()));
 
-      // Building photo
-      if (_buildingPhotoPath.isNotEmpty ) {
+      // Building photo for DOCX: prefer in-memory bytes on Web, fallback to file bytes on IO
+      if (_buildingPhotoBytes != null && _buildingPhotoBytes!.isNotEmpty) {
+        content.add(ImageContent('PhotoGenerale', _buildingPhotoBytes!));
+      } else if (!kIsWeb && _buildingPhotoPath.isNotEmpty ) {
         final photoBytes = await File(_buildingPhotoPath).readAsBytes();
         content.add(ImageContent('PhotoGenerale', photoBytes));
       }
@@ -3612,8 +3623,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
               ),
               pw.SizedBox(height: 10),
 
-              // Building photo integration
-              if (_buildingPhotoPath.isNotEmpty && File(_buildingPhotoPath).existsSync())
+              // Building photo integration (prefer in-memory bytes on Web)
+              if (_buildingPhotoBytes != null && _buildingPhotoBytes!.isNotEmpty)
                 pw.Container(
                   width: double.infinity,
                   height: 450,
@@ -3621,12 +3632,24 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     border: pw.Border.all(color: PdfColors.grey600, width: 0.5),
                     color: PdfColors.grey200,
                   ),
-                 // clipBehavior: pw.Clip.antiAlias,
+                  child: pw.Image(
+                    pw.MemoryImage(_buildingPhotoBytes!),
+                    fit: pw.BoxFit.cover,
+                  ),
+                )
+              else if (!kIsWeb && _buildingPhotoPath.isNotEmpty && File(_buildingPhotoPath).existsSync())
+                pw.Container(
+                  width: double.infinity,
+                  height: 450,
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey600, width: 0.5),
+                    color: PdfColors.grey200,
+                  ),
                   child: pw.Image(
                     pw.MemoryImage(File(_buildingPhotoPath).readAsBytesSync()),
                     fit: pw.BoxFit.cover,
                   ),
-                ),
+                )
 
             ],
           );
@@ -5104,7 +5127,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   ),
                 ],
               ),
-              if (_buildingPhotoPath.isNotEmpty) ...[
+              if ((_buildingPhotoBytes != null && _buildingPhotoBytes!.isNotEmpty) || _buildingPhotoPath.isNotEmpty) ...[
                 SizedBox(height: 12),
                 Container(
                   height: 200,
@@ -5114,10 +5137,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: IoImage(
-                    path: _buildingPhotoPath,
-                    fit: BoxFit.cover,
-                  ),
+                  child: (_buildingPhotoBytes != null && _buildingPhotoBytes!.isNotEmpty)
+                      ? Image.memory(
+                          _buildingPhotoBytes!,
+                          fit: BoxFit.cover,
+                        )
+                      : IoImage(
+                          path: _buildingPhotoPath,
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ],
 
@@ -7522,8 +7550,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
         if (v == null || (v is String && v.trim().isEmpty)) {
           allSet = false;
         }
+        else
+          {
+            allSet= true;
+          }
         if (v == 'NS') {
           anyNS = true;
+          allSet = true;
         }
       }
       if (allSet) {
