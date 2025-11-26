@@ -466,7 +466,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
       bool allSet = true;
       for (int i = 3; i <= 48; i++) {
         final v = checkboxValues2[i];
-        if (v == null) {
+        // Treat null or empty string as "not set"
+        if (v == null || (v is String && v.trim().isEmpty)) {
           allSet = false;
         }
         if (v == 'NS') {
@@ -733,7 +734,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
       bool allSet = true;
       for (int i = 3; i <= 48; i++) {
         final v = checkboxValues2[i];
-        if (v == null) allSet = false;
+        if (v == null || (v is String && v.trim().isEmpty)) allSet = false;
         if (v == 'NS') anyNS = true;
       }
       if (allSet) {
@@ -7513,12 +7514,23 @@ class _FormToWordPageState extends State<FormToWordPage> {
   Widget buildAvisTile(String title, int index) {
     bool? value;
     if (index == 1) {
-      // Auto-compute Avis: if ANY article (3..48) is 'NS' => Défavorable, else Favorable
+      // Compute Avis: stay undecided (null) until ALL articles (3..48) are set (S/NS/SO/HM)
       bool anyNS = false;
+      bool allSet = true;
       for (int i = 3; i <= 48; i++) {
-        if (checkboxValues2[i] == 'NS') { anyNS = true; break; }
+        final v = checkboxValues2[i];
+        if (v == null || (v is String && v.trim().isEmpty)) {
+          allSet = false;
+        }
+        if (v == 'NS') {
+          anyNS = true;
+        }
       }
-      value = anyNS ? false : true;
+      if (allSet) {
+        value = anyNS ? false : true;
+      } else {
+        value = null;
+      }
       // Keep internal model in sync for export/persistence
       checkboxValues3[1] = value;
     } else {
