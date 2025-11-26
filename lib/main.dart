@@ -1827,6 +1827,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (!mounted) return;
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
+        final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
         setState(() {
           String obsText;
           switch (articleIndex) {
@@ -1839,6 +1840,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
             imagePath: permanentPath,  // ✅ Use permanent path
+            imageBytes: webBytes,
           );
         });
       }
@@ -1857,6 +1859,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (!mounted) return;
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
+        final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
         setState(() {
           String obsText;
           switch (articleIndex) {
@@ -1869,6 +1872,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
             imagePath: permanentPath,  // ✅ Use permanent path
+            imageBytes: webBytes,
           );
         });
       }
@@ -4333,22 +4337,36 @@ class _FormToWordPageState extends State<FormToWordPage> {
               final SubPhotoEntry? photo = _articlePhotos[i];
 
               pw.Widget imageWidget;
-              if (photo != null && photo.imagePath.isNotEmpty) {
+              if (photo != null) {
                 try {
-                  final file = File(photo.imagePath);
-                  if (file.existsSync()) {
-                    final bytes = file.readAsBytesSync();
+                  if (photo.imageBytes != null && photo.imageBytes!.isNotEmpty) {
+                    // Web or in-memory image
                     imageWidget = pw.Image(
-                      pw.MemoryImage(bytes),
+                      pw.MemoryImage(photo.imageBytes!),
                       width: 350,
                       height: 220,
                       fit: pw.BoxFit.contain,
                     );
+                  } else if (photo.imagePath.isNotEmpty) {
+                    final file = File(photo.imagePath);
+                    if (file.existsSync()) {
+                      final bytes = file.readAsBytesSync();
+                      imageWidget = pw.Image(
+                        pw.MemoryImage(bytes),
+                        width: 350,
+                        height: 220,
+                        fit: pw.BoxFit.contain,
+                      );
+                    } else {
+                      imageWidget = pw.Text(
+                        'Photo non disponible (fichier supprimé)',
+                        style: const pw.TextStyle(fontSize: 9, color: PdfColors.red),
+                      );
+                    }
                   } else {
-                    // File doesn't exist
                     imageWidget = pw.Text(
-                      'Photo non disponible (fichier supprimé)',
-                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.red),
+                      'Aucune photo associée',
+                      style: const pw.TextStyle(fontSize: 9),
                     );
                   }
                 } catch (e) {
@@ -7087,8 +7105,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   ),
 
                 // 🔹 “View Image” icon button (only if image exists)
-                if (_articlePhotos[index]?.imagePath != null &&
-                    _articlePhotos[index]!.imagePath.isNotEmpty)
+                if (((_articlePhotos[index]?.imagePath ?? '').isNotEmpty) ||
+                    (_articlePhotos[index]?.imageBytes != null && _articlePhotos[index]!.imageBytes!.isNotEmpty))
                   IconButton(
                     icon: Icon(Icons.image, color: bleuAmont),
                     tooltip: "Voir l'image",
@@ -7107,12 +7125,19 @@ class _FormToWordPageState extends State<FormToWordPage> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: IoImage(
-                                      path: _articlePhotos[index]!.imagePath,
-                                      width: 250,
-                                      height: 250,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: kIsWeb && _articlePhotos[index]?.imageBytes != null
+                                        ? Image.memory(
+                                            _articlePhotos[index]!.imageBytes!,
+                                            width: 250,
+                                            height: 250,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : IoImage(
+                                            path: _articlePhotos[index]!.imagePath,
+                                            width: 250,
+                                            height: 250,
+                                            fit: BoxFit.cover,
+                                          ),
                                   ),
                                   const SizedBox(height: 8),
                                   TextButton(

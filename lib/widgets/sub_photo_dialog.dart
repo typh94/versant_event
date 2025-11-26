@@ -141,6 +141,7 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
                   number: _numberController.text,
                   description: _descriptionController.text,
                   imagePath: _imagePath,
+                  imageBytes: _imageBytesWeb,
                 ),
               );
             }
