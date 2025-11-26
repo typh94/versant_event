@@ -1,7 +1,7 @@
 // Minimal web stubs for dart:io symbols to allow Flutter web compilation.
 // These classes are only used to satisfy references on web builds; any actual
-// use will throw if invoked at runtime in a web build. UI should gate calls
-// behind kIsWeb checks or provide web-safe alternatives.
+// use will be no-ops or return benign defaults. UI should gate IO calls behind
+// kIsWeb checks or provide web-safe alternatives.
 import 'dart:typed_data';
 
 class File {
@@ -31,5 +31,11 @@ class Directory {
   final String path;
   Directory(this.path);
 
+  // Existence / creation APIs used by app code
+  Future<bool> exists() async => false;
+  bool existsSync() => false;
+  Future<Directory> create({bool recursive = false}) async => this;
+
+  // Listing (rarely used on web paths; return empty)
   List<File> listSync() => <File>[];
 }
