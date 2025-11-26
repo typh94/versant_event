@@ -225,6 +225,10 @@ import 'database_helper.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// IO-only utilities
+import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io';
+import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
+import 'package:path/path.dart' as p;
 
 class StorageService {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -897,12 +901,34 @@ class StorageService {
       return;
     }
 
-    // IO: keep tracking in SQLite (paths are valid on device)
+    // IO: normalize path by copying into app documents directory so it remains accessible after activity lifecycle changes
+    String finalPath = imagePath;
+    try {
+      final f = File(imagePath);
+      if (await f.exists()) {
+        final appDir = await getApplicationDocumentsDirectory() as dynamic;
+        final imagesDir = Directory(p.join(appDir.path as String, 'images')) as dynamic;
+        if (!(await (imagesDir as Directory).exists())) {
+          await (imagesDir as Directory).create(recursive: true);
+        }
+        final ext = p.extension(imagePath).isEmpty ? '.jpg' : p.extension(imagePath);
+        final newName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+        final newPath = p.join((imagesDir as Directory).path, newName);
+        await f.copy(newPath);
+        finalPath = newPath;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('ℹ️ saveImageReference(IO): failed to copy image to app dir, keeping original path. err=$e');
+      }
+    }
+
     await _dbHelper.insertImage({
       'report_id': reportId?.toString(),
       'draft_id': draftId,
       'image_type': imageType,
-      'image_path': imagePath,
+      'image_path': finalPath,
       'description': description,
       'article_index': articleIndex,
     });

@@ -802,20 +802,17 @@ class _FormToWordPageState extends State<FormToWordPage> {
       // Persist building photo as base64 (web-safe)
       'buildingPhotoB64': (() {
         try {
+          if (!kIsWeb) return null; // Avoid embedding large images in SQLite on mobile/desktop
           if (_buildingPhotoBytes != null && _buildingPhotoBytes!.isNotEmpty) {
             return base64Encode(_buildingPhotoBytes!);
-          } else if (!kIsWeb && _buildingPhotoPath.isNotEmpty) {
-            final f = File(_buildingPhotoPath);
-            if (f.existsSync()) {
-              return base64Encode(f.readAsBytesSync());
-            }
           }
         } catch (_) {}
         return null;
       })(),
-      // Persist per-article photos (verification) as base64 map when bytes exist (web-safe)
+      // Persist per-article photos (verification) as base64 map when bytes exist (web-only)
       'verifPhotoB64': (() {
         try {
+          if (!kIsWeb) return null; // Avoid large payloads on mobile/desktop
           final map = <String, String>{};
           _articlePhotos.forEach((idx, entry) {
             if (entry.imageBytes != null && entry.imageBytes!.isNotEmpty) {
