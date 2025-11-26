@@ -4,6 +4,7 @@ import '../services/salon_fiche_store.dart';
 import '../services/firestore_service.dart';
 import '../main.dart';
 import '../constants/app_colors.dart';
+import '../services/auth_service.dart';
 
 class CreateFormScreen extends StatefulWidget {
   const CreateFormScreen({super.key});
@@ -17,6 +18,24 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
   Map<String, dynamic>? _selectedSalonData;
   final _titleCtrl = TextEditingController(text: 'Rapport de vérification');
   bool _creating = false;
+  String? _role;
+  String? _selectedTechnician; // admin selection
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final r = await AuthService.currentUserRole();
+    if (mounted) setState(() => _role = r);
+  }
+
+  List<String> get _techUsernames => AuthService.users
+      .where((u) => u['role'] == 'tech')
+      .map((u) => u['username']!)
+      .toList();
 
   Future<void> _create() async {
     if (_selectedSalonId == null || _selectedSalonData == null) {
@@ -25,9 +44,17 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
       );
       return;
     }
+    // If admin, require technician selection
+    if (_role == 'admin' && (_selectedTechnician == null || _selectedTechnician!.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez sélectionner un technicien à assigner')),
+      );
+      return;
+    }
     setState(() => _creating = true);
     try {
       final fiche = _selectedSalonData!;
+      final currentUser = await AuthService.currentUsername();
       // Build a prefill map compatible with main.dart controllers
       final prefill = {
         'doName': fiche['doName'] ?? '',
@@ -54,6 +81,11 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
         'salonName': prefill['salonName'],
         'prefill': prefill,
         'status': 'draft',
+        'createdBy': currentUser,
+        if (_role == 'admin' && _selectedTechnician != null) ...{
+          'assignedTo': _selectedTechnician,
+          'technicianName': _selectedTechnician,
+        },
       });
 
       if (!mounted) return;
@@ -120,6 +152,19 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
                 );
               },
             ),
+            const SizedBox(height: 16),
+            if (_role == 'admin') ...[
+              const Text('Assigner à un technicien'),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+                value: _selectedTechnician,
+                items: _techUsernames
+                    .map((u) => DropdownMenuItem<String>(value: u, child: Text(u)))
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedTechnician = val),
+              ),
+            ],
             const Spacer(),
             SizedBox(
               width: double.infinity,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../main.dart';
 import '../constants/app_colors.dart';
 import 'archived_drafts_screen.dart';
@@ -333,6 +334,50 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                           title: title,
                                           subtitle: subline,
                                           showDelete: _isAdmin,
+                                          showChangeTech: _isAdmin,
+                                          onChangeTech: () async {
+                                            final id = _filteredDrafts[index]['id'] as String?;
+                                            if (id == null || id.isEmpty) return;
+                                            final techs = AuthService.users
+                                                .where((u) => u['role'] == 'tech')
+                                                .map((u) => u['username']!)
+                                                .toList();
+                                            String? choice;
+                                            final selected = await showDialog<String>(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text('Changer le technicien'),
+                                                content: DropdownButtonFormField<String>(
+                                                  value: choice,
+                                                  items: techs
+                                                      .map((t) => DropdownMenuItem<String>(value: t, child: Text(t)))
+                                                      .toList(),
+                                                  onChanged: (v) => choice = v,
+                                                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                                                ),
+                                                actions: [
+                                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+                                                  TextButton(onPressed: () => Navigator.pop(context, choice), child: const Text('Changer')),
+                                                ],
+                                              ),
+                                            );
+                                            if (selected == null || selected.isEmpty) return;
+                                            try {
+                                              await FirestoreService.instance.updateForm(id, {
+                                                'assignedTo': selected,
+                                                'technicianName': selected,
+                                              });
+                                              if (!mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Technicien mis à jour')),
+                                              );
+                                            } catch (e) {
+                                              if (!mounted) return;
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Erreur: $e')),
+                                              );
+                                            }
+                                          },
                                           onArchive: () async {
                                             final id = _filteredDrafts[index]['id'];
                                             await StorageService().archiveDraft(id, true);
@@ -387,6 +432,8 @@ class _DraftCard extends StatelessWidget {
   final VoidCallback onArchive;
   final VoidCallback onDelete;
   final bool showDelete;
+  final bool showChangeTech;
+  final VoidCallback? onChangeTech;
 
   const _DraftCard({
     required this.title,
@@ -395,6 +442,8 @@ class _DraftCard extends StatelessWidget {
     required this.onArchive,
     required this.onDelete,
     this.showDelete = true,
+    this.showChangeTech = false,
+    this.onChangeTech,
   });
 
   @override
@@ -450,6 +499,14 @@ class _DraftCard extends StatelessWidget {
                           color: vertSauge,
                           onPressed: onArchive,
                         ),
+                        const SizedBox(width: 8),
+                        if (showChangeTech)
+                          _ChipIconButton(
+                            icon: Icons.swap_horiz,
+                            label: 'Changer tech',
+                            color: bleuAmont,
+                            onPressed: onChangeTech ?? () {},
+                          ),
                         const SizedBox(width: 8),
                         if (showDelete)
                           _ChipIconButton(

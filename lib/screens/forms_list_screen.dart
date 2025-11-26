@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
+import '../services/auth_service.dart';
 import 'form_detail_screen.dart';
 
 class FormsListScreen extends StatefulWidget {
@@ -11,12 +12,31 @@ class FormsListScreen extends StatefulWidget {
 }
 
 class _FormsListScreenState extends State<FormsListScreen> {
+  String? _username;
+  String? _role;
+
+  Future<void> _loadUser() async {
+    final u = await AuthService.currentUsername();
+    final r = await AuthService.currentUserRole();
+    if (mounted) setState(() { _username = u; _role = r; });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
   Future<void> _manualRefresh() async {
     if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    final isTech = _role == 'tech';
+    final stream = isTech && _username != null
+        ? FirestoreService.instance.streamFormsByAssigned(_username!)
+        : FirestoreService.instance.streamAllForms();
     return Scaffold(
       appBar: AppBar(
               title: const Text('Tous les rapports (temps réel)') ,
@@ -29,7 +49,7 @@ class _FormsListScreenState extends State<FormsListScreen> {
               ],
             ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirestoreService.instance.streamAllForms(),
+        stream: stream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -86,12 +106,68 @@ class _FormsListScreenState extends State<FormsListScreen> {
                         : 'Salon: $displaySalon\nDernière mise à jour: $updatedAtStr',
                   ),
                   isThreeLine: true,
-                  trailing: (lockedBy == null || lockedBy.isEmpty)
-                      ? const Icon(Icons.lock_open, color: Colors.green)
-                      : Tooltip(
-                          message: 'En édition par $lockedBy',
-                          child: const Icon(Icons.lock, color: Colors.red),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_role == 'admin')
+                        IconButton(
+                          icon: const Icon(Icons.person_add),
+                          tooltip: 'Assigner / Réassigner',
+                          onPressed: () async {
+                            final techs = AuthService.users
+                                .where((u) => u['role'] == 'tech')
+                                .map((u) => u['username']!)
+                                .toList();
+                            final selected = await showDialog<String>(
+                              context: context,
+                              builder: (context) {
+                                String? choice;
+                                return AlertDialog(
+                                  title: const Text('Assigner à un technicien'),
+                                  content: StatefulBuilder(
+                                    builder: (context, setSt) => DropdownButtonFormField<String>(
+                                      value: choice,
+                                      items: techs
+                                          .map((t) => DropdownMenuItem<String>(value: t, child: Text(t)))
+                                          .toList(),
+                                      onChanged: (v) => setSt(() => choice = v),
+                                      decoration: const InputDecoration(border: OutlineInputBorder()),
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+                                    TextButton(onPressed: () => Navigator.pop(context, choice), child: const Text('Assigner')),
+                                  ],
+                                );
+                              },
+                            );
+                            if (selected != null && selected.isNotEmpty) {
+                              try {
+                                await FirestoreService.instance.updateForm(data['id'] as String, {
+                                  'assignedTo': selected,
+                                  'technicianName': selected,
+                                });
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Technicien assigné')),
+                                );
+                              } catch (e) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Erreur: $e')),
+                                );
+                              }
+                            }
+                          },
                         ),
+                      (lockedBy == null || lockedBy.isEmpty)
+                          ? const Icon(Icons.lock_open, color: Colors.green)
+                          : Tooltip(
+                              message: 'En édition par $lockedBy',
+                              child: const Icon(Icons.lock, color: Colors.red),
+                            ),
+                    ],
+                  ),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(

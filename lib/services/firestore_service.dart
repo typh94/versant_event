@@ -105,11 +105,18 @@ class FirestoreService {
     return q.snapshots();
   }
 
-  /// Stream forms filtered by owner (Technicians), ordered by updatedAt desc.
+  /// Stream forms filtered by owner (legacy), ordered by updatedAt desc.
   Stream<QuerySnapshot<Map<String, dynamic>>> streamFormsByOwner(String owner, {int? limit}) {
     Query<Map<String, dynamic>> q = _forms
         .where('owner', isEqualTo: owner)
         .orderBy('updatedAt', descending: true);
+    if (limit != null) q = q.limit(limit);
+    return q.snapshots();
+  }
+
+  /// Stream forms assigned to a technician (by username). Falls back to client-side filter if index missing.
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamFormsByAssigned(String username, {int? limit}) {
+    Query<Map<String, dynamic>> q = _forms.where('assignedTo', isEqualTo: username);
     if (limit != null) q = q.limit(limit);
     return q.snapshots();
   }

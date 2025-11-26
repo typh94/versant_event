@@ -13,6 +13,7 @@ class FormDetailScreen extends StatefulWidget {
 
 class _FormDetailScreenState extends State<FormDetailScreen> {
   String? _username;
+  String? _role;
   bool _lockAcquired = false;
   final _notesCtrl = TextEditingController();
 
@@ -24,7 +25,8 @@ class _FormDetailScreenState extends State<FormDetailScreen> {
 
   Future<void> _init() async {
     final user = await AuthService.currentUsername();
-    setState(() => _username = user);
+    final role = await AuthService.currentUserRole();
+    setState(() { _username = user; _role = role; });
     if (user == null) return;
     final ok = await FirestoreService.instance.acquireFormLock(widget.formId, user, ttlSeconds: 600);
     if (!mounted) return;
@@ -85,6 +87,48 @@ class _FormDetailScreenState extends State<FormDetailScreen> {
       appBar: AppBar(
         title: const Text('Détails du rapport'),
         actions: [
+          if (_role == 'admin')
+            IconButton(
+              onPressed: () async {
+                final techs = AuthService.users.where((u) => u['role'] == 'tech').map((u) => u['username']!).toList();
+                final selected = await showDialog<String>(
+                  context: context,
+                  builder: (context) {
+                    String? choice;
+                    return AlertDialog(
+                      title: const Text('Assigner à un technicien'),
+                      content: StatefulBuilder(
+                        builder: (context, setSt) => DropdownButtonFormField<String>(
+                          value: choice,
+                          items: techs.map((t) => DropdownMenuItem<String>(value: t, child: Text(t))).toList(),
+                          onChanged: (v) => setSt(() => choice = v),
+                          decoration: const InputDecoration(border: OutlineInputBorder()),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+                        TextButton(onPressed: () => Navigator.pop(context, choice), child: const Text('Assigner')),
+                      ],
+                    );
+                  },
+                );
+                if (selected != null && selected.isNotEmpty) {
+                  try {
+                    await FirestoreService.instance.updateForm(widget.formId, {
+                      'assignedTo': selected,
+                      'technicianName': selected,
+                    });
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Technicien assigné')));
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                  }
+                }
+              },
+              icon: const Icon(Icons.person_add),
+              tooltip: 'Assigner / Réassigner',
+            ),
           IconButton(
             onPressed: _lockAcquired ? _saveChanges : null,
             icon: const Icon(Icons.save),
@@ -107,6 +151,7 @@ class _FormDetailScreenState extends State<FormDetailScreen> {
           final fields = (data['fields'] as Map<String, dynamic>?);
           final prefill = (data['prefill'] as Map<String, dynamic>?) ?? const {};
           final lockedBy = data['lockedBy'] as String?;
+          final assignedTo = (data['assignedTo'] as String?) ?? (data['technicianName'] as String?);
           _notesCtrl.text = (fields?['notes'] as String?) ?? '';
 
           Widget infoRow(String label, String? value) {
@@ -131,6 +176,14 @@ class _FormDetailScreenState extends State<FormDetailScreen> {
                 Text(title, style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text('Salon: $salonName'),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.engineering, size: 18),
+                    const SizedBox(width: 6),
+                    Text('Technicien assigné: ${assignedTo ?? '-'}'),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 Text('Informations pré-remplies', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
