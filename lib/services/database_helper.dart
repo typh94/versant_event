@@ -21,7 +21,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5, // Increment version for migrations
+      version: 6, // Increment version for migrations
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async {
@@ -128,6 +128,14 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_reports_owner_created ON reports(owner, created_at)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_images_draft ON images(draft_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_images_report ON images(report_id)');
+
+    // Local tombstones for deleted document IDs (to prevent reappearing from cloud cache)
+    await db.execute('''
+      CREATE TABLE deleted_ids (
+        id TEXT PRIMARY KEY,
+        deleted_at TEXT
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -168,6 +176,19 @@ class DatabaseHelper {
         await db.execute('CREATE INDEX IF NOT EXISTS idx_images_report ON images(report_id)');
       } catch (e) {
         print('Migration v5: create indexes error: $e');
+      }
+    }
+    if (oldVersion < 6) {
+      // Create deleted_ids table for tombstones
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS deleted_ids (
+            id TEXT PRIMARY KEY,
+            deleted_at TEXT
+          )
+        ''');
+      } catch (e) {
+        print('Migration v6: create deleted_ids error: $e');
       }
     }
   }
@@ -635,5 +656,28 @@ class DatabaseHelper {
     await db.close();
   }
 
+  // -------- Deleted IDs tombstone helpers --------
+  Future<void> addDeletedId(String id) async {
+    final db = await database;
+    await db.insert(
+      'deleted_ids',
+      {
+        'id': id,
+        'deleted_at': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> removeDeletedId(String id) async {
+    final db = await database;
+    await db.delete('deleted_ids', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<String>> getDeletedIds() async {
+    final db = await database;
+    final rows = await db.query('deleted_ids', columns: ['id']);
+    return rows.map((r) => r['id'] as String).toList();
+  }
 
 }

@@ -136,7 +136,7 @@ class ArchivedDraftsScreen extends StatefulWidget {
   State<ArchivedDraftsScreen> createState() => _ArchivedDraftsScreenState();
 }
 
-class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> {
+class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> { 
   final StorageService _storage = StorageService();
   List<Map<String, dynamic>> _drafts = [];
   bool _loading = true;
@@ -176,7 +176,24 @@ class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> {
       _loading = false;
     });
   }
-
+ 
+  String _formatUpdatedAt(dynamic value) {
+    try {
+      if (value == null) return '';
+      if (value is DateTime) {
+        final dt = value.toLocal();
+        return '\n${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${(dt.year % 100).toString().padLeft(2, '0')} à ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      }
+      final s = value.toString();
+      final dt = DateTime.tryParse(s);
+      if (dt == null) return '';
+      final local = dt.toLocal();
+      return '\n${local.day.toString().padLeft(2, '0')}-${local.month.toString().padLeft(2, '0')}-${(local.year % 100).toString().padLeft(2, '0')} à ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,7 +216,7 @@ class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> {
                     final stand = (d['standName'] ?? '').toString();
                     final hall = (d['hall'] ?? '').toString();
                     final standNb = (d['standNb'] ?? '').toString();
-                    final updated = '\n${(d['updatedAt'] ?? '').toString().substring(8,10)}-${(d['updatedAt'] ?? '').toString().substring(5,7)}-${(d['updatedAt'] ?? '').toString().substring(2,4)} à ${(d['updatedAt'] ?? '').toString().substring(11,16)}';
+                    final updated = _formatUpdatedAt(d['updatedAt']);
                     final subtitle = [
                       if (stand.isNotEmpty) 'Nom: $stand',
                       if (hall.isNotEmpty) 'Hall: $hall',

@@ -185,6 +185,23 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
     }).toList();
   }
 
+  String _formatUpdatedAt(dynamic value) {
+    try {
+      if (value == null) return '';
+      if (value is DateTime) {
+        final dt = value.toLocal();
+        return '\n${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${(dt.year % 100).toString().padLeft(2, '0')} à ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      }
+      final s = value.toString();
+      final dt = DateTime.tryParse(s);
+      if (dt == null) return '';
+      final local = dt.toLocal();
+      return '\n${local.day.toString().padLeft(2, '0')}-${local.month.toString().padLeft(2, '0')}-${(local.year % 100).toString().padLeft(2, '0')} à ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -318,7 +335,7 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                       final stand = (d['standName'] ?? '').toString();
                                       final hall = (d['hall'] ?? '').toString();
                                       final standNb = (d['standNb'] ?? '').toString();
-                                      final updated = '\n${(d['updatedAt'] ?? '').toString().substring(8,10)}-${(d['updatedAt'] ?? '').toString().substring(5,7)}-${(d['updatedAt'] ?? '').toString().substring(2,4)} à ${(d['updatedAt'] ?? '').toString().substring(11,16)}';
+                                      final updated = _formatUpdatedAt(d['updatedAt']);
                                       final editor = (d['lastEditedBy'] ?? d['owner'] ?? '').toString();
                                       final subline = [
                                         if (stand.isNotEmpty) 'Nom: $stand',
@@ -495,7 +512,7 @@ class _DraftCard extends StatelessWidget {
                       children: [
                         _ChipIconButton(
                           icon: Icons.archive_outlined,
-                          label: 'Archiver',
+                          label: 'Archive',
                           color: vertSauge,
                           onPressed: onArchive,
                         ),
@@ -503,7 +520,7 @@ class _DraftCard extends StatelessWidget {
                         if (showChangeTech)
                           _ChipIconButton(
                             icon: Icons.swap_horiz,
-                            label: 'Changer tech',
+                            label: 'switch',
                             color: bleuAmont,
                             onPressed: onChangeTech ?? () {},
                           ),
@@ -511,7 +528,7 @@ class _DraftCard extends StatelessWidget {
                         if (showDelete)
                           _ChipIconButton(
                             icon: Icons.delete_outline,
-                            label: 'Supprimer',
+                            label: ' ',
                             color: roseVE,
                             onPressed: onDelete,
                           ),

@@ -309,6 +309,11 @@ class StorageService {
       await _dbHelper.insertDraft(draftId, dataWithOwner);
     }
 
+    // Ensure this id is not kept as tombstoned locally anymore
+    try {
+      await _dbHelper.removeDeletedId(draftId);
+    } catch (_) {}
+
     // Also upsert to Firestore (best-effort). Do not throw if it fails.
     try {
       await FirestoreService.instance.setForm(draftId, dataWithOwner, merge: true);
@@ -634,6 +639,16 @@ class StorageService {
           rawDrafts = await _dbHelper.getDraftsByOwnersList(localOwners);
         }
 
+        // Exclude any ids that were deleted locally (tombstones)
+        List<String> deletedIds = const [];
+        try {
+          deletedIds = await _dbHelper.getDeletedIds();
+        } catch (_) {}
+        if (deletedIds.isNotEmpty) {
+          cloud.removeWhere((m) => deletedIds.contains(m['id'] as String? ?? ''));
+          rawDrafts.removeWhere((m) => deletedIds.contains(m['id'] as String? ?? ''));
+        }
+
         // Merge local and cloud by id, cloud wins on conflicts
         final byId = <String, Map<String, dynamic>>{};
         for (final d in rawDrafts) {
@@ -780,10 +795,60 @@ class StorageService {
           // ignore: avoid_print
           print('❌ deleteDraft(web) failed: $e');
         }
+        // Fallback: mark as archived so web list (which filters archived=false) won't show it
+        try {
+          await FirestoreService.instance.updateForm(id, {
+            'archived': true,
+            'deletedAt': FieldValue.serverTimestamp(),
+          });
+          if (kDebugMode) {
+            // ignore: avoid_print
+            print('ℹ️ deleteDraft(web): marked $id as archived as fallback');
+          }
+        } catch (e2) {
+          if (kDebugMode) {
+            // ignore: avoid_print
+            print('❌ deleteDraft(web) fallback archive failed: $e2');
+          }
+        }
       }
       return;
     }
+    // On mobile/desktop, delete from Firestore as source of truth, then from local cache/DB.
+    try {
+      await FirestoreService.instance.deleteForm(id);
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('✅ deleteDraft(mobile): deleted $id from Firestore');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('❌ deleteDraft(mobile) Firestore delete failed: $e');
+      }
+      // Fallback: mark in Firestore as archived to hide it from lists which exclude archived
+      try {
+        await FirestoreService.instance.updateForm(id, {
+          'archived': true,
+          'deletedAt': FieldValue.serverTimestamp(),
+        });
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('ℹ️ deleteDraft(mobile): marked $id as archived as fallback');
+        }
+      } catch (e2) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ deleteDraft(mobile) fallback archive failed: $e2');
+        }
+      }
+      // Continue to delete locally to avoid ghost entries in local lists.
+    }
     await _dbHelper.deleteDraft(id);
+    // Record tombstone locally so that any cached cloud re-sync won't resurface this id on Android
+    try {
+      await _dbHelper.addDeletedId(id);
+    } catch (_) {}
   }
 
   // Save completed report
@@ -805,6 +870,34 @@ class StorageService {
     String? description,
     int? articleIndex,
   }) async {
+    if (kIsWeb) {
+      // On web, persist image references inside the Firestore form document to survive reloads.
+      if (draftId == null || draftId.isEmpty) return;
+      try {
+        final img = {
+          'image_path': imagePath,
+          'image_type': imageType,
+          'description': description,
+          'article_index': articleIndex,
+          'created_at': FieldValue.serverTimestamp(),
+        };
+        await FirestoreService.instance.updateForm(draftId, {
+          'images': FieldValue.arrayUnion([img]),
+        });
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('✅ saveImageReference(web): image saved into Firestore array on $draftId');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('❌ saveImageReference(web) failed: $e');
+        }
+      }
+      return;
+    }
+
+    // IO: keep tracking in SQLite (paths are valid on device)
     await _dbHelper.insertImage({
       'report_id': reportId?.toString(),
       'draft_id': draftId,
@@ -817,6 +910,22 @@ class StorageService {
 
   // Get images for a draft
   Future<List<Map<String, dynamic>>> getDraftImages(String draftId) async {
+    if (kIsWeb) {
+      try {
+        final snap = await FirestoreService.instance.getFormOnce(draftId);
+        if (!snap.exists) return [];
+        final data = snap.data();
+        final imgs = (data?['images'] as List?) ?? const [];
+        // Ensure map list with required keys
+        return imgs.whereType<Map>().map((m) => m.map((k, v) => MapEntry(k.toString(), v))).toList().cast<Map<String, dynamic>>();
+      } catch (e) {
+        if (kDebugMode) {
+          // ignore: avoid_print
+          print('ℹ️ getDraftImages(web) failed for $draftId: $e');
+        }
+        return [];
+      }
+    }
     return await _dbHelper.getImagesByDraft(draftId);
   }
 
