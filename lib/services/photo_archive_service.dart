@@ -61,7 +61,8 @@ class PhotoArchiveService {
       final contentType = _guessContentType(filename);
 
       final ref = _storage.ref().child(path);
-      await ref.putFile(File(filePath), SettableMetadata(contentType: contentType));
+      final data = await File(filePath).readAsBytes();
+      await ref.putData(data, SettableMetadata(contentType: contentType));
       final downloadUrl = await ref.getDownloadURL();
 
       await _firestore.collection('photos_archive').add({
