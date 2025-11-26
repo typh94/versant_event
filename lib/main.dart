@@ -765,6 +765,34 @@ class _FormToWordPageState extends State<FormToWordPage> {
       'textConclusion': _textConclusion.text,
       'textPreconisations': _textPreconisations.text,
       'buildingPhotoPath': _buildingPhotoPath,
+      // Persist building photo as base64 (web-safe)
+      'buildingPhotoB64': (() {
+        try {
+          if (_buildingPhotoBytes != null && _buildingPhotoBytes!.isNotEmpty) {
+            return base64Encode(_buildingPhotoBytes!);
+          } else if (!kIsWeb && _buildingPhotoPath.isNotEmpty) {
+            final f = File(_buildingPhotoPath);
+            if (f.existsSync()) {
+              return base64Encode(f.readAsBytesSync());
+            }
+          }
+        } catch (_) {}
+        return null;
+      })(),
+      // Persist per-article photos (verification) as base64 map when bytes exist (web-safe)
+      'verifPhotoB64': (() {
+        try {
+          final map = <String, String>{};
+          _articlePhotos.forEach((idx, entry) {
+            if (entry.imageBytes != null && entry.imageBytes!.isNotEmpty) {
+              map['$idx'] = base64Encode(entry.imageBytes!);
+            }
+          });
+          return map.isEmpty ? null : map;
+        } catch (_) {
+          return null;
+        }
+      })(),
             // Persist signature as base64-encoded PNG bytes (web-safe)
             'signaturePng': (() {
               try {
@@ -1167,6 +1195,9 @@ class _FormToWordPageState extends State<FormToWordPage> {
     }
      
     final verif = json['verifications'];
+    final Map<String, dynamic> verifPhotoB64 = (json['verifPhotoB64'] is Map<String, dynamic>)
+        ? (json['verifPhotoB64'] as Map<String, dynamic>)
+        : <String, dynamic>{};
     if (verif is Map) {
       for (final k in ['3','5','6', '7', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21',
         '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '36', '37', '38', '39', '45', '47', '48']) {
@@ -1177,8 +1208,25 @@ class _FormToWordPageState extends State<FormToWordPage> {
           final photoPath = (item['photoPath'] ?? '') as String;
 
           // ✅ VALIDATE image path before using it
-          if (photoPath.isNotEmpty && await _validateImagePath(photoPath)) {
-            final idx = int.parse(k);
+          final idx = int.parse(k);
+          // Try to restore bytes first (web-safe)
+          final b64 = verifPhotoB64[k];
+          Uint8List? bytes;
+          if (b64 is String && b64.isNotEmpty) {
+            try {
+              bytes = base64Decode(b64);
+            } catch (e) {
+              print('Error decoding verifPhotoB64 for article $k: $e');
+            }
+          }
+          if (bytes != null && bytes.isNotEmpty) {
+            _articlePhotos[idx] = SubPhotoEntry(
+              number: '0',
+              description: obs.isNotEmpty ? obs : 'Article $k',
+              imagePath: photoPath,
+              imageBytes: bytes,
+            );
+          } else if (photoPath.isNotEmpty && await _validateImagePath(photoPath)) {
             _articlePhotos[idx] = SubPhotoEntry(
               number: '0',
               description: obs.isNotEmpty ? obs : 'Article $k',
@@ -1188,7 +1236,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
             // Try to resolve using current Documents directory with same file name
             final remapped = await _resolveImageInCurrentDocs(photoPath);
             if (remapped != null) {
-              final idx = int.parse(k);
               print('ℹ️ Remapped article $k photo to current container: $remapped');
               _articlePhotos[idx] = SubPhotoEntry(
                 number: '0',
@@ -1298,6 +1345,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
     _date.text = (json['date'] ?? '') as String;
     _textConclusion.text = (json['textConclusion'] ?? '') as String;
     _textPreconisations.text = (json['textPreconisations'] ?? '') as String;
+    // Restore building photo bytes (web-safe) if saved
+    final buildingB64 = json['buildingPhotoB64'];
+    if (buildingB64 is String && buildingB64.isNotEmpty) {
+      try {
+        _buildingPhotoBytes = base64Decode(buildingB64);
+      } catch (e) {
+        print('Error decoding buildingPhotoB64: $e');
+      }
+    }
+
     final loadedBuildingPath = (json['buildingPhotoPath'] ?? '') as String;
     if (loadedBuildingPath.isNotEmpty && await _validateImagePath(loadedBuildingPath)) {
       _buildingPhotoPath = loadedBuildingPath;
