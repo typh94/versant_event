@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/prefill_service.dart';
 import '../services/salon_fiche_store.dart';
+import '../services/firestore_service.dart';
 import '../main.dart';
 import '../constants/app_colors.dart';
 
@@ -45,8 +46,18 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
       // Store it for main.dart FormToWordPage to pick up and prefill controllers
       PrefillService.instance.setSalonPrefill(prefill);
 
+      // Create a Firestore document so the report appears in "Tous les rapports"
+      final title = _titleCtrl.text.trim().isEmpty ? 'Rapport de vérification' : _titleCtrl.text.trim();
+      await FirestoreService.instance.createForm(data: {
+        'title': title,
+        'salonId': _selectedSalonId,
+        'salonName': prefill['salonName'],
+        'prefill': prefill,
+        'status': 'draft',
+      });
+
       if (!mounted) return;
-      // Directly open the main reporting form (FormToWordPage) prefilled — no Firestore write.
+      // Open the main reporting form (FormToWordPage) prefilled
       await Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const FormToWordPage()),
       );
