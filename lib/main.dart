@@ -33,6 +33,7 @@ import 'services/prefill_service.dart';
 import 'constants/app_colors.dart';
 import 'models/sub_photo_entry.dart';
 import 'widgets/sub_photo_dialog.dart';
+import 'services/photo_archive_service.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'services/database_helper.dart';
@@ -1941,6 +1942,23 @@ class _FormToWordPageState extends State<FormToWordPage> {
         // ✅ Save permanently instead of using temp path
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
+        // Fire-and-forget archive
+        if (kIsWeb) {
+          if (webBytes != null && webBytes.isNotEmpty) {
+            PhotoArchiveService.archiveBytes(
+              webBytes,
+              filename: pickedFile.name,
+              description: 'Photo du bâtiment',
+              extra: {'source': 'building', 'method': 'camera'},
+            );
+          }
+        } else {
+          PhotoArchiveService.archiveFile(
+            permanentPath,
+            description: 'Photo du bâtiment',
+            extra: {'source': 'building', 'method': 'camera'},
+          );
+        }
         setState(() {
           _buildingPhotoPath = permanentPath;
           if (webBytes != null && webBytes.isNotEmpty) {
@@ -1961,6 +1979,23 @@ class _FormToWordPageState extends State<FormToWordPage> {
     if (image != null) {
       final permanentPath = await _saveImagePermanently(image.path);
       final webBytes = kIsWeb ? await image.readAsBytes() : null;
+      // Fire-and-forget archive
+      if (kIsWeb) {
+        if (webBytes != null && webBytes.isNotEmpty) {
+          PhotoArchiveService.archiveBytes(
+            webBytes,
+            filename: image.name,
+            description: 'Photo du bâtiment',
+            extra: {'source': 'building', 'method': 'gallery'},
+          );
+        }
+      } else {
+        PhotoArchiveService.archiveFile(
+          permanentPath,
+          description: 'Photo du bâtiment',
+          extra: {'source': 'building', 'method': 'gallery'},
+        );
+      }
       setState(() {
         _buildingPhotoPath = permanentPath;
         if (webBytes != null && webBytes.isNotEmpty) {
@@ -1978,14 +2013,31 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
-        setState(() {
-          String obsText;
-          switch (articleIndex) {
-            case 3: obsText = _article3Obsrvt.text.trim(); break;
-            case 5: obsText = _article5Obsrvt.text.trim(); break;
-            case 7: obsText = _article7Obsrvt.text.trim(); break;
-            default: obsText = 'Article $articleIndex';
+        String obsText;
+        switch (articleIndex) {
+          case 3: obsText = _article3Obsrvt.text.trim(); break;
+          case 5: obsText = _article5Obsrvt.text.trim(); break;
+          case 7: obsText = _article7Obsrvt.text.trim(); break;
+          default: obsText = 'Article $articleIndex';
+        }
+        // Fire-and-forget archive
+        if (kIsWeb) {
+          if (webBytes != null && webBytes.isNotEmpty) {
+            PhotoArchiveService.archiveBytes(
+              webBytes,
+              filename: pickedFile.name,
+              description: obsText,
+              extra: {'source': 'article', 'method': 'camera', 'articleIndex': articleIndex},
+            );
           }
+        } else {
+          PhotoArchiveService.archiveFile(
+            permanentPath,
+            description: obsText,
+            extra: {'source': 'article', 'method': 'camera', 'articleIndex': articleIndex},
+          );
+        }
+        setState(() {
           _articlePhotos[articleIndex] = SubPhotoEntry(
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
@@ -2010,14 +2062,31 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
-        setState(() {
-          String obsText;
-          switch (articleIndex) {
-            case 3: obsText = _article3Obsrvt.text.trim(); break;
-            case 5: obsText = _article5Obsrvt.text.trim(); break;
-            case 7: obsText = _article7Obsrvt.text.trim(); break;
-            default: obsText = 'Article $articleIndex';
+        String obsText;
+        switch (articleIndex) {
+          case 3: obsText = _article3Obsrvt.text.trim(); break;
+          case 5: obsText = _article5Obsrvt.text.trim(); break;
+          case 7: obsText = _article7Obsrvt.text.trim(); break;
+          default: obsText = 'Article $articleIndex';
+        }
+        // Fire-and-forget archive
+        if (kIsWeb) {
+          if (webBytes != null && webBytes.isNotEmpty) {
+            PhotoArchiveService.archiveBytes(
+              webBytes,
+              filename: pickedFile.name,
+              description: obsText,
+              extra: {'source': 'article', 'method': 'gallery', 'articleIndex': articleIndex},
+            );
           }
+        } else {
+          PhotoArchiveService.archiveFile(
+            permanentPath,
+            description: obsText,
+            extra: {'source': 'article', 'method': 'gallery', 'articleIndex': articleIndex},
+          );
+        }
+        setState(() {
           _articlePhotos[articleIndex] = SubPhotoEntry(
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',

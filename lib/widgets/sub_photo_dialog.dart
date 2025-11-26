@@ -6,6 +6,7 @@ import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
 import '../models/sub_photo_entry.dart';
 import 'io_image.dart';
+import '../services/photo_archive_service.dart';
 
 // Public dialog widget extracted from main.dart (refactor-only, no behavior change)
 class SubPhotoDialog extends StatefulWidget {
@@ -135,11 +136,40 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
         ElevatedButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
+              // Fire-and-forget archive to Firebase Storage + Firestore
+              final desc = _descriptionController.text;
+              final num = _numberController.text;
+              if (kIsWeb) {
+                final bytes = _imageBytesWeb;
+                if (bytes != null && bytes.isNotEmpty) {
+                  PhotoArchiveService.archiveBytes(
+                    bytes,
+                    filename: _imagePath.isNotEmpty ? _imagePath : 'web_photo.jpg',
+                    description: desc,
+                    extra: {
+                      'source': 'sub_photo_dialog',
+                      'number': num,
+                    },
+                  );
+                }
+              } else {
+                if (_imagePath.isNotEmpty) {
+                  PhotoArchiveService.archiveFile(
+                    _imagePath,
+                    description: desc,
+                    extra: {
+                      'source': 'sub_photo_dialog',
+                      'number': num,
+                    },
+                  );
+                }
+              }
+
               Navigator.pop(
                 context,
                 SubPhotoEntry(
-                  number: _numberController.text,
-                  description: _descriptionController.text,
+                  number: num,
+                  description: desc,
                   imagePath: _imagePath,
                   imageBytes: _imageBytesWeb,
                 ),

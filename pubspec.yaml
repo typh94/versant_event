@@ -1,9 +1,9 @@
 name: versant_event
-description: "vrsant event ."
+description: "versant event ."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
-version: 1.0.2+37
+version: 1.0.2+38
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -32,6 +32,7 @@ dependencies:
   msal_flutter: ^2.0.1
   firebase_core: ^3.6.0
   cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.4
   sqflite: ^2.4.2
   path: ^1.9.1
 #dependency_overrides:
