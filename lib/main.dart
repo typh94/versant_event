@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import 'services/storage_service.dart';
 import 'services/auth_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -461,11 +462,22 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
   Map<int, String?> checkboxValues2 = {};
 
+  // Explicit list of verification article indices that actually exist in the UI/model.
+  // Using an explicit list avoids validating non-existent articles (e.g., 5 or 46 may be absent in some versions).
+  // Keep this list in sync with the buildVerifTile/buildVerifTile2 usages.
+  static final List<int> kVerificationArticleIndices = const <int>[
+    3, 5, 6, 7,
+    9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+    36, 37, 38, 39,
+    45, 47, 48,
+  ];
+
     void _recomputeAvisFromVerifications() {
-      // Articles range 3 to 48 inclusive
+      // Use explicit list of verification article indices
       bool anyNS = false;
       bool allSet = true;
-      for (int i = 3; i <= 48; i++) {
+      for (final i in kVerificationArticleIndices) {
         final v = checkboxValues2[i];
         // Treat null or empty string as "not set"
         if (v == null || (v is String && v.trim().isEmpty)) {
@@ -730,10 +742,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
   bool _draftApplied = false;
 
   Map<String, dynamic> _toDraftJson() {
-      // Auto-compute final "avis" based on verification articles 3..48
+      // Auto-compute final "avis" based on explicit verification article indices
       bool anyNS = false;
       bool allSet = true;
-      for (int i = 3; i <= 48; i++) {
+      for (final i in kVerificationArticleIndices) {
         final v = checkboxValues2[i];
         if (v == null || (v is String && v.trim().isEmpty)) allSet = false;
         if (v == 'NS') anyNS = true;
@@ -1739,6 +1751,47 @@ class _FormToWordPageState extends State<FormToWordPage> {
           return;
         }
       }
+
+      // Enforce that every generated Gril Technique has all fields filled
+      // Applies only when at least one gril is requested
+      if (nbTableaux > 0) {
+        for (int i = 0; i < nbTableaux; i++) {
+          final missing = <String>[];
+          if (i >= _hauteurCtrls.length || _hauteurCtrls[i].text.trim().isEmpty) missing.add('Hauteur');
+          if (i >= _ouvertureCtrls.length || _ouvertureCtrls[i].text.trim().isEmpty) missing.add('Ouverture');
+          if (i >= _profondeurCtrls.length || _profondeurCtrls[i].text.trim().isEmpty) missing.add('Profondeur');
+          if (i >= _nbTowerCtrls.length || _nbTowerCtrls[i].text.trim().isEmpty) missing.add('Nombre de Towers');
+          if (i >= _nbPalansCtrls.length || _nbPalansCtrls[i].text.trim().isEmpty) missing.add('Nombre de palans');
+          if (i >= _marqueModelPPCtrls.length || _marqueModelPPCtrls[i].text.trim().isEmpty) missing.add('Marque et modèle poutres/palans');
+          if (i >= _rideauxEnseignesCtrls.length || _rideauxEnseignesCtrls[i].text.trim().isEmpty) missing.add('Enseignes / Rideaux');
+          if (i >= _poidGrilTotalCtrls.length || _poidGrilTotalCtrls[i].text.trim().isEmpty) missing.add('Poids total du gril');
+          if (missing.isNotEmpty) {
+            final msg = 'Veuillez compléter le Gril Technique ${i + 1}: ${missing.join(', ')}';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(msg)),
+            );
+            return;
+          }
+        }
+      }
+
+      // Enforce that all verification articles (3..48) have a selected value
+      final missingArticles = <int>[];
+      for (final i in kVerificationArticleIndices) {
+        final v = checkboxValues2[i];
+        if (v == null || (v is String && v.trim().isEmpty)) {
+          missingArticles.add(i);
+        }
+      }
+      if (missingArticles.isNotEmpty) {
+        final preview = missingArticles.take(5).join(', ');
+        final more = missingArticles.length > 5 ? '…' : '';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Veuillez cocher tous les articles du tableau de vérifications (manquants: ' + preview + more + ').')),
+        );
+        return;
+      }
+
       _pageController.animateToPage(
         1,
         duration: const Duration(milliseconds: 300),
@@ -4850,14 +4903,14 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
     Future<void> _showPdfPreview() async {
       try {
+        // Always regenerate the PDF to reflect the latest form changes
+        await _generatePdfFromData();
+
         if (kIsWeb) {
-          if (_lastGeneratedPdfBytes == null || _lastGeneratedPdfBytes!.isEmpty) {
-            await _generatePdfFromData();
-          }
           if (_lastGeneratedPdfBytes == null || _lastGeneratedPdfBytes!.isEmpty) {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Aucun PDF généré.')),
+              const SnackBar(content: Text('Aucun PDF généré.')),
             );
             return;
           }
@@ -4873,12 +4926,9 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
 
         if (_lastGeneratedPdfPath.isEmpty) {
-          await _generatePdfFromData();
-        }
-        if (_lastGeneratedPdfPath.isEmpty) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Aucun PDF généré.')),
+            const SnackBar(content: Text('Aucun PDF généré.')),
           );
           return;
         }
@@ -4915,7 +4965,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             '${_techName.text},\n'
             'Versant Event.';
 
-        // Web: generate and download the PDF, then open the mail client with prefilled fields.
+        // Web: send email via backend with PDF attached automatically. Fallback to mailto if backend unavailable.
         if (kIsWeb) {
           // Ensure we have fresh PDF bytes
           await _generatePdfFromData();
@@ -4926,22 +4976,69 @@ class _FormToWordPageState extends State<FormToWordPage> {
             );
             return;
           }
+
           final safeRef = _nosReferences.text.trim().isNotEmpty
               ? _nosReferences.text.trim().replaceAll(' ', '_')
               : 'VE';
           final filename = 'rapport_${safeRef}_${DateFormat('dd_MM_yyyy_HH_mm').format(DateTime.now())}.pdf';
-          await saveBytesAsFile(_lastGeneratedPdfBytes!, filename: filename);
 
-          final uri = Uri(
-            scheme: 'mailto',
-            path: recipient,
-            queryParameters: {
-              'subject': subject,
-              'body': body,
-            },
-          );
-          // Try to open default mail app/site
-          final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          // Try backend sending first
+          try {
+            final pdfBase64 = base64Encode(_lastGeneratedPdfBytes!);
+            // Build CC from the local mail field; supports comma/semicolon separated addresses
+            final ccRaw = _localMail.text.trim();
+            final ccJoined = ccRaw.isEmpty
+                ? ''
+                : ccRaw
+                    .split(RegExp(r'[;,]\\s*'))
+                    .where((e) => e.trim().isNotEmpty)
+                    .map((e) => e.trim())
+                    .join(',');
+            final apiUrl = const String.fromEnvironment('EMAIL_API_URL');
+            final uri = Uri.parse(apiUrl.isNotEmpty ? apiUrl : '${Uri.base.origin}/send-email');
+            final response = await http
+                .post(
+                  uri,
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({
+                    'to': recipient,
+                    if (ccJoined.isNotEmpty) 'cc': ccJoined,
+                    'subject': subject,
+                    'body': body,
+                    'filename': filename,
+                    'pdfBase64': pdfBase64,
+                  }),
+                )
+                .timeout(const Duration(seconds: 20));
+
+            if (response.statusCode == 200) {
+              final data = jsonDecode(response.body) as Map<String, dynamic>;
+              if (data['ok'] == true) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('✅ Email envoyé avec la pièce jointe.')),
+                );
+                return;
+              }
+            }
+
+            // If server responded with error, continue to fallback
+          } catch (e) {
+            // Ignore and fallback
+          }
+
+          // Fallback: save the PDF for manual attach and open a mailto draft
+          await saveBytesAsFile(_lastGeneratedPdfBytes!, filename: filename);
+          final normalizedBody = body.replaceAll('\r\n', '\n').replaceAll('\r', '\n').replaceAll('\n', '\r\n');
+          final encodedSubject = Uri.encodeComponent(subject);
+          final encodedBody = Uri.encodeComponent(normalizedBody);
+          // Build CC from the local mail field; supports comma/semicolon separated addresses
+          final ccRaw = _localMail.text.trim();
+          final ccList = ccRaw.isEmpty ? <String>[] : ccRaw.split(RegExp(r'[;,]\\s*')).where((e) => e.trim().isNotEmpty).toList();
+          final ccParam = ccList.isEmpty ? '' : '&cc=' + ccList.map((e) => Uri.encodeComponent(e.trim())).join(',');
+          final mailto = 'mailto:${Uri.encodeComponent(recipient)}?subject=$encodedSubject&body=$encodedBody$ccParam';
+          final draftUri = Uri.parse(mailto);
+          final launched = await launchUrl(draftUri, mode: LaunchMode.externalApplication);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -5830,6 +5927,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
               ),
               SizedBox(height: 24),
+            /*
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -5839,6 +5937,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
               },
               child: Text('Générer les grils '),
             ),
+
+             */
 
             SizedBox(height: 24),
 
@@ -7623,18 +7723,13 @@ class _FormToWordPageState extends State<FormToWordPage> {
       // Compute Avis: stay undecided (null) until ALL articles (3..48) are set (S/NS/SO/HM)
       bool anyNS = false;
       bool allSet = true;
-      for (int i = 3; i <= 48; i++) {
+      for (final i in kVerificationArticleIndices) {
         final v = checkboxValues2[i];
         if (v == null || (v is String && v.trim().isEmpty)) {
           allSet = false;
         }
-        else
-          {
-            allSet= true;
-          }
         if (v == 'NS') {
           anyNS = true;
-          allSet = true;
         }
       }
       if (allSet) {

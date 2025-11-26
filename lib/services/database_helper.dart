@@ -243,108 +243,69 @@ class DatabaseHelper {
     final db = await database;
     final maps = await db.query(
       'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
       where: 'owner = ? AND archived = 0',
       whereArgs: [owner],
       orderBy: 'updated_at DESC',
     );
 
-    return maps.map((map) {
-      try {
-        final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
-        // Merge database metadata with the stored data
-        return {
-          'id': map['id'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'], // For backwards compatibility
-          ...data, // Spread all the form data
-        };
-      } catch (e) {
-        print('Error parsing draft data: $e');
-        return {
-          'id': map['id'],
-          'title': map['title'],
-          'owner': map['owner'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-        };
-      }
-    }).toList();
+    return maps
+        .map((map) => {
+              'id': map['id'],
+              'title': map['title'],
+              'owner': map['owner'],
+              'created_at': map['created_at'],
+              'updated_at': map['updated_at'],
+              'updatedAt': map['updated_at'],
+            })
+        .toList();
   }
 
   Future<List<Map<String, dynamic>>> getDraftsForAdmin() async {
     final db = await database;
     final maps = await db.query(
       'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
       where: 'archived = 0',
       orderBy: 'updated_at DESC',
     );
 
-    return maps.map((map) {
-      try {
-        final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
-        // Merge database metadata with the stored data
-        return {
-          'id': map['id'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'], // For backwards compatibility
-          ...data, // Spread all the form data
-        };
-      } catch (e) {
-        print('Error parsing draft data: $e');
-        return {
-          'id': map['id'],
-          'title': map['title'],
-          'owner': map['owner'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-        };
-      }
-    }).toList();
+    return maps
+        .map((map) => {
+              'id': map['id'],
+              'title': map['title'],
+              'owner': map['owner'],
+              'created_at': map['created_at'],
+              'updated_at': map['updated_at'],
+              'updatedAt': map['updated_at'],
+            })
+        .toList();
   }
 
 
   Future<List<Map<String, dynamic>>> getDraftsByOwnersList(List<String> owners) async {
     final db = await database;
 
-    // Crée une chaîne de placeholders comme '?, ?' pour la clause WHERE IN
     final placeholders = List.filled(owners.length, '?').join(', ');
 
     final maps = await db.query(
       'drafts',
-      // Utilise la clause IN pour récupérer les brouillons de plusieurs propriétaires
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
       where: 'owner IN ($placeholders) AND archived = 0',
       whereArgs: owners,
       orderBy: 'updated_at DESC',
     );
 
-    // Mappage similaire à getDraftsByOwner pour décoder les données
-    return maps.map((map) {
-      try {
-        final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
-        // Fusionne les métadonnées avec les données du formulaire
-        return {
-          'id': map['id'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'], // Pour la compatibilité
-          ...data, // Étale toutes les données du formulaire
-        };
-      } catch (e) {
-        print('Error parsing draft data: $e');
-        return {
-          'id': map['id'],
-          'title': map['title'],
-          'owner': map['owner'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-        };
-      }
-    }).toList();
+    return maps
+        .map((map) => {
+              'id': map['id'],
+              'title': map['title'],
+              'owner': map['owner'],
+              'created_at': map['created_at'],
+              'updated_at': map['updated_at'],
+              'updatedAt': map['updated_at'],
+            })
+        .toList();
   }
   Future<int> updateDraft(String id, Map<String, dynamic> data) async {
     final db = await database;
@@ -403,32 +364,21 @@ class DatabaseHelper {
     final db = await database;
     final maps = await db.query(
       'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
       where: 'owner = ? AND archived = 1',
       whereArgs: [owner],
       orderBy: 'updated_at DESC',
     );
-    return maps.map((map) {
-      try {
-        final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
-        return {
-          'id': map['id'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-          ...data,
-        };
-      } catch (e) {
-        print('Error parsing archived draft data: $e');
-        return {
-          'id': map['id'],
-          'title': map['title'],
-          'owner': map['owner'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-        };
-      }
-    }).toList();
+    return maps
+        .map((map) => {
+              'id': map['id'],
+              'title': map['title'],
+              'owner': map['owner'],
+              'created_at': map['created_at'],
+              'updated_at': map['updated_at'],
+              'updatedAt': map['updated_at'],
+            })
+        .toList();
   }
 
   // Salon fiches CRUD
@@ -479,64 +429,41 @@ class DatabaseHelper {
     final placeholders = List.filled(owners.length, '?').join(', ');
     final maps = await db.query(
       'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
       where: 'owner IN ($placeholders) AND archived = 1',
       whereArgs: owners,
       orderBy: 'updated_at DESC',
     );
-    return maps.map((map) {
-      try {
-        final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
-        return {
-          'id': map['id'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-          ...data,
-        };
-      } catch (e) {
-        print('Error parsing archived draft data (owners list): $e');
-        return {
-          'id': map['id'],
-          'title': map['title'],
-          'owner': map['owner'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-        };
-      }
-    }).toList();
+    return maps
+        .map((map) => {
+              'id': map['id'],
+              'title': map['title'],
+              'owner': map['owner'],
+              'created_at': map['created_at'],
+              'updated_at': map['updated_at'],
+              'updatedAt': map['updated_at'],
+            })
+        .toList();
   }
 
   Future<List<Map<String, dynamic>>> getAllArchivedDrafts() async {
     final db = await database;
     final maps = await db.query(
       'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
       where: 'archived = 1',
       orderBy: 'updated_at DESC',
     );
-    return maps.map((map) {
-      try {
-        final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
-        return {
-          'id': map['id'],
-          'owner': map['owner'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-          ...data,
-        };
-      } catch (e) {
-        print('Error parsing ALL archived draft data: $e');
-        return {
-          'id': map['id'],
-          'title': map['title'],
-          'owner': map['owner'],
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-        };
-      }
-    }).toList();
+    return maps
+        .map((map) => {
+              'id': map['id'],
+              'title': map['title'],
+              'owner': map['owner'],
+              'created_at': map['created_at'],
+              'updated_at': map['updated_at'],
+              'updatedAt': map['updated_at'],
+            })
+        .toList();
   }
 
   // CRUD Operations for Reports
@@ -617,39 +544,23 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getAllDrafts() async {
     final db = await database;
 
-    // Only non-archived drafts
+    // Only non-archived drafts; select lightweight columns to avoid CursorWindow overflow
     final List<Map<String, dynamic>> maps = await db.query(
       'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
       where: 'archived = 0',
-      orderBy: 'updated_at DESC', // Ajout de l'ordre pour cohérence
+      orderBy: 'updated_at DESC',
     );
 
-    return maps.map((map) {
-      try {
-        final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
-        // Fusionne les métadonnées avec les données du formulaire
-        return {
-          'id': map['id'],
-          'owner': map['owner'], // Très important pour l'affichage/filtrage
-          'created_at': map['created_at'],
-          'updated_at': map['updated_at'],
-          'updatedAt': map['updated_at'],
-          ...data, // Étale toutes les données du formulaire (salonName, standName, etc.)
-        };
-
-
-      } catch (e) {
-        print('Error parsing ALL draft data: $e');
-        return {
+    // Return rows as-is (no heavy JSON decode). UI will fallback to title when other fields are absent.
+    return maps.map((map) => {
           'id': map['id'],
           'title': map['title'],
           'owner': map['owner'],
           'created_at': map['created_at'],
           'updated_at': map['updated_at'],
           'updatedAt': map['updated_at'],
-        };
-      }
-    }).toList();
+        }).toList();
   }
 
   // CRUD Operations for Images

@@ -80,27 +80,18 @@ class _FormsListScreenState extends State<FormsListScreen> {
                     : updatedAtDt.toLocal().toString();
                 return ListTile(
                   title: Text(displayTitle),
-                  subtitle: Text('Salon: $displaySalon\nDernière mise à jour: $updatedAtStr'),
-                  isThreeLine: true,
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (technician != null && technician.isNotEmpty)
-                        Text(
-                          technician,
-                          style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-                          textAlign: TextAlign.right,
-                        ),
-                      const SizedBox(height: 4),
-                      (lockedBy == null || lockedBy.isEmpty)
-                          ? const Icon(Icons.lock_open, color: Colors.green)
-                          : Tooltip(
-                              message: 'En édition par $lockedBy',
-                              child: const Icon(Icons.lock, color: Colors.red),
-                            ),
-                    ],
+                  subtitle: Text(
+                    technician != null && technician.isNotEmpty
+                        ? 'Salon: $displaySalon\nDernière mise à jour: $updatedAtStr  ·  $technician'
+                        : 'Salon: $displaySalon\nDernière mise à jour: $updatedAtStr',
                   ),
+                  isThreeLine: true,
+                  trailing: (lockedBy == null || lockedBy.isEmpty)
+                      ? const Icon(Icons.lock_open, color: Colors.green)
+                      : Tooltip(
+                          message: 'En édition par $lockedBy',
+                          child: const Icon(Icons.lock, color: Colors.red),
+                        ),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(

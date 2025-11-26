@@ -274,9 +274,13 @@ class StorageService {
       }
     }
 
+    // Always record who last edited this draft (the current user calling save)
+    final lastEditedBy = owner;
+
     final dataWithOwner = {
       ...data,
       'owner': ownerToUse,
+      'lastEditedBy': lastEditedBy,
       'archived': false,
     };
 
@@ -321,7 +325,7 @@ class StorageService {
 
     if (kDebugMode) {
       // ignore: avoid_print
-      print('ℹ️ StorageService.saveDraft -> Saved locally in SQLite AND attempted Firestore sync. id=$draftId owner=$ownerToUse');
+      print('ℹ️ StorageService.saveDraft -> Saved locally in SQLite AND attempted Firestore sync. id=$draftId owner=$ownerToUse lastEditedBy=$lastEditedBy');
     }
 
     return draftId;
@@ -433,6 +437,7 @@ class StorageService {
         'standNb': draft['standNb'],
         'updatedAt': updatedAt is Timestamp ? updatedAt.toDate().toIso8601String() : (updatedAt?.toString()),
         'owner': draft['owner'],
+        'lastEditedBy': draft['lastEditedBy'] ?? draft['owner'],
       };
     }).toList();
   }

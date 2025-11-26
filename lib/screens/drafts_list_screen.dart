@@ -318,11 +318,13 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                       final hall = (d['hall'] ?? '').toString();
                                       final standNb = (d['standNb'] ?? '').toString();
                                       final updated = '\n${(d['updatedAt'] ?? '').toString().substring(8,10)}-${(d['updatedAt'] ?? '').toString().substring(5,7)}-${(d['updatedAt'] ?? '').toString().substring(2,4)} à ${(d['updatedAt'] ?? '').toString().substring(11,16)}';
+                                      final editor = (d['lastEditedBy'] ?? d['owner'] ?? '').toString();
                                       final subline = [
                                         if (stand.isNotEmpty) 'Nom: $stand',
                                         if (hall.isNotEmpty) 'Hall: $hall',
                                         if (standNb.isNotEmpty) 'Stand: $standNb',
                                         if (updated.isNotEmpty) updated,
+                                        if (editor.isNotEmpty) 'Édité par: $editor'.toUpperCase(),
                                       ].join(' • ');
 
                                       return Padding(

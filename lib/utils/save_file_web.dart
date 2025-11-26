@@ -5,7 +5,13 @@ import 'dart:html' as html;
 // Accepts List<int> and converts to Uint8List for Blob.
 Future<String> saveBytesAsFile(List<int> bytes, {required String filename}) async {
   final u8 = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
-  final blob = html.Blob([u8]);
+  // Infer a content type from filename to help browsers recognize the file
+  String contentType = 'application/octet-stream';
+  final lower = filename.toLowerCase();
+  if (lower.endsWith('.pdf')) contentType = 'application/pdf';
+  if (lower.endsWith('.docx')) contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+  final blob = html.Blob([u8], contentType);
   final url = html.Url.createObjectUrlFromBlob(blob);
   final anchor = html.AnchorElement(href: url)
     ..download = filename
