@@ -3,13 +3,31 @@ import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import 'form_detail_screen.dart';
 
-class FormsListScreen extends StatelessWidget {
+class FormsListScreen extends StatefulWidget {
   const FormsListScreen({super.key});
+
+  @override
+  State<FormsListScreen> createState() => _FormsListScreenState();
+}
+
+class _FormsListScreenState extends State<FormsListScreen> {
+  Future<void> _manualRefresh() async {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tous les rapports (temps réel)')),
+      appBar: AppBar(
+              title: const Text('Tous les rapports (temps réel)') ,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: 'Rafraîchir',
+                  onPressed: _manualRefresh,
+                ),
+              ],
+            ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirestoreService.instance.streamAllForms(),
         builder: (context, snapshot) {
@@ -19,41 +37,80 @@ class FormsListScreen extends StatelessWidget {
           if (snapshot.hasError) {
             return Center(child: Text('Erreur: ${snapshot.error}'));
           }
-          final docs = snapshot.data?.docs ?? [];
+          final rawDocs = snapshot.data?.docs ?? [];
+          // Map to safe maps and sort by updatedAt desc locally (tolerate various types)
+          final docs = rawDocs.map((d) {
+            final data = d.data();
+            final ua = data['updatedAt'];
+            DateTime parsed;
+            if (ua is Timestamp) {
+              parsed = ua.toDate();
+            } else {
+              parsed = DateTime.tryParse(ua?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+            }
+            return {
+              'id': d.id,
+              ...data,
+              '_parsedUpdatedAt': parsed,
+            };
+          }).toList()
+            ..sort((a, b) => (b['_parsedUpdatedAt'] as DateTime).compareTo(a['_parsedUpdatedAt'] as DateTime));
+
           if (docs.isEmpty) {
             return const Center(child: Text('Aucun rapport'));
           }
-          return ListView.separated(
-            itemCount: docs.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final d = docs[index];
-              final data = d.data();
-              final title = data['title'] as String? ?? 'Sans titre';
-              final salonName = data['salonName'] as String? ?? '-';
-              final lockedBy = data['lockedBy'] as String?;
-              final updatedAt = (data['updatedAt'] is Timestamp)
-                  ? (data['updatedAt'] as Timestamp).toDate().toString()
-                  : '-';
-              return ListTile(
-                title: Text(title),
-                subtitle: Text('Salon: $salonName\nDernière mise à jour: $updatedAt'),
-                isThreeLine: true,
-                trailing: lockedBy == null
-                    ? const Icon(Icons.lock_open, color: Colors.green)
-                    : Tooltip(
-                        message: 'En édition par $lockedBy',
-                        child: const Icon(Icons.lock, color: Colors.red),
+          return RefreshIndicator(
+            onRefresh: _manualRefresh,
+            child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: docs.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final data = docs[index];
+                final title = (data['title'] as String?)?.trim();
+                final displayTitle = (title == null || title.isEmpty) ? 'Sans titre' : title;
+                final salonName = (data['salonName'] as String?)?.trim();
+                final displaySalon = (salonName == null || salonName.isEmpty) ? '-' : salonName;
+                final lockedBy = data['lockedBy'] as String?;
+                final owner = data['owner'] as String?; // technicien
+                final technician = (data['technicianName'] as String?) ?? owner;
+                final updatedAtDt = data['_parsedUpdatedAt'] as DateTime;
+                final updatedAtStr = updatedAtDt.millisecondsSinceEpoch == 0
+                    ? '-'
+                    : updatedAtDt.toLocal().toString();
+                return ListTile(
+                  title: Text(displayTitle),
+                  subtitle: Text('Salon: $displaySalon\nDernière mise à jour: $updatedAtStr'),
+                  isThreeLine: true,
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (technician != null && technician.isNotEmpty)
+                        Text(
+                          technician,
+                          style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                          textAlign: TextAlign.right,
+                        ),
+                      const SizedBox(height: 4),
+                      (lockedBy == null || lockedBy.isEmpty)
+                          ? const Icon(Icons.lock_open, color: Colors.green)
+                          : Tooltip(
+                              message: 'En édition par $lockedBy',
+                              child: const Icon(Icons.lock, color: Colors.red),
+                            ),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => FormDetailScreen(formId: data['id'] as String),
                       ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => FormDetailScreen(formId: d.id),
-                    ),
-                  );
-                },
-              );
-            },
+                    );
+                  },
+                );
+              },
+            ),
           );
         },
       ),

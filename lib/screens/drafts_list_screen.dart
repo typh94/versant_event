@@ -126,34 +126,47 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
 
    */
   Future<void> _load() async {
-    // 1. Charger l'utilisateur, le rôle et le nom de l'Admin
-    _username = await AuthService.currentUsername();
-    _role = await AuthService.currentUserRole();
+    try {
+      // 1. Charger l'utilisateur, le rôle et le nom de l'Admin
+      _username = await AuthService.currentUsername();
+      _role = await AuthService.currentUserRole();
 
-    // Trouver le nom d'utilisateur de l'Admin (Hypothèse: un seul admin pour l'instant)
-    _adminUsername = AuthService.users
-        .firstWhere((u) => u['role'] == 'admin', orElse: () => {})['username'];
+      // Trouver le nom d'utilisateur de l'Admin (Hypothèse: un seul admin pour l'instant)
+      final admin = AuthService.users.firstWhere(
+        (u) => u['role'] == 'admin',
+        orElse: () => const {'username': '', 'password': '', 'role': 'admin'},
+      );
+      _adminUsername = admin['username'];
 
+      if (!mounted) return;
 
-    if (!mounted) return;
+      if (_username == null || _username!.isEmpty) {
+        setState(() => _loading = false);
+        return;
+      }
 
-    if (_username == null || _username!.isEmpty) {
-      setState(() => _loading = false);
-      return;
+      final items = await _storage.listDraftsToDisplay(
+        currentUser: _username!,
+        isAdmin: _role == 'admin',
+        adminUsername: _adminUsername ?? '',
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _drafts = items;
+        _loading = false;
+        _applyFilter();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+      // Show a simple error indicator; avoid crashing the app
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement des rapports: $e')),
+      );
     }
-
-    final items = await _storage.listDraftsToDisplay(
-      currentUser: _username!,
-      isAdmin: _role == 'admin',
-      adminUsername: _adminUsername ?? '',
-    );
-
-    if (!mounted) return;
-    setState(() {
-      _drafts = items;
-      _loading = false;
-      _applyFilter();
-    });
   }
 
   void _applyFilter() {

@@ -96,9 +96,11 @@ class FirestoreService {
     return _forms.doc(id).snapshots();
   }
 
-  /// Stream all forms (Admins), ordered by updatedAt desc.
+  /// Stream all forms (Admins).
+  /// Note: We avoid server-side orderBy on updatedAt to tolerate mixed types/legacy data.
+  /// Sort in UI instead.
   Stream<QuerySnapshot<Map<String, dynamic>>> streamAllForms({int? limit}) {
-    Query<Map<String, dynamic>> q = _forms.orderBy('updatedAt', descending: true);
+    Query<Map<String, dynamic>> q = _forms;
     if (limit != null) q = q.limit(limit);
     return q.snapshots();
   }

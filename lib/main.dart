@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle, PlatformException;
+import 'package:flutter/services.dart' as services;
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:docx_template/docx_template.dart';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) 'package:versant_event/stubs/path_provider_stub.dart';
@@ -1727,9 +1728,20 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
   void _goToNextPage() {
     if (_formKey1.currentState!.validate()) {
+      // Enforce that all "Documents consultés" questions (1..13) are answered
+      for (int i = 1; i <= 13; i++) {
+        if (checkboxValues[i] == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Veuillez répondre à toutes les questions de "Documents consultés" avant de continuer.'),
+            ),
+          );
+          return;
+        }
+      }
       _pageController.animateToPage(
         1,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
       setState(() => _currentPage = 1);
@@ -5787,6 +5799,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
               SizedBox(height: 12),
               TextFormField(
                 controller: _nbTableauxBesoin,
+                keyboardType: TextInputType.number,
+                inputFormatters: [services.FilteringTextInputFormatter.digitsOnly],
+                onChanged: (val) {
+                  final n = int.tryParse(val) ?? 0;
+                  setState(() {
+                    nbTableaux = n;
+                    _ensureGrilControllersLength(nbTableaux);
+                  });
+                },
 
                 decoration: InputDecoration(
                   labelText: 'Nombre de tableaux désirés',
