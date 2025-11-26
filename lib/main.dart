@@ -222,139 +222,160 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
 
-                SizedBox(height: 40),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 150,
-                  child: Card(
-                    elevation: 8,
-                    shadowColor: roseVE.withOpacity(0.4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => FormToWordPage()),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [roseVE, Color(0xFFFF6B9D)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                FutureBuilder<String?>(
+                  future: AuthService.currentRole(),
+                  builder: (context, snapshot) {
+                    final role = snapshot.data;
+                    final isAdmin = role == 'admin';
+                    if (!isAdmin) return SizedBox.shrink();
+                    return Column(
+                      children: [
+                        SizedBox(height: 40),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 150,
+                          child: Card(
+                            elevation: 8,
+                            shadowColor: roseVE.withOpacity(0.4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => FormToWordPage()),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(24),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [roseVE, Color(0xFFFF6B9D)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.add_circle_outline,
+                                        size: 24,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Nouveau Rapport de Vérification',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.add_circle_outline,
-                                size: 24,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Nouveau Rapport de Vérification',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                      ],
+                    );
+                  },
                 ),
 
-                SizedBox(height: 40),
+                FutureBuilder<String?>(
+                  future: AuthService.currentRole(),
+                  builder: (context, snapshot) {
+                    final role = snapshot.data;
+                    final isAdmin = role == 'admin';
+                    if (!isAdmin) return SizedBox.shrink();
+                    return Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 100,
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: roseVE.withOpacity(0.3), width: 2),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const FirestoreDemoMenu()),
+                                );
+                              },
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 100,
-                  child: Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: roseVE.withOpacity(0.3), width: 2),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const FirestoreDemoMenu()),
-                        );
-                      },
-
-                      borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: roseVE.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.newspaper_outlined,
-                                size: 32,
-                                color: roseVE,
-                              ),
-                            ),
-                            SizedBox(width: 20),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Fiches Salon',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey[800],
+                              borderRadius: BorderRadius.circular(20),
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: roseVE.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.newspaper_outlined,
+                                        size: 32,
+                                        color: roseVE,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Créer et accéder aux fiches salon',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey[600],
+                                    SizedBox(width: 20),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Fiches Salon',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey[800],
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Créer et accéder aux fiches salon',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color: roseVE.withOpacity(0.5),
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: roseVE.withOpacity(0.5),
-                              size: 20,
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
+                        SizedBox(height: 60),
+                      ],
+                    );
+                  },
                 ),
-                SizedBox(height: 60),
 
                 // Logout button
                 TextButton.icon(

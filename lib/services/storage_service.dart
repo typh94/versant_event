@@ -494,6 +494,23 @@ class StorageService {
               print('ℹ️ listDraftsToDisplay(web): owner whereIn failed or empty. Falling back to full scan. err=$e');
             }
           }
+
+          // Also include any forms explicitly assigned to this technician
+          try {
+            final assignedSnap = await col.where('assignedTo', isEqualTo: currentUser).get();
+            final existingIds = docs.map((d) => d.id).toSet();
+            for (final d in assignedSnap.docs) {
+              if (!existingIds.contains(d.id)) {
+                docs.add(d);
+              }
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              // ignore: avoid_print
+              print('ℹ️ listDraftsToDisplay(web): assignedTo fetch failed. err=$e');
+            }
+          }
+
           // If no docs found, fall back to fetching all and filter client-side by heuristics
           if (docs.isEmpty) {
             final fallback = await col.get();
@@ -502,7 +519,9 @@ class StorageService {
               final owner = data['owner'];
               final createdBy = data['createdBy'];
               final techName = data['techName'];
+              final assignedTo = data['assignedTo'];
               final visibleToTech = (owner == currentUser) || (owner == adminUsername) ||
+                  (assignedTo == currentUser) ||
                   (owner == null && (createdBy == currentUser || techName == currentUser));
               return visibleToTech;
             }).toList();
@@ -514,7 +533,9 @@ class StorageService {
             'id': d.id,
             ...data,
           };
-        }).toList();
+        }).toList()
+        // Filter out archived in tech view (and in general it's fine)
+        ..removeWhere((m) => (m['archived'] ?? false) == true);
         // Client-side sort by updatedAt desc if present
         rawDrafts.sort((a, b) {
           final ua = a['updatedAt'];
@@ -560,7 +581,7 @@ class StorageService {
           }
           rawDrafts = await _dbHelper.getAllDrafts();
         } else {
-          // Technician: own + admin's, non-archived
+          // Technician: own + admin's, plus any forms assigned to this technician; non-archived
           final ownersToFetch = <String>{currentUser, if (adminUsername.isNotEmpty) adminUsername}.toList();
           List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = [];
           try {
@@ -583,10 +604,29 @@ class StorageService {
                 final data = d.data();
                 final owner = data['owner'];
                 final archived = data['archived'] == true;
-                return !archived && (owner == currentUser || owner == adminUsername);
+                final assignedTo = data['assignedTo'];
+                return !archived && ((owner == currentUser || owner == adminUsername) || (assignedTo == currentUser));
               }).toList();
             }
           }
+
+          // Additionally include any docs assigned to currentUser
+          try {
+            final assignedSnap = await col
+                .where('assignedTo', isEqualTo: currentUser)
+                .where('archived', isEqualTo: false)
+                .get();
+            final existingIds = docs.map((d) => d.id).toSet();
+            for (final d in assignedSnap.docs) {
+              if (!existingIds.contains(d.id)) docs.add(d);
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              // ignore: avoid_print
+              print('ℹ️ listDraftsToDisplay(IO): assignedTo fetch failed. err=$e');
+            }
+          }
+
           cloud = docs.map((d) => {'id': d.id, ...d.data()}).toList();
 
           // Local drafts for same owners
