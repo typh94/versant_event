@@ -429,30 +429,52 @@ class _FormToWordPageState extends State<FormToWordPage> {
     @override
     void initState() {
       super.initState();
-      AuthService.currentUsername().then((u) {
-        if (mounted) setState(() => _currentUsername = u ?? '');
-        print('🔍 Current username: $_currentUsername');
-      });
+      _initUserAndPrefill();
+    }
+
+    Future<void> _initUserAndPrefill() async {
+      final u = await AuthService.currentUsername();
+      final role = await AuthService.currentUserRole();
+      
+      if (mounted) {
+        setState(() => _currentUsername = u ?? '');
+      }
+      
+      // If we are a tech, auto-fill our full name if it's not already set by prefill
+      // IMPORTANT: If we are admin, we don't want to auto-fill our name in _techName
+      if (_techName.text.isEmpty && role == 'tech') {
+        final fullName = AuthService.getFullName(u);
+        if (fullName != null && mounted) {
+          setState(() => _techName.text = fullName);
+        }
+      }
+      print('🔍 Current username: $_currentUsername');
 
       // Apply salon fiche prefill if available
       final prefill = PrefillService.instance.takeSalonPrefill();
       if (prefill != null) {
-        try {
-          _doName.text = (prefill['doName'] ?? '').toString();
-          _salonName.text = (prefill['salonName'] ?? '').toString();
-          _siteName.text = (prefill['siteName'] ?? '').toString();
-          // Note: controller is _siteAdress in this file
-          _siteAdress.text = (prefill['siteAddress'] ?? '').toString();
-          _dateMontage.text = (prefill['dateMontage'] ?? '').toString();
-          _dateEvnmt.text = (prefill['dateEvnmt'] ?? '').toString();
-          _catErpType.text = (prefill['catErpType'] ?? '').toString();
-          _effectifMax.text = (prefill['effectifMax'] ?? '').toString();
-          _orgaName.text = (prefill['orgaName'] ?? '').toString();
-          _installateurName.text = (prefill['installateurName'] ?? '').toString();
-          _exploitSiteName.text = (prefill['exploitSiteName'] ?? '').toString();
-        } catch (_) {
-          // Ignore mapping errors to avoid breaking the form
+        _applyPrefill(prefill);
+      }
+    }
+
+    void _applyPrefill(Map<String, dynamic> prefill) {
+      try {
+        _doName.text = (prefill['doName'] ?? '').toString();
+        _salonName.text = (prefill['salonName'] ?? '').toString();
+        _siteName.text = (prefill['siteName'] ?? '').toString();
+        _siteAdress.text = (prefill['siteAddress'] ?? '').toString();
+        _dateMontage.text = (prefill['dateMontage'] ?? '').toString();
+        _dateEvnmt.text = (prefill['dateEvnmt'] ?? '').toString();
+        _catErpType.text = (prefill['catErpType'] ?? '').toString();
+        _effectifMax.text = (prefill['effectifMax'] ?? '').toString();
+        _orgaName.text = (prefill['orgaName'] ?? '').toString();
+        _installateurName.text = (prefill['installateurName'] ?? '').toString();
+        _exploitSiteName.text = (prefill['exploitSiteName'] ?? '').toString();
+        if (prefill['technicianFullName'] != null && prefill['technicianFullName'].toString().isNotEmpty) {
+          _techName.text = prefill['technicianFullName'].toString();
         }
+      } catch (_) {
+        // Ignore mapping errors to avoid breaking the form
       }
     }
 
@@ -2013,31 +2035,14 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
-        String obsText;
-        switch (articleIndex) {
-          case 3: obsText = _article3Obsrvt.text.trim(); break;
-          case 5: obsText = _article5Obsrvt.text.trim(); break;
-          case 7: obsText = _article7Obsrvt.text.trim(); break;
-          default: obsText = 'Article $articleIndex';
-        }
-        // Fire-and-forget archive
-        if (kIsWeb) {
-          if (webBytes != null && webBytes.isNotEmpty) {
-            PhotoArchiveService.archiveBytes(
-              webBytes,
-              filename: pickedFile.name,
-              description: obsText,
-              extra: {'source': 'article', 'method': 'camera', 'articleIndex': articleIndex},
-            );
-          }
-        } else {
-          PhotoArchiveService.archiveFile(
-            permanentPath,
-            description: obsText,
-            extra: {'source': 'article', 'method': 'camera', 'articleIndex': articleIndex},
-          );
-        }
         setState(() {
+          String obsText;
+          switch (articleIndex) {
+            case 3: obsText = _article3Obsrvt.text.trim(); break;
+            case 5: obsText = _article5Obsrvt.text.trim(); break;
+            case 7: obsText = _article7Obsrvt.text.trim(); break;
+            default: obsText = 'Article $articleIndex';
+          }
           _articlePhotos[articleIndex] = SubPhotoEntry(
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
@@ -2062,31 +2067,14 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
-        String obsText;
-        switch (articleIndex) {
-          case 3: obsText = _article3Obsrvt.text.trim(); break;
-          case 5: obsText = _article5Obsrvt.text.trim(); break;
-          case 7: obsText = _article7Obsrvt.text.trim(); break;
-          default: obsText = 'Article $articleIndex';
-        }
-        // Fire-and-forget archive
-        if (kIsWeb) {
-          if (webBytes != null && webBytes.isNotEmpty) {
-            PhotoArchiveService.archiveBytes(
-              webBytes,
-              filename: pickedFile.name,
-              description: obsText,
-              extra: {'source': 'article', 'method': 'gallery', 'articleIndex': articleIndex},
-            );
-          }
-        } else {
-          PhotoArchiveService.archiveFile(
-            permanentPath,
-            description: obsText,
-            extra: {'source': 'article', 'method': 'gallery', 'articleIndex': articleIndex},
-          );
-        }
         setState(() {
+          String obsText;
+          switch (articleIndex) {
+            case 3: obsText = _article3Obsrvt.text.trim(); break;
+            case 5: obsText = _article5Obsrvt.text.trim(); break;
+            case 7: obsText = _article7Obsrvt.text.trim(); break;
+            default: obsText = 'Article $articleIndex';
+          }
           _articlePhotos[articleIndex] = SubPhotoEntry(
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
@@ -5920,12 +5908,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 validator: (value) => value!.isEmpty ? 'Entrez l\'installateur' : null,
 
               ),
-
-
-
-
-
-
               SizedBox(height: 12),
               buildInfoTextField(
                 context: context,
@@ -6024,7 +6006,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
               },
               child: Text('Générer les grils '),
             ),
-
              */
 
             SizedBox(height: 24),

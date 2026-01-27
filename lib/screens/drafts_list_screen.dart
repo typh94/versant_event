@@ -336,13 +336,14 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                       final hall = (d['hall'] ?? '').toString();
                                       final standNb = (d['standNb'] ?? '').toString();
                                       final updated = _formatUpdatedAt(d['updatedAt']);
-                                      final editor = (d['lastEditedBy'] ?? d['owner'] ?? '').toString();
+                                      final prefill = (d['prefill'] as Map<String, dynamic>?) ?? {};
+                                      final assigned = (d['assignedTo'] ?? d['technicianName'] ?? prefill['technicianFullName'] ?? d['owner'] ?? '').toString();
                                       final subline = [
                                         if (stand.isNotEmpty) 'Nom: $stand',
                                         if (hall.isNotEmpty) 'Hall: $hall',
                                         if (standNb.isNotEmpty) 'Stand: $standNb',
                                         if (updated.isNotEmpty) updated,
-                                        if (editor.isNotEmpty) 'Édité par: $editor'.toUpperCase(),
+                                        if (assigned.isNotEmpty) 'Assigné à: $assigned'.toUpperCase(),
                                       ].join(' • ');
 
                                       return Padding(
@@ -380,10 +381,22 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                             );
                                             if (selected == null || selected.isEmpty) return;
                                             try {
-                                              await FirestoreService.instance.updateForm(id, {
+                                              final fullName = AuthService.getFullName(selected) ?? '';
+                                              final updatePayload = {
                                                 'assignedTo': selected,
-                                                'technicianName': selected,
-                                              });
+                                                'technicianName': fullName,
+                                                'techName': fullName,
+                                                'prefill': {
+                                                  ...(_filteredDrafts[index]['prefill'] as Map<String, dynamic>? ?? {}),
+                                                  'technicianFullName': fullName,
+                                                },
+                                              };
+                                              await FirestoreService.instance.updateForm(id, updatePayload);
+
+                                              // If we are on IO, also update the local draft to ensure immediate reflection
+                                              await _storage.updateDraftFields(id, updatePayload);
+
+                                              await _load();
                                               if (!mounted) return;
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 const SnackBar(content: Text('Technicien mis à jour')),
@@ -397,7 +410,7 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                           },
                                           onArchive: () async {
                                             final id = _filteredDrafts[index]['id'];
-                                            await StorageService().archiveDraft(id, true);
+                                            await _storage.archiveDraft(id, true);
                                             if (!mounted) return;
                                             setState(() {
                                               _drafts.removeWhere((e) => e['id'] == id);
@@ -409,7 +422,30 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                           },
                                           onDelete: () async {
                                             final id = _filteredDrafts[index]['id'];
-                                            await StorageService().deleteDraft(id);
+                                            final confirm = await showDialog<bool>(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text('Supprimer le rapport'),
+                                                content: const Text('Êtes-vous sûr de vouloir supprimer ce rapport ?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.pop(context, false),
+                                                    child: const Text('Annuler'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () => Navigator.pop(context, true),
+                                                    child: const Text(
+                                                      'Supprimer',
+                                                      style: TextStyle(color: Colors.red),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (confirm != true) return;
+
+                                            await _storage.deleteDraft(id);
                                             if (!mounted) return;
                                             setState(() {
                                               _drafts.removeWhere((e) => e['id'] == id);

@@ -87,14 +87,19 @@ class _DateRangeSlashFormatter extends TextInputFormatter {
       newOffset = digitsBeforeCursor + 1; // first '/'
     } else if (digitsBeforeCursor <= 8) {
       newOffset = digitsBeforeCursor + 2; // both '/'
-    } else if (digitsBeforeCursor == 9) {
-      newOffset = 'DD/MM/YYYY au '.length; // jump after ' au '
     } else {
       // In second date portion
       final secondDigits = digitsBeforeCursor - 8;
-      if (secondDigits <= 2) newOffset = 'DD/MM/YYYY au '.length + secondDigits;
-      else if (secondDigits <= 4) newOffset = 'DD/MM/YYYY au '.length + secondDigits + 1;
-      else newOffset = 'DD/MM/YYYY au '.length + secondDigits + 2;
+      final baseOffset = 'DD/MM/YYYY au '.length;
+      if (secondDigits <= 0) {
+        newOffset = 'DD/MM/YYYY au '.length;
+      } else if (secondDigits <= 2) {
+        newOffset = baseOffset + secondDigits;
+      } else if (secondDigits <= 4) {
+        newOffset = baseOffset + secondDigits + 1;
+      } else {
+        newOffset = baseOffset + secondDigits + 2;
+      }
     }
     if (newOffset > masked.length) newOffset = masked.length;
 
@@ -241,7 +246,7 @@ class _AdminSalonFichesScreenState extends State<AdminSalonFichesScreen> {
                 children: [
                   const SizedBox(height: 25),
 
-                  _buildTextField(_doName, 'Nom du DO'),
+                  _buildTextField(_doName, 'Nom du donneur d\'ordres'),
                   const SizedBox(height: 25),
                   _buildTextField(_salonName, 'Nom du salon'),
                   const SizedBox(height: 25),

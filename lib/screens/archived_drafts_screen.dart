@@ -217,11 +217,14 @@ class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> {
                     final hall = (d['hall'] ?? '').toString();
                     final standNb = (d['standNb'] ?? '').toString();
                     final updated = _formatUpdatedAt(d['updatedAt']);
+                    final prefill = (d['prefill'] as Map<String, dynamic>?) ?? {};
+                    final assigned = (d['assignedTo'] ?? d['technicianName'] ?? prefill['technicianFullName'] ?? d['owner'] ?? '').toString();
                     final subtitle = [
                       if (stand.isNotEmpty) 'Nom: $stand',
                       if (hall.isNotEmpty) 'Hall: $hall',
                       if (standNb.isNotEmpty) 'Stand: $standNb',
                       if (updated.isNotEmpty) updated,
+                      if (assigned.isNotEmpty) 'Assigné à: $assigned'.toUpperCase(),
                     ].join(' • ');
 
                     return Padding(
@@ -232,7 +235,7 @@ class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> {
                         showDelete: _isAdmin,
                         onUnarchive: () async {
                           final id = _drafts[index]['id'];
-                          await StorageService().archiveDraft(id, false);
+                          await _storage.archiveDraft(id, false);
                           if (!mounted) return;
                           setState(() {
                             _drafts.removeAt(index);
@@ -243,7 +246,30 @@ class _ArchivedDraftsScreenState extends State<ArchivedDraftsScreen> {
                         },
                         onDelete: () async {
                           final id = _drafts[index]['id'];
-                          await StorageService().deleteDraft(id);
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Supprimer le rapport'),
+                              content: const Text('Êtes-vous sûr de vouloir supprimer ce rapport ?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Annuler'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    'Supprimer',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm != true) return;
+
+                          await _storage.deleteDraft(id);
                           if (!mounted) return;
                           setState(() {
                             _drafts.removeAt(index);

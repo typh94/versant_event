@@ -221,6 +221,7 @@ class StorageService {
 
 
  */
+import 'auth_service.dart';
 import 'database_helper.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'firestore_service.dart';
@@ -233,7 +234,7 @@ import 'package:path/path.dart' as p;
 class StorageService {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
-  // Archive/unarchive a draft
+    // Archive/unarchive a draft
   Future<void> archiveDraft(String id, bool archived) async {
     if (kIsWeb) {
       // On web, use Firestore since SQLite is not available
@@ -247,7 +248,19 @@ class StorageService {
       }
       return;
     }
+
+    // IO platforms: update local AND sync to Firestore
     await _dbHelper.setDraftArchived(id, archived);
+    try {
+      await FirestoreService.instance.updateForm(id, {'archived': archived});
+      if (kDebugMode) {
+        print('✅ archiveDraft(IO) synced to Firestore: $id archived=$archived');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ℹ️ archiveDraft(IO) Firestore sync failed (local updated): $e');
+      }
+    }
   }
 /*
   // Save draft to database
@@ -281,11 +294,38 @@ class StorageService {
     // Always record who last edited this draft (the current user calling save)
     final lastEditedBy = owner;
 
+    bool? existingArchived;
+    if (id != null) {
+      if (kIsWeb) {
+        try {
+          final snap = await FirestoreService.instance.getFormOnce(draftId);
+          existingArchived = snap.data()?['archived'] as bool?;
+        } catch (_) {}
+      } else {
+        final meta = await _dbHelper.getDraftMetadata(draftId);
+        if (meta != null && meta.containsKey('archived')) {
+          existingArchived = (meta['archived'] == 1 || meta['archived'] == true);
+        }
+      }
+    }
+
+    // Capture current technician name if this is a save from the form itself
+    // and ensuring we don't overwrite reassignment from admin.
+    // Usually this method is called by the technician working on it.
+    final currentUserRole = await AuthService.currentUserRole();
+    final isUserAdmin = currentUserRole == 'admin';
+    final fullName = AuthService.getFullName(owner);
+
     final dataWithOwner = {
       ...data,
       'owner': ownerToUse,
       'lastEditedBy': lastEditedBy,
-      'archived': false,
+      'archived': existingArchived ?? false,
+      // If admin is saving, do NOT overwrite technician names unless they are missing
+      if (fullName != null && (!isUserAdmin || (data['technicianName'] == null && data['techName'] == null))) ...{
+        'technicianName': fullName,
+        'techName': fullName,
+      }
     };
 
     if (kIsWeb) {
@@ -338,6 +378,33 @@ class StorageService {
     }
 
     return draftId;
+  }
+
+  /// Update only specific fields in a draft.
+  Future<void> updateDraftFields(String id, Map<String, dynamic> fields) async {
+    if (kIsWeb) {
+      await FirestoreService.instance.updateForm(id, fields);
+      return;
+    }
+
+    // IO Platforms: Update locally
+    final existing = await _dbHelper.getDraft(id);
+    if (existing != null) {
+      final updated = {
+        ...existing,
+        ...fields,
+      };
+      await _dbHelper.updateDraft(id, updated);
+    }
+
+    // Sync to Firestore best-effort
+    try {
+      await FirestoreService.instance.updateForm(id, fields);
+    } catch (e) {
+      if (kDebugMode) {
+        print('ℹ️ updateDraftFields Firestore sync failed: $e');
+      }
+    }
   }
 
   // Load draft from storage (Firestore on web, SQLite on IO)
@@ -446,7 +513,10 @@ class StorageService {
         'standNb': draft['standNb'],
         'updatedAt': updatedAt is Timestamp ? updatedAt.toDate().toIso8601String() : (updatedAt?.toString()),
         'owner': draft['owner'],
+        'assignedTo': draft['assignedTo'],
+        'technicianName': draft['technicianName'],
         'lastEditedBy': draft['lastEditedBy'] ?? draft['owner'],
+        'prefill': draft['prefill'],
       };
     }).toList();
   }
@@ -588,7 +658,7 @@ class StorageService {
                 .where((m) => (m['archived'] ?? false) != true)
                 .toList();
           }
-          rawDrafts = await _dbHelper.getAllDrafts();
+          rawDrafts = await _dbHelper.getDraftsForAdmin();
         } else {
           // Technician: own + admin's, plus any forms assigned to this technician; non-archived
           final ownersToFetch = <String>{currentUser, if (adminUsername.isNotEmpty) adminUsername}.toList();
@@ -653,7 +723,7 @@ class StorageService {
           rawDrafts.removeWhere((m) => deletedIds.contains(m['id'] as String? ?? ''));
         }
 
-        // Merge local and cloud by id, cloud wins on conflicts
+        // Merge local and cloud by id. Priority: archived=true should persist if either source says so.
         final byId = <String, Map<String, dynamic>>{};
         for (final d in rawDrafts) {
           final id = d['id'] as String?;
@@ -661,9 +731,25 @@ class StorageService {
         }
         for (final c in cloud) {
           final id = c['id'] as String?;
-          if (id != null) byId[id] = {...(byId[id] ?? {}), ...c};
+          if (id != null) {
+            final existing = byId[id];
+            if (existing != null) {
+              // Merge: cloud wins on most fields, but if either says archived, keep it archived
+              final bool localArchived = (existing['archived'] == true || existing['archived'] == 1);
+              final bool cloudArchived = (c['archived'] == true || c['archived'] == 1);
+              byId[id] = {
+                ...existing,
+                ...c,
+                'archived': localArchived || cloudArchived,
+              };
+            } else {
+              byId[id] = c;
+            }
+          }
         }
-        rawDrafts = byId.values.toList();
+        rawDrafts = byId.values.toList()
+        // Final filter to ensure no archived forms leaked into the non-archived list
+        ..removeWhere((m) => (m['archived'] == true || m['archived'] == 1));
 
         // Sort by updatedAt desc if present
         rawDrafts.sort((a, b) {
@@ -777,6 +863,52 @@ class StorageService {
         // Tech: sees his archived + admin's archived
         final ownersToFetch = [currentUser, adminUsername];
         rawDrafts = await _dbHelper.getArchivedDraftsByOwnersList(ownersToFetch);
+      }
+
+      // Sync/Fetch from Firestore on mobile too
+      try {
+        final col = FirebaseFirestore.instance.collection(FirestoreService.formsCollection);
+        QuerySnapshot<Map<String, dynamic>> snap;
+        if (isAdmin) {
+          snap = await col.where('archived', isEqualTo: true).limit(30).get();
+        } else {
+          final ownersToFetch = <String>{currentUser, if (adminUsername.isNotEmpty) adminUsername}.toList();
+          snap = await col
+              .where('archived', isEqualTo: true)
+              .where('owner', whereIn: ownersToFetch)
+              .limit(20)
+              .get();
+        }
+        final cloud = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+
+        // Merge local and cloud by id. Priority: archived=true should persist if either source says so.
+        final byId = <String, Map<String, dynamic>>{};
+        for (final d in rawDrafts) {
+          final id = d['id'] as String?;
+          if (id != null) byId[id] = d;
+        }
+        for (final c in cloud) {
+          final id = c['id'] as String?;
+          if (id != null) {
+            final existing = byId[id];
+            if (existing != null) {
+              final bool localArchived = (existing['archived'] == true || existing['archived'] == 1);
+              final bool cloudArchived = (c['archived'] == true || c['archived'] == 1);
+              byId[id] = {
+                ...existing,
+                ...c,
+                'archived': localArchived || cloudArchived,
+              };
+            } else {
+              byId[id] = c;
+            }
+          }
+        }
+        rawDrafts = byId.values.toList()
+        ..removeWhere((m) => !(m['archived'] == true || m['archived'] == 1));
+
+      } catch (e) {
+        if (kDebugMode) print('ℹ️ listArchivedDraftsToDisplay(mobile) cloud fetch failed: $e');
         final seenIds = <String>{};
         rawDrafts = rawDrafts.where((draft) => seenIds.add(draft['id'] as String)).toList();
       }

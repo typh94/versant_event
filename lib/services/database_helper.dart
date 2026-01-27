@@ -264,45 +264,52 @@ class DatabaseHelper {
     final db = await database;
     final maps = await db.query(
       'drafts',
-      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived', 'data'],
       where: 'owner = ? AND archived = 0',
       whereArgs: [owner],
       orderBy: 'updated_at DESC',
     );
 
-    return maps
-        .map((map) => {
-              'id': map['id'],
-              'title': map['title'],
-              'owner': map['owner'],
-              'created_at': map['created_at'],
-              'updated_at': map['updated_at'],
-              'updatedAt': map['updated_at'],
-            })
-        .toList();
+    return maps.map((map) {
+      final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
+      return {
+        'id': map['id'],
+        'title': map['title'],
+        'owner': map['owner'],
+        'created_at': map['created_at'],
+        'updated_at': map['updated_at'],
+        'updatedAt': map['updated_at'],
+        'assignedTo': data['assignedTo'],
+        'technicianName': data['technicianName'],
+        'prefill': data['prefill'],
+      };
+    }).toList();
   }
 
   Future<List<Map<String, dynamic>>> getDraftsForAdmin() async {
     final db = await database;
     final maps = await db.query(
       'drafts',
-      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived', 'data'],
       where: 'archived = 0',
       orderBy: 'updated_at DESC',
     );
 
-    return maps
-        .map((map) => {
-              'id': map['id'],
-              'title': map['title'],
-              'owner': map['owner'],
-              'created_at': map['created_at'],
-              'updated_at': map['updated_at'],
-              'updatedAt': map['updated_at'],
-            })
-        .toList();
+    return maps.map((map) {
+      final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
+      return {
+        'id': map['id'],
+        'title': map['title'],
+        'owner': map['owner'],
+        'created_at': map['created_at'],
+        'updated_at': map['updated_at'],
+        'updatedAt': map['updated_at'],
+        'assignedTo': data['assignedTo'],
+        'technicianName': data['technicianName'],
+        'prefill': data['prefill'],
+      };
+    }).toList();
   }
-
 
   Future<List<Map<String, dynamic>>> getDraftsByOwnersList(List<String> owners) async {
     final db = await database;
@@ -311,22 +318,26 @@ class DatabaseHelper {
 
     final maps = await db.query(
       'drafts',
-      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived', 'data'],
       where: 'owner IN ($placeholders) AND archived = 0',
       whereArgs: owners,
       orderBy: 'updated_at DESC',
     );
 
-    return maps
-        .map((map) => {
-              'id': map['id'],
-              'title': map['title'],
-              'owner': map['owner'],
-              'created_at': map['created_at'],
-              'updated_at': map['updated_at'],
-              'updatedAt': map['updated_at'],
-            })
-        .toList();
+    return maps.map((map) {
+      final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
+      return {
+        'id': map['id'],
+        'title': map['title'],
+        'owner': map['owner'],
+        'created_at': map['created_at'],
+        'updated_at': map['updated_at'],
+        'updatedAt': map['updated_at'],
+        'assignedTo': data['assignedTo'],
+        'technicianName': data['technicianName'],
+        'prefill': data['prefill'],
+      };
+    }).toList();
   }
   Future<int> updateDraft(String id, Map<String, dynamic> data) async {
     final db = await database;
@@ -385,21 +396,75 @@ class DatabaseHelper {
     final db = await database;
     final maps = await db.query(
       'drafts',
-      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived'],
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived', 'data'],
       where: 'owner = ? AND archived = 1',
       whereArgs: [owner],
       orderBy: 'updated_at DESC',
     );
-    return maps
-        .map((map) => {
-              'id': map['id'],
-              'title': map['title'],
-              'owner': map['owner'],
-              'created_at': map['created_at'],
-              'updated_at': map['updated_at'],
-              'updatedAt': map['updated_at'],
-            })
-        .toList();
+    return maps.map((map) {
+      final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
+      return {
+        'id': map['id'],
+        'title': map['title'],
+        'owner': map['owner'],
+        'created_at': map['created_at'],
+        'updated_at': map['updated_at'],
+        'updatedAt': map['updated_at'],
+        'assignedTo': data['assignedTo'],
+        'technicianName': data['technicianName'],
+        'prefill': data['prefill'],
+      };
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getAllArchivedDrafts() async {
+    final db = await database;
+    final maps = await db.query(
+      'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived', 'data'],
+      where: 'archived = 1',
+      orderBy: 'updated_at DESC',
+    );
+    return maps.map((map) {
+      final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
+      return {
+        'id': map['id'],
+        'title': map['title'],
+        'owner': map['owner'],
+        'created_at': map['created_at'],
+        'updated_at': map['updated_at'],
+        'updatedAt': map['updated_at'],
+        'assignedTo': data['assignedTo'],
+        'technicianName': data['technicianName'],
+        'prefill': data['prefill'],
+      };
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getArchivedDraftsByOwnersList(List<String> owners) async {
+    final db = await database;
+    final placeholders = List.filled(owners.length, '?').join(', ');
+    final maps = await db.query(
+      'drafts',
+      columns: ['id', 'title', 'owner', 'created_at', 'updated_at', 'archived', 'data'],
+      where: 'owner IN ($placeholders) AND archived = 1',
+      whereArgs: owners,
+      orderBy: 'updated_at DESC',
+    );
+    return maps.map((map) {
+      final data = jsonDecode(map['data'] as String) as Map<String, dynamic>;
+      return {
+        'id': map['id'],
+        'title': map['title'],
+        'owner': map['owner'],
+        'created_at': map['created_at'],
+        'updated_at': map['updated_at'],
+        'updatedAt': map['updated_at'],
+        'assignedTo': data['assignedTo'],
+        'technicianName': data['technicianName'],
+        'prefill': data['prefill'],
+      };
+    }).toList();
   }
 
   // Salon fiches CRUD
@@ -444,7 +509,7 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete('salon_fiches', where: 'id = ?', whereArgs: [id]);
   }
-
+/*
   Future<List<Map<String, dynamic>>> getArchivedDraftsByOwnersList(List<String> owners) async {
     final db = await database;
     final placeholders = List.filled(owners.length, '?').join(', ');
@@ -487,6 +552,8 @@ class DatabaseHelper {
         .toList();
   }
 
+ */
+
   // CRUD Operations for Reports
   Future<int> insertReport(Map<String, dynamic> report) async {
     final db = await database;
@@ -514,7 +581,7 @@ class DatabaseHelper {
     final db = await database;
     final maps = await db.query(
       'drafts',
-      columns: ['owner', 'id'], // Récupérer seulement les champs nécessaires
+      columns: ['owner', 'id', 'archived'], // Ajout de 'archived'
       where: 'id = ?',
       whereArgs: [id],
     );

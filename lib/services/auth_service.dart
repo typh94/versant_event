@@ -7,16 +7,25 @@ class AuthService {
   // Simple in-app user directory
   // role: 'tech' or 'admin'
   static const List<Map<String, String>> users = [
-    {'username': 'kane', 'password': 'kane123', 'role': 'tech'},
-    {'username': 'SAB', 'password': 'samir123', 'role': 'tech'},
-    {'username': 'MCO', 'password': 'maati123', 'role': 'tech'},
-    {'username': 'JOS', 'password': 'johan123', 'role': 'tech'},
-    {'username': 'AMM', 'password': 'alexis123', 'role': 'tech'},
-    {'username': 'CHO', 'password': 'cham123', 'role': 'tech'},
-    {'username': 'DIB', 'password': 'didier123', 'role': 'tech'},
-    {'username': 'PRESTA', 'password': 'mehdi123', 'role': 'tech'},
-    {'username': 'admin', 'password': 'admin123', 'role': 'admin'},
+    {'username': 'kane', 'password': 'kane123', 'role': 'tech', 'fullName': 'Mohamed Sacko'},
+    {'username': 'SAB', 'password': 'samir123', 'role': 'tech', 'fullName': 'Samir Bouaziz'},
+    {'username': 'MCO', 'password': 'maati123', 'role': 'tech', 'fullName': 'Maati Courbe'},
+    {'username': 'JOS', 'password': 'johan123', 'role': 'tech', 'fullName': 'Johan Stamatakis.'},
+    {'username': 'AMM', 'password': 'alexis123', 'role': 'tech', 'fullName': 'Alexis Allart'},
+    {'username': 'CHO', 'password': 'cham123', 'role': 'tech', 'fullName': 'Chamseddine Ouamar'},
+    {'username': 'DIB', 'password': 'didier123', 'role': 'tech', 'fullName': 'Didier Beaufreton'},
+    {'username': 'PRESTA', 'password': 'mehdi123', 'role': 'tech', 'fullName': 'Mehdi Cherid'},
+    {'username': 'admin', 'password': 'admin123', 'role': 'admin', 'fullName': 'Admin Admin'},
   ];
+
+  static String? getFullName(String? username) {
+    if (username == null) return null;
+    final user = users.firstWhere(
+      (u) => u['username'] == username,
+      orElse: () => {},
+    );
+    return user['fullName'];
+  }
 
   static Future<bool> login(String username, String password) async {
     final match = users.firstWhere(

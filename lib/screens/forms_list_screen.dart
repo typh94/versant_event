@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/storage_service.dart';
 import 'form_detail_screen.dart';
 
 class FormsListScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class FormsListScreen extends StatefulWidget {
 }
 
 class _FormsListScreenState extends State<FormsListScreen> {
+  final StorageService _storage = StorageService();
   String? _username;
   String? _role;
 
@@ -93,7 +95,9 @@ class _FormsListScreenState extends State<FormsListScreen> {
                 final displaySalon = (salonName == null || salonName.isEmpty) ? '-' : salonName;
                 final lockedBy = data['lockedBy'] as String?;
                 final owner = data['owner'] as String?; // technicien
-                final technician = (data['technicianName'] as String?) ?? owner;
+                final assignedTo = data['assignedTo'] as String?;
+                final prefill = (data['prefill'] as Map<String, dynamic>?) ?? {};
+                final technician = assignedTo ?? (data['technicianName'] as String?) ?? (prefill['technicianFullName'] as String?) ?? owner;
                 final updatedAtDt = data['_parsedUpdatedAt'] as DateTime;
                 final updatedAtStr = updatedAtDt.millisecondsSinceEpoch == 0
                     ? '-'
@@ -102,7 +106,7 @@ class _FormsListScreenState extends State<FormsListScreen> {
                   title: Text(displayTitle),
                   subtitle: Text(
                     technician != null && technician.isNotEmpty
-                        ? 'Salon: $displaySalon\nDernière mise à jour: $updatedAtStr  ·  $technician'
+                        ? 'Salon: $displaySalon\nDernière mise à jour: $updatedAtStr  ·  Assigné à: $technician'
                         : 'Salon: $displaySalon\nDernière mise à jour: $updatedAtStr',
                   ),
                   isThreeLine: true,
@@ -143,11 +147,23 @@ class _FormsListScreenState extends State<FormsListScreen> {
                             );
                             if (selected != null && selected.isNotEmpty) {
                               try {
-                                await FirestoreService.instance.updateForm(data['id'] as String, {
+                                final fullName = AuthService.getFullName(selected) ?? '';
+                                final updatePayload = {
                                   'assignedTo': selected,
-                                  'technicianName': selected,
-                                });
+                                  'technicianName': fullName,
+                                  'techName': fullName,
+                                  'prefill': {
+                                    ...(data['prefill'] as Map<String, dynamic>? ?? {}),
+                                    'technicianFullName': fullName,
+                                  },
+                                };
+                                await FirestoreService.instance.updateForm(data['id'] as String, updatePayload);
+
+                                // Si on est sur mobile (IO), mettre aussi à jour le stockage local
+                                await _storage.updateDraftFields(data['id'] as String, updatePayload);
+
                                 if (!context.mounted) return;
+                                await _manualRefresh();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Technicien assigné')),
                                 );

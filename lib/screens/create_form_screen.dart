@@ -68,6 +68,9 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
         'orgaName': fiche['orgaName'] ?? '',
         'installateurName': fiche['installateurName'] ?? '',
         'exploitSiteName': fiche['exploitSiteName'] ?? '',
+        'technicianFullName': _role == 'admin' && _selectedTechnician != null
+            ? AuthService.getFullName(_selectedTechnician) ?? ''
+            : '',
       };
 
       // Store it for main.dart FormToWordPage to pick up and prefill controllers
@@ -82,6 +85,7 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
         'prefill': prefill,
         'status': 'draft',
         'createdBy': currentUser,
+        'archived': false,
         if (_role == 'admin' && _selectedTechnician != null) ...{
           'assignedTo': _selectedTechnician,
           'technicianName': _selectedTechnician,
@@ -134,13 +138,63 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
                   return const Text('Aucune fiche — créez-en une depuis "Gérer les fiches salon"');
                 }
                 return DropdownButtonFormField<String>(
+                  isExpanded: true,
                   decoration: const InputDecoration(border: OutlineInputBorder()),
                   value: _selectedSalonId,
                   items: fiches.map((data) {
                     final name = (data['salonName'] as String?) ?? (data['name'] as String?) ?? 'Unnamed';
+                    final id = data['id'] as String;
                     return DropdownMenuItem(
-                      value: data['id'] as String,
-                      child: Text(name),
+                      value: id,
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(name, overflow: TextOverflow.ellipsis)),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                            onPressed: () async {
+                              // We use a small delay or post-frame callback if necessary, 
+                              // but usually, showing a dialog here is fine.
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Supprimer la fiche ?'),
+                                  content: Text('Voulez-vous vraiment supprimer la fiche "$name" ?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(false),
+                                      child: const Text('Annuler'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(true),
+                                      child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true) {
+                                // Close the dropdown menu before deleting
+                                if (Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                }
+
+                                SalonFicheStore.instance.removeFiche(id);
+                                if (_selectedSalonId == id) {
+                                  setState(() {
+                                    _selectedSalonId = null;
+                                    _selectedSalonData = null;
+                                  });
+                                }
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Fiche supprimée')),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {

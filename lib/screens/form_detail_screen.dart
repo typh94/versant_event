@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
+import '../services/storage_service.dart';
 
 class FormDetailScreen extends StatefulWidget {
   final String formId;
@@ -12,10 +13,12 @@ class FormDetailScreen extends StatefulWidget {
 }
 
 class _FormDetailScreenState extends State<FormDetailScreen> {
+  final StorageService _storage = StorageService();
   String? _username;
   String? _role;
   bool _lockAcquired = false;
   final _notesCtrl = TextEditingController();
+  Map<String, dynamic> _currentPrefill = {};
 
   @override
   void initState() {
@@ -114,10 +117,21 @@ class _FormDetailScreenState extends State<FormDetailScreen> {
                 );
                 if (selected != null && selected.isNotEmpty) {
                   try {
-                    await FirestoreService.instance.updateForm(widget.formId, {
+                    final fullName = AuthService.getFullName(selected) ?? '';
+                    final updatePayload = {
                       'assignedTo': selected,
-                      'technicianName': selected,
-                    });
+                      'technicianName': fullName,
+                      'techName': fullName,
+                      'prefill': {
+                        ...(_currentPrefill),
+                        'technicianFullName': fullName,
+                      },
+                    };
+                    await FirestoreService.instance.updateForm(widget.formId, updatePayload);
+
+                    // Si on est sur mobile (IO), mettre aussi à jour le stockage local
+                    await _storage.updateDraftFields(widget.formId, updatePayload);
+
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Technicien assigné')));
                   } catch (e) {
@@ -150,8 +164,13 @@ class _FormDetailScreenState extends State<FormDetailScreen> {
           final salonName = data['salonName'] as String? ?? '-';
           final fields = (data['fields'] as Map<String, dynamic>?);
           final prefill = (data['prefill'] as Map<String, dynamic>?) ?? const {};
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _currentPrefill = prefill;
+            }
+          });
           final lockedBy = data['lockedBy'] as String?;
-          final assignedTo = (data['assignedTo'] as String?) ?? (data['technicianName'] as String?);
+          final assignedTo = (data['assignedTo'] as String?) ?? (data['technicianName'] as String?) ?? (prefill['technicianFullName'] as String?);
           _notesCtrl.text = (fields?['notes'] as String?) ?? '';
 
           Widget infoRow(String label, String? value) {
@@ -181,13 +200,13 @@ class _FormDetailScreenState extends State<FormDetailScreen> {
                   children: [
                     const Icon(Icons.engineering, size: 18),
                     const SizedBox(width: 6),
-                    Text('Technicien assigné: ${assignedTo ?? '-'}'),
+                    Text('Assigné à: ${assignedTo ?? '-'}'),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text('Informations pré-remplies', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                infoRow('Nom du DO', prefill['doName'] as String?),
+                infoRow('Nom du donneur d\'ordres', prefill['doName'] as String?),
                 infoRow('Nom du salon', prefill['salonName'] as String? ?? salonName),
                 infoRow('Nom du site', prefill['siteName'] as String?),
                 infoRow('Adresse du site', prefill['siteAddress'] as String?),
