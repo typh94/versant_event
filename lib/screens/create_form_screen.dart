@@ -78,7 +78,7 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
 
       // Create a Firestore document so the report appears in "Tous les rapports"
       final title = _titleCtrl.text.trim().isEmpty ? 'Rapport de vérification' : _titleCtrl.text.trim();
-      await FirestoreService.instance.createForm(data: {
+      final draftId = await FirestoreService.instance.createForm(data: {
         'title': title,
         'salonId': _selectedSalonId,
         'salonName': prefill['salonName'],
@@ -95,7 +95,10 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
       if (!mounted) return;
       // Open the main reporting form (FormToWordPage) prefilled
       await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const FormToWordPage()),
+        MaterialPageRoute(
+          builder: (_) => const FormToWordPage(),
+          settings: RouteSettings(arguments: {'draftId': draftId}),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
