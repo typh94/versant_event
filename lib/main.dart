@@ -441,7 +441,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
       
       // If we are a tech, auto-fill our full name if it's not already set by prefill
       // IMPORTANT: If we are admin, we don't want to auto-fill our name in _techName
-      if (_techName.text.isEmpty && role == 'tech') {
+      if (_techName.text.isEmpty && role == 'tech' && _draftId == null) {
         final fullName = AuthService.getFullName(u);
         if (fullName != null && mounted) {
           setState(() => _techName.text = fullName);
@@ -458,17 +458,39 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
     void _applyPrefill(Map<String, dynamic> prefill) {
       try {
-        _doName.text = (prefill['doName'] ?? '').toString();
-        _salonName.text = (prefill['salonName'] ?? '').toString();
-        _siteName.text = (prefill['siteName'] ?? '').toString();
-        _siteAdress.text = (prefill['siteAddress'] ?? '').toString();
-        _dateMontage.text = (prefill['dateMontage'] ?? '').toString();
-        _dateEvnmt.text = (prefill['dateEvnmt'] ?? '').toString();
-        _catErpType.text = (prefill['catErpType'] ?? '').toString();
-        _effectifMax.text = (prefill['effectifMax'] ?? '').toString();
-        _orgaName.text = (prefill['orgaName'] ?? '').toString();
-        _installateurName.text = (prefill['installateurName'] ?? '').toString();
-        _exploitSiteName.text = (prefill['exploitSiteName'] ?? '').toString();
+        if ((prefill['doName'] ?? '').toString().isNotEmpty) {
+          _doName.text = prefill['doName'].toString();
+        }
+        if ((prefill['salonName'] ?? '').toString().isNotEmpty) {
+          _salonName.text = prefill['salonName'].toString();
+        }
+        if ((prefill['siteName'] ?? '').toString().isNotEmpty) {
+          _siteName.text = prefill['siteName'].toString();
+        }
+        if ((prefill['siteAddress'] ?? '').toString().isNotEmpty) {
+          _siteAdress.text = prefill['siteAddress'].toString();
+        }
+        if ((prefill['dateMontage'] ?? '').toString().isNotEmpty) {
+          _dateMontage.text = prefill['dateMontage'].toString();
+        }
+        if ((prefill['dateEvnmt'] ?? '').toString().isNotEmpty) {
+          _dateEvnmt.text = prefill['dateEvnmt'].toString();
+        }
+        if ((prefill['catErpType'] ?? '').toString().isNotEmpty) {
+          _catErpType.text = prefill['catErpType'].toString();
+        }
+        if ((prefill['effectifMax'] ?? '').toString().isNotEmpty) {
+          _effectifMax.text = prefill['effectifMax'].toString();
+        }
+        if ((prefill['orgaName'] ?? '').toString().isNotEmpty) {
+          _orgaName.text = prefill['orgaName'].toString();
+        }
+        if ((prefill['installateurName'] ?? '').toString().isNotEmpty) {
+          _installateurName.text = prefill['installateurName'].toString();
+        }
+        if ((prefill['exploitSiteName'] ?? '').toString().isNotEmpty) {
+          _exploitSiteName.text = prefill['exploitSiteName'].toString();
+        }
         if (prefill['technicianFullName'] != null && prefill['technicianFullName'].toString().isNotEmpty) {
           _techName.text = prefill['technicianFullName'].toString();
         }
@@ -798,9 +820,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
       } else {
         checkboxValues3[1] = null;
       }
+
+      // If we have a draftId, we might be an admin saving for a tech.
+      // We should check if the draft already has an owner/assignedTo.
+      // However, _toDraftJson is generic. 
+      // Let's ensure we don't accidentally put the current user as owner in the DATA part 
+      // if it's already assigned to someone else.
+
     return {
       'title': _nosReferences.text,
-      'owner': _currentUsername,
+      // 'owner': _currentUsername, // REMOVED to avoid overwriting original owner in data blob
       'nosReferences': _nosReferences.text,
       'clientFacture': _clientFacture.text,
       'contactFacture': _contactFacture.text,
@@ -1176,9 +1205,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
     // Per-gril fields
 
 
-    final int savedNbTableaux = (json['nbTableaux'] ?? 0) is int
-        ? (json['nbTableaux'] as int)
-        : int.tryParse((json['nbTableaux'] ?? '0').toString()) ?? 0;
+    final dynamic rawNbTableaux = json['nbTableaux'];
+    final int savedNbTableaux = (rawNbTableaux is int)
+        ? rawNbTableaux
+        : int.tryParse(rawNbTableaux?.toString() ?? '0') ?? 0;
     if (savedNbTableaux > 0) {
       nbTableaux = savedNbTableaux;
       _nbTableauxBesoin.text = savedNbTableaux.toString();
@@ -1212,7 +1242,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
       for (final k in ['1','2','3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']) {
         final item = docs[k];
         if (item is Map) {
-          checkboxValues[int.parse(k)] = item['status'] as bool?;
+          final int? keyInt = int.tryParse(k);
+          if (keyInt != null) {
+            checkboxValues[keyInt] = item['status'] as bool?;
+          }
           final comment = (item['comment'] ?? '') as String;
           switch (k) {
             case '1': _question1.text = comment; break;
@@ -1233,11 +1266,14 @@ class _FormToWordPageState extends State<FormToWordPage> {
       }
     }
     final avisdoc = json['avis'];
-    if (docs is Map) {
+    if (avisdoc is Map) {
       for (final k in ['1','2' ]) {
         final item = avisdoc[k];
         if (item is Map) {
-          checkboxValues3[int.parse(k)] = item['status'] as bool?;
+          final int? keyInt = int.tryParse(k);
+          if (keyInt != null) {
+            checkboxValues3[keyInt] = item['status'] as bool?;
+          }
           final comment = (item['comment'] ?? '') as String;
           switch (k) {
             case '1': _avisFav.text = comment; break;
@@ -1256,12 +1292,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
         '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '36', '37', '38', '39', '45', '47', '48']) {
         final item = verif[k];
         if (item is Map) {
-          checkboxValues2[int.parse(k)] = (item['status'] as String?);
+          final int? keyInt = int.tryParse(k);
+          if (keyInt != null) {
+            checkboxValues2[keyInt] = (item['status'] as String?);
+          }
           final obs = (item['obs'] ?? '') as String;
           final photoPath = (item['photoPath'] ?? '') as String;
 
           // ✅ VALIDATE image path before using it
-          final idx = int.parse(k);
+          final idx = keyInt ?? int.parse(k);
           // Try to restore bytes first (web-safe)
           final b64 = verifPhotoB64[k];
           Uint8List? bytes;
@@ -1354,50 +1393,131 @@ class _FormToWordPageState extends State<FormToWordPage> {
       } catch (_) {}
     }
 
-    _standHall.text = (json['hall'] ?? '') as String;
-    _standName.text = (json['standName'] ?? '') as String;
-    _techName.text = (json['techName'] ?? '') as String;
-    _localAdress.text = (json['localAdress'] ?? '') as String;
-    _dateTransmission.text = (json['dateTransmission'] ?? '') as String;
-    _objMission.text = (json['objMission'] ?? '') as String;
-    _standNb.text = (json['standNb'] ?? '') as String;
-    _localTel.text= (json['localTel'] ?? '') as String;
-    _localMail.text= (json['localMail'] ?? '') as String;
-    _doName.text= (json['doName'] ?? '') as String;
-    _salonName.text= (json['salonName'] ?? '') as String;
+    if ((json['hall'] ?? '').toString().isNotEmpty) {
+      _standHall.text = json['hall'].toString();
+    }
+    if ((json['standName'] ?? '').toString().isNotEmpty) {
+      _standName.text = json['standName'].toString();
+    }
+    if ((json['techName'] ?? '').toString().isNotEmpty) {
+      _techName.text = json['techName'].toString();
+    }
+    if ((json['localAdress'] ?? '').toString().isNotEmpty) {
+      _localAdress.text = json['localAdress'].toString();
+    }
+    if ((json['dateTransmission'] ?? '').toString().isNotEmpty) {
+      _dateTransmission.text = json['dateTransmission'].toString();
+    }
+    if ((json['objMission'] ?? '').toString().isNotEmpty) {
+      _objMission.text = json['objMission'].toString();
+    }
+    if ((json['standNb'] ?? '').toString().isNotEmpty) {
+      _standNb.text = json['standNb'].toString();
+    }
+    if ((json['localTel'] ?? '').toString().isNotEmpty) {
+      _localTel.text = json['localTel'].toString();
+    }
+    if ((json['localMail'] ?? '').toString().isNotEmpty) {
+      _localMail.text = json['localMail'].toString();
+    }
+    if ((json['doName'] ?? '').toString().isNotEmpty) {
+      _doName.text = json['doName'].toString();
+    }
+    if ((json['salonName'] ?? '').toString().isNotEmpty) {
+      _salonName.text = json['salonName'].toString();
+    }
 
     // Restore added header fields (supporting both siteAdress/siteAddress)
-    _siteName.text = (json['siteName'] ?? '') as String;
-    _siteAdress.text = (json['siteAdress'] ?? json['siteAddress'] ?? '') as String;
-    _dateMontage.text = (json['dateMontage'] ?? '') as String;
-    _dateEvnmt.text = (json['dateEvnmt'] ?? '') as String;
-    _catErpType.text = (json['catErpType'] ?? '') as String;
-    _effectifMax.text = (json['effectifMax'] ?? '') as String;
-    _orgaName.text = (json['orgaName'] ?? '') as String;
-    _exploitSiteName.text = (json['exploitSiteName'] ?? '') as String;
+    if ((json['siteName'] ?? '').toString().isNotEmpty) {
+      _siteName.text = json['siteName'].toString();
+    }
+    final siteAddr = json['siteAdress'] ?? json['siteAddress'];
+    if ((siteAddr ?? '').toString().isNotEmpty) {
+      _siteAdress.text = siteAddr.toString();
+    }
+    if ((json['dateMontage'] ?? '').toString().isNotEmpty) {
+      _dateMontage.text = json['dateMontage'].toString();
+    }
+    if ((json['dateEvnmt'] ?? '').toString().isNotEmpty) {
+      _dateEvnmt.text = json['dateEvnmt'].toString();
+    }
+    if ((json['catErpType'] ?? '').toString().isNotEmpty) {
+      _catErpType.text = json['catErpType'].toString();
+    }
+    if ((json['effectifMax'] ?? '').toString().isNotEmpty) {
+      _effectifMax.text = json['effectifMax'].toString();
+    }
+    if ((json['orgaName'] ?? '').toString().isNotEmpty) {
+      _orgaName.text = json['orgaName'].toString();
+    }
+    if ((json['exploitSiteName'] ?? '').toString().isNotEmpty) {
+      _exploitSiteName.text = json['exploitSiteName'].toString();
+    }
 
-    _mailStand.text= (json['mailClient'] ?? '') as String;
-    _standDscrptn.text= (json['dscrptnSommaire'] ?? '') as String;
+    if ((json['mailClient'] ?? '').toString().isNotEmpty) {
+      _mailStand.text = json['mailClient'].toString();
+    }
+    if ((json['dscrptnSommaire'] ?? '').toString().isNotEmpty) {
+      _standDscrptn.text = json['dscrptnSommaire'].toString();
+    }
 
-    _nosReferences.text = (json['nosReferences'] ?? '') as String;
-    _clientFacture.text = (json['clientFacture'] ?? '') as String;
-    _contactFacture.text = (json['contactFacture'] ?? '') as String;
-    _addresseFacture.text = (json['addresseFacture'] ?? '') as String;
-    _telFacture.text = (json['telFacture'] ?? '') as String;
-    _emailFacture.text = (json['emailFacture'] ?? '') as String;
-    _refFacture.text = (json['refFacture'] ?? '') as String;
-    _contactSinistre.text = (json['contactSinistre'] ?? '') as String;
-    _addresseSinistre.text = (json['addresseSinistre'] ?? '') as String;
-    _telSinistre.text = (json['telSinistre'] ?? '') as String;
-    _emailSinistre.text = (json['emailSinistre'] ?? '') as String;
-    _contexteIntervention.text = (json['contexteIntervention'] ?? '') as String;
-    _infoAcces.text = (json['infoAcces'] ?? '') as String;
-    _etatDemande.text = (json['etatDemande'] ?? '') as String;
-    _startTime.text = (json['startTime'] ?? '') as String;
-    _endTime.text = (json['endTime'] ?? '') as String;
-    _date.text = (json['date'] ?? '') as String;
-    _textConclusion.text = (json['textConclusion'] ?? '') as String;
-    _textPreconisations.text = (json['textPreconisations'] ?? '') as String;
+    if ((json['nosReferences'] ?? '').toString().isNotEmpty) {
+      _nosReferences.text = json['nosReferences'].toString();
+    }
+    if ((json['clientFacture'] ?? '').toString().isNotEmpty) {
+      _clientFacture.text = json['clientFacture'].toString();
+    }
+    if ((json['contactFacture'] ?? '').toString().isNotEmpty) {
+      _contactFacture.text = json['contactFacture'].toString();
+    }
+    if ((json['addresseFacture'] ?? '').toString().isNotEmpty) {
+      _addresseFacture.text = json['addresseFacture'].toString();
+    }
+    if ((json['telFacture'] ?? '').toString().isNotEmpty) {
+      _telFacture.text = json['telFacture'].toString();
+    }
+    if ((json['emailFacture'] ?? '').toString().isNotEmpty) {
+      _emailFacture.text = json['emailFacture'].toString();
+    }
+    if ((json['refFacture'] ?? '').toString().isNotEmpty) {
+      _refFacture.text = json['refFacture'].toString();
+    }
+    if ((json['contactSinistre'] ?? '').toString().isNotEmpty) {
+      _contactSinistre.text = json['contactSinistre'].toString();
+    }
+    if ((json['addresseSinistre'] ?? '').toString().isNotEmpty) {
+      _addresseSinistre.text = json['addresseSinistre'].toString();
+    }
+    if ((json['telSinistre'] ?? '').toString().isNotEmpty) {
+      _telSinistre.text = json['telSinistre'].toString();
+    }
+    if ((json['emailSinistre'] ?? '').toString().isNotEmpty) {
+      _emailSinistre.text = json['emailSinistre'].toString();
+    }
+    if ((json['contexteIntervention'] ?? '').toString().isNotEmpty) {
+      _contexteIntervention.text = json['contexteIntervention'].toString();
+    }
+    if ((json['infoAcces'] ?? '').toString().isNotEmpty) {
+      _infoAcces.text = json['infoAcces'].toString();
+    }
+    if ((json['etatDemande'] ?? '').toString().isNotEmpty) {
+      _etatDemande.text = json['etatDemande'].toString();
+    }
+    if ((json['startTime'] ?? '').toString().isNotEmpty) {
+      _startTime.text = json['startTime'].toString();
+    }
+    if ((json['endTime'] ?? '').toString().isNotEmpty) {
+      _endTime.text = json['endTime'].toString();
+    }
+    if ((json['date'] ?? '').toString().isNotEmpty) {
+      _date.text = json['date'].toString();
+    }
+    if ((json['textConclusion'] ?? '').toString().isNotEmpty) {
+      _textConclusion.text = json['textConclusion'].toString();
+    }
+    if ((json['textPreconisations'] ?? '').toString().isNotEmpty) {
+      _textPreconisations.text = json['textPreconisations'].toString();
+    }
     // Restore building photo bytes (web-safe) if saved
     final buildingB64 = json['buildingPhotoB64'];
     if (buildingB64 is String && buildingB64.isNotEmpty) {
@@ -1425,9 +1545,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
       }
     }
 
-    _installateurName.text = (json['installateurName'] ?? '') as String;
-    _proprioMatosName.text = (json['proprioMatosName'] ?? '') as String;
-    _nbStructures.text = (json['nbStructuresTot'] ?? '') as String;
+    if ((json['installateurName'] ?? '').toString().isNotEmpty) {
+      _installateurName.text = json['installateurName'].toString();
+    }
+    if ((json['proprioMatosName'] ?? '').toString().isNotEmpty) {
+      _proprioMatosName.text = json['proprioMatosName'].toString();
+    }
+    if ((json['nbStructuresTot'] ?? '').toString().isNotEmpty) {
+      _nbStructures.text = json['nbStructuresTot'].toString();
+    }
 
     final sub = json['subPhotos'];
     _subPhotos = [];
@@ -1658,11 +1784,28 @@ class _FormToWordPageState extends State<FormToWordPage> {
         if (json != null && mounted) {
           setState(() {
             _loadFromDraftJson(json);
+            // Apply salon fiche prefill if available (for new reports created from salon)
+            // We do this AFTER _loadFromDraftJson so that if it's a brand new report 
+            // with empty fields in Firestore, they are supplemented by salon data.
+            final prefill = PrefillService.instance.takeSalonPrefill();
+            if (prefill != null) {
+              print('ℹ️ Applying salon prefill to draft $_draftId');
+              _applyPrefill(prefill);
+            } else if (json['prefill'] is Map) {
+              // Fallback: if PrefillService is empty (e.g. reload), check if draft has prefill data
+              print('ℹ️ Applying prefill data from Firestore for draft $_draftId');
+              _applyPrefill(Map<String, dynamic>.from(json['prefill']));
+            }
             _draftApplied = true;
           });
         }
       });
     } else {
+      // No draft ID, but still check for prefill (though create_form_screen now always passes draftId)
+      final prefill = PrefillService.instance.takeSalonPrefill();
+      if (prefill != null) {
+        _applyPrefill(prefill);
+      }
       _draftApplied = true;
     }
   }

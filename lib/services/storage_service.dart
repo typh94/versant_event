@@ -324,6 +324,11 @@ class StorageService {
     String ownerToUse = owner;
     if (existingOwnerFromDb != null && existingOwnerFromDb.isNotEmpty) {
       ownerToUse = existingOwnerFromDb;
+    } else if (id != null && (data['owner'] != null || data['assignedTo'] != null)) {
+      // Fallback: if we have an ID but it's not in DB yet (race condition or first save from FormToWordPage),
+      // try to use owner from data if provided, but ONLY if we don't have existingOwnerFromDb.
+      // Actually, if it's the first save, we should trust the data coming in if it has an owner.
+      ownerToUse = data['owner'] ?? data['assignedTo'] ?? owner;
     }
 
     // Capture current technician name if this is a save from the form itself
