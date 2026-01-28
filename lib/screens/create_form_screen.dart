@@ -88,7 +88,8 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
         'archived': false,
         if (_role == 'admin' && _selectedTechnician != null) ...{
           'assignedTo': _selectedTechnician,
-          'technicianName': _selectedTechnician,
+          'owner': _selectedTechnician,
+          'technicianName': AuthService.getFullName(_selectedTechnician),
         },
       });
 

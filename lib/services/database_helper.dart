@@ -581,7 +581,7 @@ class DatabaseHelper {
     final db = await database;
     final maps = await db.query(
       'drafts',
-      columns: ['owner', 'id', 'archived'], // Ajout de 'archived'
+      columns: ['owner', 'id', 'archived', 'data'], // Ajout de 'archived' et 'data'
       where: 'id = ?',
       whereArgs: [id],
     );

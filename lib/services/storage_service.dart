@@ -221,6 +221,8 @@ class StorageService {
 
 
  */
+import 'dart:convert';
+
 import 'auth_service.dart';
 import 'database_helper.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
@@ -281,32 +283,47 @@ class StorageService {
   Future<String> saveDraft(Map<String, dynamic> data, {String? id, required String owner}) async {
     final draftId = id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
-    // Preserve the original owner on updates. Only set to the passed owner on insert.
-    String ownerToUse = owner;
-    if (!kIsWeb && id != null) {
-      final meta = await _dbHelper.getDraftMetadata(draftId);
-      final existingOwner = (meta != null ? meta['owner'] as String? : null);
-      if (existingOwner != null && existingOwner.isNotEmpty) {
-        ownerToUse = existingOwner; // keep original owner
-      }
-    }
-
     // Always record who last edited this draft (the current user calling save)
     final lastEditedBy = owner;
 
     bool? existingArchived;
+    String? existingAssignedTo;
+    String? existingOwnerFromDb;
+
     if (id != null) {
       if (kIsWeb) {
         try {
           final snap = await FirestoreService.instance.getFormOnce(draftId);
-          existingArchived = snap.data()?['archived'] as bool?;
+          final snapData = snap.data();
+          if (snapData != null) {
+            existingArchived = snapData['archived'] as bool?;
+            existingAssignedTo = snapData['assignedTo'] as String?;
+            existingOwnerFromDb = snapData['owner'] as String?;
+          }
         } catch (_) {}
       } else {
         final meta = await _dbHelper.getDraftMetadata(draftId);
-        if (meta != null && meta.containsKey('archived')) {
-          existingArchived = (meta['archived'] == 1 || meta['archived'] == true);
+        if (meta != null) {
+          existingOwnerFromDb = meta['owner'] as String?;
+          if (meta.containsKey('archived')) {
+            existingArchived = (meta['archived'] == 1 || meta['archived'] == true);
+          }
+          if (meta.containsKey('data')) {
+            try {
+              final blob = jsonDecode(meta['data'] as String);
+              if (blob is Map && blob.containsKey('assignedTo')) {
+                existingAssignedTo = blob['assignedTo'] as String?;
+              }
+            } catch (_) {}
+          }
         }
       }
+    }
+
+    // Preserve the original owner on updates.
+    String ownerToUse = owner;
+    if (existingOwnerFromDb != null && existingOwnerFromDb.isNotEmpty) {
+      ownerToUse = existingOwnerFromDb;
     }
 
     // Capture current technician name if this is a save from the form itself
@@ -321,7 +338,9 @@ class StorageService {
       'owner': ownerToUse,
       'lastEditedBy': lastEditedBy,
       'archived': existingArchived ?? false,
+      if (existingAssignedTo != null) 'assignedTo': existingAssignedTo,
       // If admin is saving, do NOT overwrite technician names unless they are missing
+      // Also ensure 'technicianName' is fullName for display, but keep original if it exists
       if (fullName != null && (!isUserAdmin || (data['technicianName'] == null && data['techName'] == null))) ...{
         'technicianName': fullName,
         'techName': fullName,
