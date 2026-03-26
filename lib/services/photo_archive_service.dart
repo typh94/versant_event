@@ -16,7 +16,7 @@ class PhotoArchiveService {
   static final _firestore = FirebaseFirestore.instance;
 
   /// Archives raw bytes (use on web or when bytes are available)
-  static Future<void> archiveBytes(Uint8List bytes, {
+  static Future<String?> archiveBytes(Uint8List bytes, {
     String filename = 'photo.jpg',
     String? description,
     Map<String, dynamic>? extra,
@@ -40,20 +40,22 @@ class PhotoArchiveService {
         'createdAt': FieldValue.serverTimestamp(),
         ...?extra,
       });
+      return downloadUrl;
     } catch (e) {
       // Log but do not throw
       // ignore: avoid_print
       print('PhotoArchiveService.archiveBytes error: $e');
+      return null;
     }
   }
 
   /// Archives a local file path (IO platforms)
-  static Future<void> archiveFile(String filePath, {
+  static Future<String?> archiveFile(String filePath, {
     String? description,
     Map<String, dynamic>? extra,
   }) async {
     try {
-      if (kIsWeb) return; // not applicable
+      if (kIsWeb) return null; // not applicable
       final username = await AuthService.currentUsername();
       final now = DateTime.now();
       final filename = filePath.split('/').last;
@@ -61,8 +63,8 @@ class PhotoArchiveService {
       final contentType = _guessContentType(filename);
 
       final ref = _storage.ref().child(path);
-      final data = await File(filePath).readAsBytes();
-      await ref.putData(data, SettableMetadata(contentType: contentType));
+      // Use putFile for IO platforms (better performance/memory)
+      await ref.putFile(File(filePath), SettableMetadata(contentType: contentType));
       final downloadUrl = await ref.getDownloadURL();
 
       await _firestore.collection('photos_archive').add({
@@ -74,9 +76,11 @@ class PhotoArchiveService {
         'createdAt': FieldValue.serverTimestamp(),
         ...?extra,
       });
+      return downloadUrl;
     } catch (e) {
       // ignore: avoid_print
       print('PhotoArchiveService.archiveFile error: $e');
+      return null;
     }
   }
 

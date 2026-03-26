@@ -850,6 +850,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
       'textConclusion': _textConclusion.text,
       'textPreconisations': _textPreconisations.text,
       'buildingPhotoPath': _buildingPhotoPath,
+      'buildingPhotoUrl': _buildingPhotoUrl,
       // Persist building photo as base64 (web-safe)
       'buildingPhotoB64': (() {
         try {
@@ -874,6 +875,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
         } catch (_) {
           return null;
         }
+      })(),
+      // Persist verification photos URLs
+      'verifPhotoUrls': (() {
+        final map = <String, String>{};
+        _articlePhotos.forEach((idx, entry) {
+          if (entry.downloadUrl != null) {
+            map['$idx'] = entry.downloadUrl!;
+          }
+        });
+        return map.isEmpty ? null : map;
       })(),
             // Persist signature as base64-encoded PNG bytes (web-safe)
             'signaturePng': (() {
@@ -1195,6 +1206,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             'number': e.number,
             'description': e.description,
             'imagePath': e.imagePath,
+            'downloadUrl': e.downloadUrl,
           })
           .toList(),
     };
@@ -1283,6 +1295,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
       }
     }
      
+    // Restore verification photos URLs
+    final Map<String, dynamic> verifPhotoUrls = (json['verifPhotoUrls'] is Map<String, dynamic>)
+        ? (json['verifPhotoUrls'] as Map<String, dynamic>)
+        : <String, dynamic>{};
+
     final verif = json['verifications'];
     final Map<String, dynamic> verifPhotoB64 = (json['verifPhotoB64'] is Map<String, dynamic>)
         ? (json['verifPhotoB64'] as Map<String, dynamic>)
@@ -1317,12 +1334,14 @@ class _FormToWordPageState extends State<FormToWordPage> {
               description: obs.isNotEmpty ? obs : 'Article $k',
               imagePath: photoPath,
               imageBytes: bytes,
+              downloadUrl: verifPhotoUrls[k] as String?,
             );
           } else if (photoPath.isNotEmpty && await _validateImagePath(photoPath)) {
             _articlePhotos[idx] = SubPhotoEntry(
               number: '0',
               description: obs.isNotEmpty ? obs : 'Article $k',
               imagePath: photoPath,
+              downloadUrl: verifPhotoUrls[k] as String?,
             );
           } else if (photoPath.isNotEmpty) {
             // Try to resolve using current Documents directory with same file name
@@ -1333,6 +1352,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 number: '0',
                 description: obs.isNotEmpty ? obs : 'Article $k',
                 imagePath: remapped,
+                downloadUrl: verifPhotoUrls[k] as String?,
               );
             } else {
               // Image file is missing - keep empty and log
@@ -1531,12 +1551,14 @@ class _FormToWordPageState extends State<FormToWordPage> {
     final loadedBuildingPath = (json['buildingPhotoPath'] ?? '') as String;
     if (loadedBuildingPath.isNotEmpty && await _validateImagePath(loadedBuildingPath)) {
       _buildingPhotoPath = loadedBuildingPath;
+      _buildingPhotoUrl = json['buildingPhotoUrl'] as String?;
     } else {
       // Try to resolve using current Documents directory with same file name
       final resolved = await _resolveImageInCurrentDocs(loadedBuildingPath);
       if (resolved != null) {
         print('ℹ️ Remapped building photo to current container: $resolved');
         _buildingPhotoPath = resolved;
+        _buildingPhotoUrl = json['buildingPhotoUrl'] as String?;
       } else {
         if (loadedBuildingPath.isNotEmpty) {
           print('⚠️ Building photo missing at reload: $loadedBuildingPath');
@@ -1580,6 +1602,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
   // Building photo
   String _buildingPhotoPath = '';
+  String? _buildingPhotoUrl; // Remote URL after archiving to Firebase Storage
   Uint8List? _buildingPhotoBytes; // Web: keep in-memory bytes for preview/PDF
 
   // Sub-photo entries
@@ -2106,10 +2129,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
         // ✅ Save permanently instead of using temp path
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
+        String? downloadUrl;
         // Fire-and-forget archive
         if (kIsWeb) {
           if (webBytes != null && webBytes.isNotEmpty) {
-            PhotoArchiveService.archiveBytes(
+            downloadUrl = await PhotoArchiveService.archiveBytes(
               webBytes,
               filename: pickedFile.name,
               description: 'Photo du bâtiment',
@@ -2117,7 +2141,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
             );
           }
         } else {
-          PhotoArchiveService.archiveFile(
+          downloadUrl = await PhotoArchiveService.archiveFile(
             permanentPath,
             description: 'Photo du bâtiment',
             extra: {'source': 'building', 'method': 'camera'},
@@ -2125,10 +2149,24 @@ class _FormToWordPageState extends State<FormToWordPage> {
         }
         setState(() {
           _buildingPhotoPath = permanentPath;
+          _buildingPhotoUrl = downloadUrl;
           if (webBytes != null && webBytes.isNotEmpty) {
             _buildingPhotoBytes = webBytes;
           }
         });
+
+        // ✅ AUTO-SAVE after photo upload to persist downloadUrl
+        await _saveDraft();
+
+        if (mounted && downloadUrl != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✅ Photo du bâtiment sauvegardée et synchronisée')),
+          );
+        } else if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('⚠️ Photo sauvegardée localement, mais échec de la synchronisation cloud')),
+          );
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -2143,10 +2181,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
     if (image != null) {
       final permanentPath = await _saveImagePermanently(image.path);
       final webBytes = kIsWeb ? await image.readAsBytes() : null;
+      String? downloadUrl;
       // Fire-and-forget archive
       if (kIsWeb) {
         if (webBytes != null && webBytes.isNotEmpty) {
-          PhotoArchiveService.archiveBytes(
+          downloadUrl = await PhotoArchiveService.archiveBytes(
             webBytes,
             filename: image.name,
             description: 'Photo du bâtiment',
@@ -2154,7 +2193,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           );
         }
       } else {
-        PhotoArchiveService.archiveFile(
+        downloadUrl = await PhotoArchiveService.archiveFile(
           permanentPath,
           description: 'Photo du bâtiment',
           extra: {'source': 'building', 'method': 'gallery'},
@@ -2162,10 +2201,24 @@ class _FormToWordPageState extends State<FormToWordPage> {
       }
       setState(() {
         _buildingPhotoPath = permanentPath;
+        _buildingPhotoUrl = downloadUrl;
         if (webBytes != null && webBytes.isNotEmpty) {
           _buildingPhotoBytes = webBytes;
         }
       });
+
+      // ✅ AUTO-SAVE after photo upload to persist downloadUrl
+      await _saveDraft();
+
+      if (mounted && downloadUrl != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Photo du bâtiment sauvegardée et synchronisée')),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('⚠️ Photo sauvegardée localement, mais échec de la synchronisation cloud')),
+        );
+      }
     }
   }
 
@@ -2177,28 +2230,55 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
-        setState(() {
-          String obsText;
-          switch (articleIndex) {
-            case 3: obsText = _article3Obsrvt.text.trim(); break;
-            case 5: obsText = _article5Obsrvt.text.trim(); break;
-            case 7: obsText = _article7Obsrvt.text.trim(); break;
-            default: obsText = 'Article $articleIndex';
+
+        String obsText;
+        switch (articleIndex) {
+          case 3: obsText = _article3Obsrvt.text.trim(); break;
+          case 5: obsText = _article5Obsrvt.text.trim(); break;
+          case 7: obsText = _article7Obsrvt.text.trim(); break;
+          default: obsText = 'Article $articleIndex';
+        }
+
+        String? downloadUrl;
+        if (kIsWeb) {
+          if (webBytes != null && webBytes.isNotEmpty) {
+            downloadUrl = await PhotoArchiveService.archiveBytes(
+              webBytes,
+              filename: pickedFile.name,
+              description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
+              extra: {'source': 'article', 'index': articleIndex, 'method': 'camera'},
+            );
           }
+        } else {
+          downloadUrl = await PhotoArchiveService.archiveFile(
+            permanentPath,
+            description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
+            extra: {'source': 'article', 'index': articleIndex, 'method': 'camera'},
+          );
+        }
+
+        setState(() {
           _articlePhotos[articleIndex] = SubPhotoEntry(
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
             imagePath: permanentPath,  // ✅ Use permanent path
             imageBytes: webBytes,
+            downloadUrl: downloadUrl,
           );
         });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la prise de photo (article $articleIndex): $e')),
-      );
-    }
+
+        // ✅ AUTO-SAVE after article photo upload
+        await _saveDraft();
+
+        if (mounted && downloadUrl != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('✅ Photo article $articleIndex sauvegardée et synchronisée')),
+          );
+        } else if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
+          );
+        }
   }
 
   Future<void> _pickArticlePhotoFromGallery(int articleIndex) async {
@@ -2209,28 +2289,55 @@ class _FormToWordPageState extends State<FormToWordPage> {
       if (pickedFile != null) {
         final permanentPath = await _saveImagePermanently(pickedFile.path);
         final webBytes = kIsWeb ? await pickedFile.readAsBytes() : null;
-        setState(() {
-          String obsText;
-          switch (articleIndex) {
-            case 3: obsText = _article3Obsrvt.text.trim(); break;
-            case 5: obsText = _article5Obsrvt.text.trim(); break;
-            case 7: obsText = _article7Obsrvt.text.trim(); break;
-            default: obsText = 'Article $articleIndex';
+
+        String obsText;
+        switch (articleIndex) {
+          case 3: obsText = _article3Obsrvt.text.trim(); break;
+          case 5: obsText = _article5Obsrvt.text.trim(); break;
+          case 7: obsText = _article7Obsrvt.text.trim(); break;
+          default: obsText = 'Article $articleIndex';
+        }
+
+        String? downloadUrl;
+        if (kIsWeb) {
+          if (webBytes != null && webBytes.isNotEmpty) {
+            downloadUrl = await PhotoArchiveService.archiveBytes(
+              webBytes,
+              filename: pickedFile.name,
+              description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
+              extra: {'source': 'article', 'index': articleIndex, 'method': 'gallery'},
+            );
           }
+        } else {
+          downloadUrl = await PhotoArchiveService.archiveFile(
+            permanentPath,
+            description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
+            extra: {'source': 'article', 'index': articleIndex, 'method': 'gallery'},
+          );
+        }
+
+        setState(() {
           _articlePhotos[articleIndex] = SubPhotoEntry(
             number: '0',
             description: obsText.isNotEmpty ? obsText : 'Article $articleIndex',
             imagePath: permanentPath,  // ✅ Use permanent path
             imageBytes: webBytes,
+            downloadUrl: downloadUrl,
           );
         });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la sélection depuis la galerie (article $articleIndex): $e')),
-      );
-    }
+
+        // ✅ AUTO-SAVE after article photo upload
+        await _saveDraft();
+
+        if (mounted && downloadUrl != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('✅ Photo article $articleIndex sauvegardée et synchronisée')),
+          );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
+          );
+        }
   }
 
   Future<String> _saveImagePermanently(String tempPath) async {
@@ -2340,6 +2447,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
       setState(() {
         _subPhotos.add(result);
       });
+      // ✅ AUTO-SAVE after sub-photo addition
+      await _saveDraft();
     }
   }
 

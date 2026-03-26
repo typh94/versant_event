@@ -134,15 +134,17 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
           child: const Text('Annuler'),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
             if (_formKey.currentState!.validate()) {
               // Fire-and-forget archive to Firebase Storage + Firestore
               final desc = _descriptionController.text;
               final num = _numberController.text;
+              String? downloadUrl;
+
               if (kIsWeb) {
                 final bytes = _imageBytesWeb;
                 if (bytes != null && bytes.isNotEmpty) {
-                  PhotoArchiveService.archiveBytes(
+                  downloadUrl = await PhotoArchiveService.archiveBytes(
                     bytes,
                     filename: _imagePath.isNotEmpty ? _imagePath : 'web_photo.jpg',
                     description: desc,
@@ -154,7 +156,7 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
                 }
               } else {
                 if (_imagePath.isNotEmpty) {
-                  PhotoArchiveService.archiveFile(
+                  downloadUrl = await PhotoArchiveService.archiveFile(
                     _imagePath,
                     description: desc,
                     extra: {
@@ -165,15 +167,18 @@ class _SubPhotoDialogState extends State<SubPhotoDialog> {
                 }
               }
 
-              Navigator.pop(
-                context,
-                SubPhotoEntry(
-                  number: num,
-                  description: desc,
-                  imagePath: _imagePath,
-                  imageBytes: _imageBytesWeb,
-                ),
-              );
+              if (mounted) {
+                Navigator.pop(
+                  context,
+                  SubPhotoEntry(
+                    number: num,
+                    description: desc,
+                    imagePath: _imagePath,
+                    imageBytes: _imageBytesWeb,
+                    downloadUrl: downloadUrl,
+                  ),
+                );
+              }
             }
           },
           child: const Text('Ajouter'),
