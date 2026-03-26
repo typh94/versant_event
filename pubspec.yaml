@@ -2,7 +2,7 @@ name: versant_event
 description: "versant event ."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-# The following defines the version and build number for your application.
+# The fo;llowing defines the version and build number for your application.
 version: 1.0.2+39
 #version: 2.0.1+1
 
