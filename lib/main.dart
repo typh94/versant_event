@@ -5536,16 +5536,14 @@ class _FormToWordPageState extends State<FormToWordPage> {
   @override
   Widget build(BuildContext context) {
 
-    return WillPopScope(
-      onWillPop: () async {
-          await _saveDraft();
-        //  await _saveDraftToDatabase();
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _saveDraft();
         if (mounted) {
-          Navigator.pop(context, true);
-          print('🔍 Current username: $_currentUsername');
-
+          Navigator.of(context).pop(true);
         }
-        return false; // we handle the pop after saving
       },
       child: Scaffold(
        backgroundColor: fondRosePale,
@@ -7503,46 +7501,49 @@ class _FormToWordPageState extends State<FormToWordPage> {
           ],
         ),
 
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Row(
           children: [
             Column(
               children: [
-                Text('S', style: TextStyle(color: Colors.black)),
+                const Text('S', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'S',
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues2[index] = 'S';
                     });
+                    _saveDraft();
                   },
                 ),
               ],
             ),
-            SizedBox(width: 40),
+            const SizedBox(width: 40),
             Column(
               children: [
-                Text('NS', style: TextStyle(color: Colors.black)),
+                const Text('NS', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'NS',
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues2[index] = 'NS';
                     });
+                    _saveDraft();
                   },
                 ),
               ],
             ),
-            SizedBox(width: 40),
+            const SizedBox(width: 40),
             Column(
               children: [
-                Text('SO', style: TextStyle(color: Colors.black)),
+                const Text('SO', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'SO',
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues2[index] = 'SO';
                     });
+                    _saveDraft();
                   },
                 ),
               ],
@@ -7550,7 +7551,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           ],
         ),
         if (value == 'S' || value == 'SO')
-          Divider(color: roseVE),
+          const Divider(color: roseVE),
 
 
       ],
@@ -7577,11 +7578,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
     return StatefulBuilder(
       builder: (context, setInnerState) {
         // Rebuild when text changes
-        controller.addListener(() {
+        void listener() {
           setInnerState(() {});
-        });
+        }
+        controller.removeListener(listener);
+        controller.addListener(listener);
 
         final bool hasText = controller.text.isNotEmpty;
+        final entry = _articlePhotos[index];
+        final bool hasImage = (entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty) ||
+            (entry?.imagePath != null && entry!.imagePath.isNotEmpty);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -7590,29 +7596,36 @@ class _FormToWordPageState extends State<FormToWordPage> {
               children: [
                 // 🔹 Observation field
                 Expanded(
-                  child: TextFormField(
-                    controller: controller,
-                    decoration: InputDecoration(
-                      labelText: 'Observation',
-                      labelStyle: TextStyle(
-                        color: hasText ? Colors.black : roseVE,
-                        letterSpacing: 1.3,
-                      ),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
+                  child: Focus(
+                    onFocusChange: (hasFocus) {
+                      if (!hasFocus) {
+                        _saveDraft();
+                      }
+                    },
+                    child: TextFormField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: 'Observation',
+                        labelStyle: TextStyle(
                           color: hasText ? Colors.black : roseVE,
-                          width: 1,
+                          letterSpacing: 1.3,
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: hasText ? Colors.black : roseVE,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: hasText ? Colors.black : roseVE,
+                            width: 1,
+                          ),
                         ),
                       ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: hasText ? Colors.black : roseVE,
-                          width: 1,
-                        ),
-                      ),
+                      maxLines: 1,
+                      style: TextStyle(color: textColor),
                     ),
-                    maxLines: 1,
-                    style: TextStyle(color: textColor),
                   ),
                 ),
 
@@ -7621,7 +7634,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 // 🔹 Gallery button
                 if (showGallery)
                   OutlinedButton.icon(
-                    onPressed: () => _pickArticlePhotoFromGallery(index),
+                    onPressed: () async {
+                      await _pickArticlePhotoFromGallery(index);
+                      setInnerState(() {});
+                    },
                     icon: Icon(Icons.photo_library, color: roseVE),
                     label: Text(galleryLabel, style: TextStyle(color: roseVE)),
                     style: OutlinedButton.styleFrom(
@@ -7635,7 +7651,10 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 // 🔹 Camera button
                 if (showCamera)
                   OutlinedButton.icon(
-                    onPressed: () => _pickArticlePhoto(index),
+                    onPressed: () async {
+                      await _pickArticlePhoto(index);
+                      setInnerState(() {});
+                    },
                     icon: Icon(Icons.camera_alt, color: roseVE),
                     label: Text(cameraLabel, style: TextStyle(color: roseVE)),
                     style: OutlinedButton.styleFrom(
@@ -7645,8 +7664,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   ),
 
                 // 🔹 “View Image” icon button (only if image exists)
-                if (((_articlePhotos[index]?.imagePath ?? '').isNotEmpty) ||
-                    (_articlePhotos[index]?.imageBytes != null && _articlePhotos[index]!.imageBytes!.isNotEmpty))
+                if (hasImage)
                   IconButton(
                     icon: Icon(Icons.image, color: bleuAmont),
                     tooltip: "Voir l'image",
@@ -7665,15 +7683,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: kIsWeb && _articlePhotos[index]?.imageBytes != null
+                                    child: entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty
                                         ? Image.memory(
-                                            _articlePhotos[index]!.imageBytes!,
+                                            entry.imageBytes!,
                                             width: 250,
                                             height: 250,
                                             fit: BoxFit.cover,
                                           )
                                         : IoImage(
-                                            path: _articlePhotos[index]!.imagePath,
+                                            path: entry!.imagePath,
                                             width: 250,
                                             height: 250,
                                             fit: BoxFit.cover,
@@ -7694,6 +7712,72 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   ),
               ],
             ),
+
+            if (hasImage) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  // Re-use the existing view logic
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Dialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty
+                                    ? Image.memory(
+                                        entry.imageBytes!,
+                                        width: 250,
+                                        height: 250,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : IoImage(
+                                        path: entry!.imagePath,
+                                        width: 250,
+                                        height: 250,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Fermer"),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty
+                      ? Image.memory(
+                          entry.imageBytes!,
+                          fit: BoxFit.cover,
+                        )
+                      : IoImage(
+                          path: entry!.imagePath,
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 12),
 
@@ -8021,20 +8105,22 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     setState(() {
                       checkboxValues[index] = val == true ? true : null;
                     });
+                    _saveDraft();
                   },
                 ),
               ],
             ),
-            SizedBox(width: 40),
+            const SizedBox(width: 40),
             Column(
               children: [
-                Text('Non', style: TextStyle(color: Colors.black)),
+                const Text('Non', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == false,
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues[index] = val == true ? false : null;
                     });
+                    _saveDraft();
                   },
                 ),
               ],
@@ -8043,7 +8129,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
         ),
 
-        Divider(color: Colors.black),
+        const Divider(color: Colors.black),
       ],
 
     );
