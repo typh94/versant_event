@@ -2275,10 +2275,17 @@ class _FormToWordPageState extends State<FormToWordPage> {
             SnackBar(content: Text('✅ Photo article $articleIndex sauvegardée et synchronisée')),
           );
         } else if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
           );
         }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la prise de photo (article $articleIndex): $e')),
+      );
+    }
   }
 
   Future<void> _pickArticlePhotoFromGallery(int articleIndex) async {
@@ -2331,13 +2338,20 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
         if (mounted && downloadUrl != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('✅ Photo article $articleIndex sauvegardée et synchronisée')),
+            SnackBar(content: Text('✅ Photo article $articleIndex sauvegardée et synchronisée')),
           );
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
+            SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
           );
         }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sélection depuis la galerie (article $articleIndex): $e')),
+      );
+    }
   }
 
   Future<String> _saveImagePermanently(String tempPath) async {
