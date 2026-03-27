@@ -1,10 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
-import 'archive_platform_web.dart'
-    if (dart.library.io) 'archive_platform_io.dart';
+import 'package:versant_event/io_stubs.dart' if (dart.library.io) 'dart:io';
 import 'auth_service.dart';
 
 /// Minimal service to archive photos to Firebase Storage
@@ -13,7 +12,7 @@ import 'auth_service.dart';
 /// This is fire-and-forget: errors are caught and printed,
 /// to avoid impacting existing UI/flows.
 class PhotoArchiveService {
-  static final _storage = firebase_storage.FirebaseStorage.instance;
+  static final _storage = FirebaseStorage.instance;
   static final _firestore = FirebaseFirestore.instance;
 
   /// Archives raw bytes (use on web or when bytes are available)
@@ -29,7 +28,7 @@ class PhotoArchiveService {
       final contentType = _guessContentType(filename);
 
       final ref = _storage.ref().child(path);
-      await ref.putData(bytes, firebase_storage.SettableMetadata(contentType: contentType));
+      await ref.putData(bytes, SettableMetadata(contentType: contentType));
       final downloadUrl = await ref.getDownloadURL();
 
       await _firestore.collection('photos_archive').add({
@@ -57,19 +56,27 @@ class PhotoArchiveService {
   }) async {
     try {
       if (kIsWeb) return null; // not applicable
-      
-      // On IO platforms, read the file as bytes using platform helper then archive.
-      final bytes = await ArchivePlatform.readLocalFile(filePath);
-      if (bytes == null) return null;
-
+      final username = await AuthService.currentUsername();
+      final now = DateTime.now();
       final filename = filePath.split('/').last;
-      
-      return await archiveBytes(
-        bytes,
-        filename: filename,
-        description: description,
-        extra: extra,
-      );
+      final path = _buildStoragePath(now, filename);
+      final contentType = _guessContentType(filename);
+
+      final ref = _storage.ref().child(path);
+      final data = await File(filePath).readAsBytes();
+      await ref.putData(data, SettableMetadata(contentType: contentType));
+      final downloadUrl = await ref.getDownloadURL();
+
+      await _firestore.collection('photos_archive').add({
+        'storagePath': path,
+        'downloadUrl': downloadUrl,
+        'description': description,
+        'username': username,
+        'platform': 'io',
+        'createdAt': FieldValue.serverTimestamp(),
+        ...?extra,
+      });
+      return downloadUrl;
     } catch (e) {
       // ignore: avoid_print
       print('PhotoArchiveService.archiveFile error: $e');

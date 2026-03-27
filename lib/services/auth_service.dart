@@ -15,6 +15,7 @@ class AuthService {
     {'username': 'CHO', 'password': 'cham123', 'role': 'tech', 'fullName': 'Chamseddine Ouamar'},
     {'username': 'DIB', 'password': 'didier123', 'role': 'tech', 'fullName': 'Didier Beaufreton'},
     {'username': 'PRESTA', 'password': 'mehdi123', 'role': 'tech', 'fullName': 'Mehdi Cherid'},
+    {'username': 'LUDO', 'password': 'ludo123', 'role': 'tech', 'fullName': 'Ludovic Ridarch'},
     {'username': 'admin', 'password': 'admin123', 'role': 'admin', 'fullName': 'Admin Admin'},
   ];
 

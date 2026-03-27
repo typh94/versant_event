@@ -1295,11 +1295,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
       }
     }
      
-    // Restore verification photos URLs
-    final Map<String, dynamic> verifPhotoUrls = (json['verifPhotoUrls'] is Map<String, dynamic>)
-        ? (json['verifPhotoUrls'] as Map<String, dynamic>)
-        : <String, dynamic>{};
-
     final verif = json['verifications'];
     final Map<String, dynamic> verifPhotoB64 = (json['verifPhotoB64'] is Map<String, dynamic>)
         ? (json['verifPhotoB64'] as Map<String, dynamic>)
@@ -1334,14 +1329,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
               description: obs.isNotEmpty ? obs : 'Article $k',
               imagePath: photoPath,
               imageBytes: bytes,
-              downloadUrl: verifPhotoUrls[k] as String?,
             );
           } else if (photoPath.isNotEmpty && await _validateImagePath(photoPath)) {
             _articlePhotos[idx] = SubPhotoEntry(
               number: '0',
               description: obs.isNotEmpty ? obs : 'Article $k',
               imagePath: photoPath,
-              downloadUrl: verifPhotoUrls[k] as String?,
             );
           } else if (photoPath.isNotEmpty) {
             // Try to resolve using current Documents directory with same file name
@@ -1352,7 +1345,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 number: '0',
                 description: obs.isNotEmpty ? obs : 'Article $k',
                 imagePath: remapped,
-                downloadUrl: verifPhotoUrls[k] as String?,
               );
             } else {
               // Image file is missing - keep empty and log
@@ -1551,14 +1543,12 @@ class _FormToWordPageState extends State<FormToWordPage> {
     final loadedBuildingPath = (json['buildingPhotoPath'] ?? '') as String;
     if (loadedBuildingPath.isNotEmpty && await _validateImagePath(loadedBuildingPath)) {
       _buildingPhotoPath = loadedBuildingPath;
-      _buildingPhotoUrl = json['buildingPhotoUrl'] as String?;
     } else {
       // Try to resolve using current Documents directory with same file name
       final resolved = await _resolveImageInCurrentDocs(loadedBuildingPath);
       if (resolved != null) {
         print('ℹ️ Remapped building photo to current container: $resolved');
         _buildingPhotoPath = resolved;
-        _buildingPhotoUrl = json['buildingPhotoUrl'] as String?;
       } else {
         if (loadedBuildingPath.isNotEmpty) {
           print('⚠️ Building photo missing at reload: $loadedBuildingPath');
@@ -2154,19 +2144,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
             _buildingPhotoBytes = webBytes;
           }
         });
-
-        // ✅ AUTO-SAVE after photo upload to persist downloadUrl
-        await _saveDraft();
-
-        if (mounted && downloadUrl != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Photo du bâtiment sauvegardée et synchronisée')),
-          );
-        } else if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('⚠️ Photo sauvegardée localement, mais échec de la synchronisation cloud')),
-          );
-        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -2206,19 +2183,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
           _buildingPhotoBytes = webBytes;
         }
       });
-
-      // ✅ AUTO-SAVE after photo upload to persist downloadUrl
-      await _saveDraft();
-
-      if (mounted && downloadUrl != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Photo du bâtiment sauvegardée et synchronisée')),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('⚠️ Photo sauvegardée localement, mais échec de la synchronisation cloud')),
-        );
-      }
     }
   }
 
@@ -2266,19 +2230,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
             downloadUrl: downloadUrl,
           );
         });
-
-        // ✅ AUTO-SAVE after article photo upload
-        await _saveDraft();
-
-        if (mounted && downloadUrl != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ Photo article $articleIndex sauvegardée et synchronisée')),
-          );
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
-          );
-        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -2332,19 +2283,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
             downloadUrl: downloadUrl,
           );
         });
-
-        // ✅ AUTO-SAVE after article photo upload
-        await _saveDraft();
-
-        if (mounted && downloadUrl != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('✅ Photo article $articleIndex sauvegardée et synchronisée')),
-          );
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('⚠️ Photo article $articleIndex sauvegardée localement, mais échec de la synchronisation cloud')),
-          );
-        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -2461,8 +2399,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
       setState(() {
         _subPhotos.add(result);
       });
-      // ✅ AUTO-SAVE after sub-photo addition
-      await _saveDraft();
     }
   }
 
@@ -5536,14 +5472,16 @@ class _FormToWordPageState extends State<FormToWordPage> {
   @override
   Widget build(BuildContext context) {
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        await _saveDraft();
+    return WillPopScope(
+      onWillPop: () async {
+          await _saveDraft();
+        //  await _saveDraftToDatabase();
         if (mounted) {
-          Navigator.of(context).pop(true);
+          Navigator.pop(context, true);
+          print('🔍 Current username: $_currentUsername');
+
         }
+        return false; // we handle the pop after saving
       },
       child: Scaffold(
        backgroundColor: fondRosePale,
@@ -7501,49 +7439,46 @@ class _FormToWordPageState extends State<FormToWordPage> {
           ],
         ),
 
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Column(
               children: [
-                const Text('S', style: TextStyle(color: Colors.black)),
+                Text('S', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'S',
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues2[index] = 'S';
                     });
-                    _saveDraft();
                   },
                 ),
               ],
             ),
-            const SizedBox(width: 40),
+            SizedBox(width: 40),
             Column(
               children: [
-                const Text('NS', style: TextStyle(color: Colors.black)),
+                Text('NS', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'NS',
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues2[index] = 'NS';
                     });
-                    _saveDraft();
                   },
                 ),
               ],
             ),
-            const SizedBox(width: 40),
+            SizedBox(width: 40),
             Column(
               children: [
-                const Text('SO', style: TextStyle(color: Colors.black)),
+                Text('SO', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == 'SO',
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues2[index] = 'SO';
                     });
-                    _saveDraft();
                   },
                 ),
               ],
@@ -7551,7 +7486,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
           ],
         ),
         if (value == 'S' || value == 'SO')
-          const Divider(color: roseVE),
+          Divider(color: roseVE),
 
 
       ],
@@ -7578,16 +7513,11 @@ class _FormToWordPageState extends State<FormToWordPage> {
     return StatefulBuilder(
       builder: (context, setInnerState) {
         // Rebuild when text changes
-        void listener() {
+        controller.addListener(() {
           setInnerState(() {});
-        }
-        controller.removeListener(listener);
-        controller.addListener(listener);
+        });
 
         final bool hasText = controller.text.isNotEmpty;
-        final entry = _articlePhotos[index];
-        final bool hasImage = (entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty) ||
-            (entry?.imagePath != null && entry!.imagePath.isNotEmpty);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -7596,36 +7526,29 @@ class _FormToWordPageState extends State<FormToWordPage> {
               children: [
                 // 🔹 Observation field
                 Expanded(
-                  child: Focus(
-                    onFocusChange: (hasFocus) {
-                      if (!hasFocus) {
-                        _saveDraft();
-                      }
-                    },
-                    child: TextFormField(
-                      controller: controller,
-                      decoration: InputDecoration(
-                        labelText: 'Observation',
-                        labelStyle: TextStyle(
+                  child: TextFormField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      labelText: 'Observation',
+                      labelStyle: TextStyle(
+                        color: hasText ? Colors.black : roseVE,
+                        letterSpacing: 1.3,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
                           color: hasText ? Colors.black : roseVE,
-                          letterSpacing: 1.3,
-                        ),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: hasText ? Colors.black : roseVE,
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: hasText ? Colors.black : roseVE,
-                            width: 1,
-                          ),
+                          width: 1,
                         ),
                       ),
-                      maxLines: 1,
-                      style: TextStyle(color: textColor),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: hasText ? Colors.black : roseVE,
+                          width: 1,
+                        ),
+                      ),
                     ),
+                    maxLines: 1,
+                    style: TextStyle(color: textColor),
                   ),
                 ),
 
@@ -7634,10 +7557,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 // 🔹 Gallery button
                 if (showGallery)
                   OutlinedButton.icon(
-                    onPressed: () async {
-                      await _pickArticlePhotoFromGallery(index);
-                      setInnerState(() {});
-                    },
+                    onPressed: () => _pickArticlePhotoFromGallery(index),
                     icon: Icon(Icons.photo_library, color: roseVE),
                     label: Text(galleryLabel, style: TextStyle(color: roseVE)),
                     style: OutlinedButton.styleFrom(
@@ -7651,10 +7571,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
                 // 🔹 Camera button
                 if (showCamera)
                   OutlinedButton.icon(
-                    onPressed: () async {
-                      await _pickArticlePhoto(index);
-                      setInnerState(() {});
-                    },
+                    onPressed: () => _pickArticlePhoto(index),
                     icon: Icon(Icons.camera_alt, color: roseVE),
                     label: Text(cameraLabel, style: TextStyle(color: roseVE)),
                     style: OutlinedButton.styleFrom(
@@ -7664,7 +7581,8 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   ),
 
                 // 🔹 “View Image” icon button (only if image exists)
-                if (hasImage)
+                if (((_articlePhotos[index]?.imagePath ?? '').isNotEmpty) ||
+                    (_articlePhotos[index]?.imageBytes != null && _articlePhotos[index]!.imageBytes!.isNotEmpty))
                   IconButton(
                     icon: Icon(Icons.image, color: bleuAmont),
                     tooltip: "Voir l'image",
@@ -7683,15 +7601,15 @@ class _FormToWordPageState extends State<FormToWordPage> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty
+                                    child: kIsWeb && _articlePhotos[index]?.imageBytes != null
                                         ? Image.memory(
-                                            entry.imageBytes!,
+                                            _articlePhotos[index]!.imageBytes!,
                                             width: 250,
                                             height: 250,
                                             fit: BoxFit.cover,
                                           )
                                         : IoImage(
-                                            path: entry!.imagePath,
+                                            path: _articlePhotos[index]!.imagePath,
                                             width: 250,
                                             height: 250,
                                             fit: BoxFit.cover,
@@ -7712,72 +7630,6 @@ class _FormToWordPageState extends State<FormToWordPage> {
                   ),
               ],
             ),
-
-            if (hasImage) ...[
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () {
-                  // Re-use the existing view logic
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return Dialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty
-                                    ? Image.memory(
-                                        entry.imageBytes!,
-                                        width: 250,
-                                        height: 250,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : IoImage(
-                                        path: entry!.imagePath,
-                                        width: 250,
-                                        height: 250,
-                                        fit: BoxFit.cover,
-                                      ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text("Fermer"),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-                child: Container(
-                  height: 100,
-                  width: 100,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade400),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: entry?.imageBytes != null && entry!.imageBytes!.isNotEmpty
-                      ? Image.memory(
-                          entry.imageBytes!,
-                          fit: BoxFit.cover,
-                        )
-                      : IoImage(
-                          path: entry!.imagePath,
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ),
-            ],
 
             const SizedBox(height: 12),
 
@@ -8105,22 +7957,20 @@ class _FormToWordPageState extends State<FormToWordPage> {
                     setState(() {
                       checkboxValues[index] = val == true ? true : null;
                     });
-                    _saveDraft();
                   },
                 ),
               ],
             ),
-            const SizedBox(width: 40),
+            SizedBox(width: 40),
             Column(
               children: [
-                const Text('Non', style: TextStyle(color: Colors.black)),
+                Text('Non', style: TextStyle(color: Colors.black)),
                 Checkbox(
                   value: value == false,
                   onChanged: (bool? val) {
                     setState(() {
                       checkboxValues[index] = val == true ? false : null;
                     });
-                    _saveDraft();
                   },
                 ),
               ],
@@ -8129,7 +7979,7 @@ class _FormToWordPageState extends State<FormToWordPage> {
 
         ),
 
-        const Divider(color: Colors.black),
+        Divider(color: Colors.black),
       ],
 
     );
