@@ -32,9 +32,8 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
     if (mounted) setState(() => _role = r);
   }
 
-  List<String> get _techUsernames => AuthService.users
+  List<Map<String, String>> get _techs => AuthService.users
       .where((u) => u['role'] == 'tech')
-      .map((u) => u['username']!)
       .toList();
 
   Future<void> _create() async {
@@ -217,8 +216,11 @@ class _CreateFormScreenState extends State<CreateFormScreen> {
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 value: _selectedTechnician,
-                items: _techUsernames
-                    .map((u) => DropdownMenuItem<String>(value: u, child: Text(u)))
+                items: _techs
+                    .map((u) => DropdownMenuItem<String>(
+                          value: u['username'],
+                          child: Text(u['fullName'] ?? u['username']!),
+                        ))
                     .toList(),
                 onChanged: (val) => setState(() => _selectedTechnician = val),
               ),

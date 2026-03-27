@@ -358,7 +358,6 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                             if (id == null || id.isEmpty) return;
                                             final techs = AuthService.users
                                                 .where((u) => u['role'] == 'tech')
-                                                .map((u) => u['username']!)
                                                 .toList();
                                             String? choice;
                                             final selected = await showDialog<String>(
@@ -368,7 +367,10 @@ class _DraftsListScreenState extends State<DraftsListScreen> {
                                                 content: DropdownButtonFormField<String>(
                                                   value: choice,
                                                   items: techs
-                                                      .map((t) => DropdownMenuItem<String>(value: t, child: Text(t)))
+                                                      .map((t) => DropdownMenuItem<String>(
+                                                            value: t['username'],
+                                                            child: Text(t['fullName'] ?? t['username']!),
+                                                          ))
                                                       .toList(),
                                                   onChanged: (v) => choice = v,
                                                   decoration: const InputDecoration(border: OutlineInputBorder()),

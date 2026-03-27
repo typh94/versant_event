@@ -120,7 +120,6 @@ class _FormsListScreenState extends State<FormsListScreen> {
                           onPressed: () async {
                             final techs = AuthService.users
                                 .where((u) => u['role'] == 'tech')
-                                .map((u) => u['username']!)
                                 .toList();
                             final selected = await showDialog<String>(
                               context: context,
@@ -132,7 +131,10 @@ class _FormsListScreenState extends State<FormsListScreen> {
                                     builder: (context, setSt) => DropdownButtonFormField<String>(
                                       value: choice,
                                       items: techs
-                                          .map((t) => DropdownMenuItem<String>(value: t, child: Text(t)))
+                                          .map((t) => DropdownMenuItem<String>(
+                                                value: t['username'],
+                                                child: Text(t['fullName'] ?? t['username']!),
+                                              ))
                                           .toList(),
                                       onChanged: (v) => setSt(() => choice = v),
                                       decoration: const InputDecoration(border: OutlineInputBorder()),
