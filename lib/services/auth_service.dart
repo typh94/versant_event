@@ -22,7 +22,7 @@ class AuthService {
   static String? getFullName(String? username) {
     if (username == null) return null;
     final user = users.firstWhere(
-      (u) => u['username'] == username,
+      (u) => u['username']?.toLowerCase() == username.toLowerCase(),
       orElse: () => {},
     );
     return user['fullName'];
@@ -30,7 +30,7 @@ class AuthService {
 
   static Future<bool> login(String username, String password) async {
     final match = users.firstWhere(
-      (u) => u['username'] == username && u['password'] == password,
+      (u) => u['username']?.toLowerCase() == username.toLowerCase() && u['password'] == password,
       orElse: () => {},
     );
     if (match.isEmpty) return false;
